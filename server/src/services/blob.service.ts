@@ -1,8 +1,8 @@
 import { BlobClient, BlobItem, BlobServiceClient, BlockBlobClient, ContainerClient } from "@azure/storage-blob";
-import { BlobActionResponse, BlobActionResult } from "../utils/models/blob-action";
+import { BlobActionResponse, BlobActionResult } from "../utils/models/blob-action.model";
 import { Readable } from "stream";
-import { env } from "../utils/constants/env";
-import { Service } from "../utils/interfaces/service";
+import { env } from "../env";
+import { Service } from "../utils/interfaces/service.interface";
 import { injectable } from "tsyringe";
 
 @injectable()

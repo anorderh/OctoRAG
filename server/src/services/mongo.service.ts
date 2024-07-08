@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
-import { Service } from "../utils/interfaces/service";
-import { env } from "../utils/constants/env";
+import { Service } from "../utils/interfaces/service.interface";
+import { env } from "../env";
 import { injectable } from "tsyringe";
 
 @injectable()
