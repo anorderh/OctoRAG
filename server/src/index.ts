@@ -1,13 +1,14 @@
 import "reflect-metadata";
 import App from "./App";
 import { services } from "./services";
-import { container } from "tsyringe";
+import { InjectionToken, container } from "tsyringe";
 import { env } from "./env";
+import { Service } from "./utils/interfaces/service.interface";
 
 let app = new App();
 
 Promise.all(
-  services.map((s) => {
+  (services as InjectionToken<Service>[]).map((s) => {
       let instance = container.resolve(s);
       return instance.initialize();
   })
