@@ -1,9 +1,3 @@
-import { InjectionToken } from "tsyringe";
-import { Service } from "../utils/interfaces/service.interface";
-import { BlobService } from "./blob.service";
-import { MongoService } from "./mongo.service";
-
-export const services: (typeof Service)[] = [
-    BlobService,
-    MongoService
-];
+export * from './blob.service';
+export * from './auth.service';
+export * from './mongo.service';

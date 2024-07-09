@@ -1,14 +1,17 @@
 import "reflect-metadata";
 import App from "./App";
-import { services } from "./services";
+import { BlobService, MongoService } from "./services";
 import { InjectionToken, container } from "tsyringe";
 import { env } from "./env";
-import { Service } from "./utils/interfaces/service.interface";
+import { AsyncService } from "./utils/interfaces/async-service.interface";
 
 let app = new App();
 
 Promise.all(
-  (services as InjectionToken<Service>[]).map((s) => {
+  ([
+    BlobService,
+    MongoService
+  ] as InjectionToken<AsyncService>[]).map((s) => {
       let instance = container.resolve(s);
       return instance.initialize();
   })

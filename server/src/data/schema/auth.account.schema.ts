@@ -1,18 +1,24 @@
-import { Schema } from "mongoose";
+import { Schema, model } from "mongoose";
 import { AccountStatus } from "../../utils/enums/account-status.enum";
+import * as bcrypt from 'bcrypt';
 
-export interface Account {
-    _id: Number,
-    username: string,
-    email: string,
-    status: AccountStatus
+export const Account = model(
+    'Account', 
+    new Schema({
+        username: {type: String, required: true},
+        email: {type: String, required: true},
+        password: {type: String, required: true},
+        status: {type: String, enum: Object.values(AccountStatus), required: true}
+    }, {
+        timestamps: true
+    })
+);
+
+Account.schema.methods.hash = function (plainText: string) {
+    const saltRounds = 10;
+    return bcrypt.hash(plainText, saltRounds);
 }
 
-export const accountSchema = new Schema({
-    _id: {type: Number, required: true},
-    username: {type: String, required: true},
-    email: {type: String, required: true},
-    status: {type: String, enum: Object.values(AccountStatus), required: true}
-}, {
-    timestamps: true
-})
+Account.schema.methods.validate = function (input: string) {
+    return bcrypt.compare(input, this.password);
+}

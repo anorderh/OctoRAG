@@ -2,11 +2,11 @@ import { BlobClient, BlobItem, BlobServiceClient, BlockBlobClient, ContainerClie
 import { BlobActionResponse, BlobActionResult } from "../utils/models/blob-action.model";
 import { Readable } from "stream";
 import { env } from "../env";
-import { Service } from "../utils/interfaces/service.interface";
+import { AsyncService } from "../utils/interfaces/async-service.interface";
 import { injectable } from "tsyringe";
 
 @injectable()
-export class BlobService extends Service {
+export class BlobService extends AsyncService {
     loaded: Boolean = false;
     client: BlobServiceClient;
 
