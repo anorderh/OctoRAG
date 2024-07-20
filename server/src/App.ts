@@ -1,10 +1,22 @@
 import express, { Express, Router } from "express";
 import cors from "cors";
 import { env } from "./env";
-import { routers } from "./routers";
+import mongoose from "mongoose";
+import { BlobService } from "./services";
+import { container } from "tsyringe";
+import { ControllerBase } from "./utils/abstract/controller";
+import { AuthController } from "./routing/controllers";
 
 class App {
-    instance: Express
+    dependencies: Promise<void[]> = Promise.all([
+        mongoose.connect(env.mongo.connStr).then(() => {
+            console.log("Mongoose successfully setup.")
+        }),
+        container.resolve(BlobService).initialize().then(() => {
+            console.log("Azure Blob Service successfully setup.");
+        })
+    ])
+    express: Express
     middleware: any[] = [
         cors({
             origin: env.server.origin
@@ -12,14 +24,15 @@ class App {
         express.json(),
         express.urlencoded()
     ]
-    routers: Router[] = routers;
+    controllers: ControllerBase[] = [
+        AuthController
+    ].map((token) => container.resolve(token));
 
     constructor() {
-        this.instance = express();
-        this.middleware.forEach((m) => this.instance.use(m));
-        this.routers.forEach((r) => {
-            let path = env.server.apiPath;
-            this.instance.use(path, r)
+        this.express = express();
+        this.middleware.forEach((m) => this.express.use(m));
+        this.controllers.forEach((c) => {
+            this.express.use(env.server.apiPath, c.router)
         });
     }
 }

@@ -9,7 +9,6 @@ import { ObjectId } from 'mongoose';
 export class AuthService {
     hash(plainText: string) {
         const saltRounds = 10;
-        
         return bcrypt.hash(plainText, saltRounds);
     }
     
@@ -18,7 +17,7 @@ export class AuthService {
     }
 
     createToken(id: any) {
-        return jwt.sign({ id }, env.server.jwtKey, {
+        return jwt.sign({ id }, env.tokens.access.secret, {
             expiresIn: 3 * 24 * 60 * 60,
         });
     }

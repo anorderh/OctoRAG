@@ -1,7 +1,7 @@
 import { Schema, model } from "mongoose";
 
-export const RefreshToken = model(
-    'RefreshToken', 
+export const AccountToken = model(
+    'AccountToken', 
     new Schema({
         _id: {type: Number, required: true},
         accountId: {type: String, required: true},

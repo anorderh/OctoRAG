@@ -4,7 +4,6 @@ import Joi from "joi";
 export function createJoiMiddleware(schema: Joi.ObjectSchema) {
     return (req: Request, res: Response, next: NextFunction) => {
         const {error} = schema.validate(req.body);
-
         if (error) {
             return res.status(400).send(error.details[0].message);
         }

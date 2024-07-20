@@ -1,12 +1,12 @@
 import { BlobClient, BlobItem, BlobServiceClient, BlockBlobClient, ContainerClient } from "@azure/storage-blob";
-import { BlobActionResponse, BlobActionResult } from "../utils/models/blob-action.model";
+import { BlobActionResponse } from "../utils/types/blob-action-response.type";
+import { BlobActionResult } from "../utils/enums/blob-action-result.enum";
 import { Readable } from "stream";
 import { env } from "../env";
-import { AsyncService } from "../utils/interfaces/async-service.interface";
-import { injectable } from "tsyringe";
+import { inject, injectable, singleton } from "tsyringe";
 
-@injectable()
-export class BlobService extends AsyncService {
+@singleton()
+export class BlobService {
     loaded: Boolean = false;
     client: BlobServiceClient;
 
@@ -19,8 +19,6 @@ export class BlobService extends AsyncService {
             try {
                 this.client = BlobServiceClient.fromConnectionString(env.azure.connStr);
                 this.loaded = true;
-                console.log("Azure Blob Service successfully setup.");
-
                 resolve();
             } catch(err) {
                 reject();

@@ -5,9 +5,16 @@ export const env = {
         port: process.env.PORT,
         origin: process.env.API_ORIGIN!,
         apiPath: process.env.API_PATH!,
-        jwtKey: process.env.JWT_KEY!,
-        jwtKeyName: process.env.JWT_KEY_NAME!,
-        tokenExpiration: 3 * 24 * 60 * 60 // secs
+    },
+    tokens: {
+        refresh: {
+            expiration: 3 * 24 * 60 * 60 // 3 days.
+        },
+        access: {
+            name: process.env.JWT_KEY_NAME!,
+            secret: process.env.JWT_SECRET!,
+            expiration: 60 * 5 // 5 mins.
+        }
     },
     azure: {
         connStr: process.env.AZURE_CONN_STR!,
