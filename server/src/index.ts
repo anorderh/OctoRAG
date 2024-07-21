@@ -1,8 +1,9 @@
 import "reflect-metadata";
 import App from "./App";
 import { env } from "./env";
+import { container } from "tsyringe";
 
-let app = new App();
+let app = container.resolve(App);
 
 app.dependencies
   .then(() => {

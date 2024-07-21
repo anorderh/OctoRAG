@@ -1,8 +1,14 @@
 import { Schema, model } from "mongoose";
-import { AccountStatus } from "../../utils/enums/account-status.enum";
-import * as bcrypt from 'bcrypt';
 
-export const Account = model(
+export interface Account {
+    username: string;
+    email: string;
+    password: string;
+    pfpPath: string;
+    desc: string;
+}
+
+export const Account = model<Account>(
     'Account', 
     new Schema({
         username: {type: String, required: true},
@@ -10,7 +16,6 @@ export const Account = model(
         password: {type: String, required: true},
         pfpPath: {type: String},
         desc: {type: String},
-        status: {type: String, enum: Object.values(AccountStatus), required: true}
     }, {
         timestamps: true
     })

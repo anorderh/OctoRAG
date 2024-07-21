@@ -13,7 +13,7 @@ export function Get(path: string) {
             throw new Error(`Decorator method \"${methodId}\" is already mapped to a route`)
         }
         dict[methodId] = {
-            method: HttpVerb.GET,
+            httpType: HttpVerb.GET,
             path
         } as RouteInput;
     }
@@ -31,7 +31,7 @@ export function Post(path: string) {
             throw new Error(`Decorator method \"${methodId}\" is already mapped to a route`)
         }
         dict[methodId] = {
-            method: HttpVerb.POST,
+            httpType: HttpVerb.POST,
             path
         } as RouteInput;
     }
@@ -49,7 +49,7 @@ export function Patch(path: string) {
             throw new Error(`Decorator method \"${methodId}\" is already mapped to a route`)
         }
         dict[methodId] = {
-            method: HttpVerb.PATCH,
+            httpType: HttpVerb.PATCH,
             path
         } as RouteInput;
     }
@@ -67,7 +67,7 @@ export function Delete(path: string) {
             throw new Error(`Decorator method \"${methodId}\" is already mapped to a route`)
         }
         dict[methodId] = {
-            method: HttpVerb.DELETE,
+            httpType: HttpVerb.DELETE,
             path
         } as RouteInput;
     }

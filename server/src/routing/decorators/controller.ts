@@ -18,10 +18,10 @@ export function Controller(prefix: string): ClassDecorator {
                 let middleware = middlewareDict[method] ?? [];
                 let impl = controller[method];
 
-                router[input.method](
+                router[input.httpType](
                     route,                  // Route
                     middleware,             // Middleware
-                    impl                    // Method.
+                    impl.bind(controller)   // Method.
                 )             
             })
         }

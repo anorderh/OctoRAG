@@ -2,19 +2,9 @@ import 'dotenv/config';
 
 export const env = {
     server: {
-        port: process.env.PORT,
+        port: process.env.PORT!,
         origin: process.env.API_ORIGIN!,
         apiPath: process.env.API_PATH!,
-    },
-    tokens: {
-        refresh: {
-            expiration: 3 * 24 * 60 * 60 // 3 days.
-        },
-        access: {
-            name: process.env.JWT_KEY_NAME!,
-            secret: process.env.JWT_SECRET!,
-            expiration: 60 * 5 // 5 mins.
-        }
     },
     azure: {
         connStr: process.env.AZURE_CONN_STR!,
@@ -22,5 +12,22 @@ export const env = {
     },
     mongo: {
         connStr: process.env.MONGO_CONN_STR!
-    }
+    },
+    tokens: {
+        access: {
+            secret: process.env.ACCESS_JWT_SECRET!,
+            name: process.env.ACCESS_JWT_NAME!,
+            expr: Number(process.env.ACCESS_JWT_EXPR!),
+        },
+        refresh: {
+            secret: process.env.REFRESH_JWT_SECRET!,
+            name: process.env.REFRESH_JWT_NAME!,
+            expr: Number(process.env.REFRESH_JWT_EXPR!),
+        },
+        verify: {
+            secret: process.env.VERIFY_JWT_SECRET!,
+            name: process.env.VERIFY_JWT_NAME!,
+            expr: Number(process.env.REFRESH_JWT_EXPR!),
+        }
+    },
 }

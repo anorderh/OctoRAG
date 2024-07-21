@@ -3,10 +3,12 @@ import cors from "cors";
 import { env } from "./env";
 import mongoose from "mongoose";
 import { BlobService } from "./services";
-import { container } from "tsyringe";
+import { InjectionToken, container, injectable } from "tsyringe";
 import { ControllerBase } from "./utils/abstract/controller";
-import { AuthController } from "./routing/controllers";
+import { AuthController, TestController } from "./routing/controllers";
+import cookieParser from "cookie-parser";
 
+@injectable()
 class App {
     dependencies: Promise<void[]> = Promise.all([
         mongoose.connect(env.mongo.connStr).then(() => {
@@ -22,11 +24,13 @@ class App {
             origin: env.server.origin
         }),
         express.json(),
-        express.urlencoded()
+        express.urlencoded(),
+        cookieParser()
     ]
     controllers: ControllerBase[] = [
-        AuthController
-    ].map((token) => container.resolve(token));
+        container.resolve(AuthController),
+        container.resolve(TestController)
+    ];
 
     constructor() {
         this.express = express();
