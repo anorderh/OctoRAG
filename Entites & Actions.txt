@@ -1,0 +1,85 @@
+Community-driven Content Curation Platform emphasizing Digital Learning
+
+Entities
+	- Boards --> Groups of resources people have created
+		Structure
+			Id
+			Name
+			Creator
+			ResourceIds
+			Followers
+			Views
+			Tags
+			Clicks
+			Saved
+			Created, Updated Dates
+			Active flag
+	- Finds --> Resources placed into collections
+		Structure
+			Id
+			Name
+			ResourceType
+			CollectionId
+			Tags
+			Dimensions
+			Clicks
+			Layer
+			Position
+			Created, Updated Dates
+			Active flag
+	- Framing --> Resources placed into collections
+		Structure
+			Id
+			Name
+			CollectionId
+			Dimensions
+			Position
+			Layer
+			Created, Updated Dates
+			Active flag
+	- ResourceType --> URL associated w/ resources
+		Structure
+			Id
+			Name
+			URL Identifier
+			Active flag
+	- Tags --> Tags associated w/ collections for searching
+		- Has numerical values, which is used to group related tags together
+		Structure
+			Id
+			Name
+			Similarity Value
+			Active flag
+	- Events --> Actions associated w/ users, periodic system events, or 
+		Structure
+			Id
+			Name
+			EventType - could even be enum
+			AssociationId
+			Occurred
+	- Notifs --> Notifs provided to users following curators
+		Structure
+			Id
+			Name
+			EventId
+			UserId
+			Acknowledged
+	- Follows --> User subscribing to a collection, resource, or other user
+		Structure
+			Id
+			UserId
+			AssociationId
+			Occurred
+
+Actions
+1. Create a collection
+2. Add resources to collection
+3. Follow a collection
+4. Follow a curator
+5. Search for collections by query
+6. Search for collections by tags
+7. View feed
+8. Follow a tag
+9. Click on a collection
+10. Click on a resource
+11. Reposition resources within a collection

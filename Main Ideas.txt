@@ -1,0 +1,20 @@
+Main Ideas
+
+Boards - Collection of content itself
+Finds - Resources
+Framing - Aesthetic or useful organization of finds
+
+* You have boards and finds. Boards contain finds and finds are links pulled form internet w/ hyperlink, thumbnail, short blurb etc.
+* Finds can be from any online resource, but this will identified. Most common groupings are youtube, twitter, wikipedia, pinterest, tiktok, instagram, etc.
+	- Pages can be directly linked
+* Boards have 2 options for positoning content
+	- Static (blocks which can be assigned column-like lik Trello boards & supports internal directories)
+	- Dynamic (blocks can be placed around in random positions, so longer as they're not intersecting)
+* Finds can be repositoned within the board and said positioning will be saved
+* To better organize and/or customize boards, Framing is introduced
+	- Graphical tools, images, text boxes... static content to better understand a board's purpose, organization, and/or appeasement
+* Tags are appended to boards & resources, based on their content. Can be manually added as well
+* User tracking
+	- Pins --> Tags
+	- Follow --> Boards, other users
+	- Following pulls content into feed, whereas tags can be saved into a users' feed to search specifically for boards and/or content with the mentioned tag

@@ -1,11 +1,13 @@
 import { Schema, model } from "mongoose";
+import { User } from "./user";
 
 export interface Account {
+    id: string;
     username: string;
     email: string;
     password: string;
-    pfpPath: string;
-    desc: string;
+    userId: string;
+    user: User;
 }
 
 export const Account = model<Account>(
@@ -14,8 +16,7 @@ export const Account = model<Account>(
         username: {type: String, required: true},
         email: {type: String, required: true},
         password: {type: String, required: true},
-        pfpPath: {type: String},
-        desc: {type: String},
+        userId: {type: String, ref: 'User', required: true},
     }, {
         timestamps: true
     })

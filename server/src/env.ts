@@ -30,4 +30,10 @@ export const env = {
             expr: Number(process.env.REFRESH_JWT_EXPR!),
         }
     },
+    defaults: {
+        pagination: {
+            skip: 0,
+            limit: 10
+        }
+    }
 }

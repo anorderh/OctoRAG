@@ -2,7 +2,7 @@ Datawrap
 
 Goals
 - Allow users to search datasets and bring them into client
-- Allow users to create accounts & manage credentials
+- Allow users to create users & manage credentials
 - Allow users to save workspaces
 - Allow users to render 2D graphs based on datasets
 - Allow users to render 3D graphs (minimal) based on datasets
