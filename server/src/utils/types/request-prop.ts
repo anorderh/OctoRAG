@@ -1,1 +1,1 @@
-export type RequestProp = 'params' | 'body';
+export type RequestProp = 'params' | 'body' | 'query';

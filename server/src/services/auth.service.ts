@@ -2,9 +2,10 @@ import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 import { injectable } from "tsyringe";
 import { env } from '../env';
-import { ObjectId } from 'mongoose';
 import { Token } from '../utils/interfaces/token';
 import { TokenType } from '../utils/enums/token-type';
+import { ObjectId } from 'mongodb';
+import { InvalidTokenTypeError } from '../utils/extensions/error-extension-library';
 
 
 @injectable()
@@ -19,31 +20,38 @@ export class AuthService {
     }
 
     serialize(token: Token) : string {
-        switch (token.type) {
+        let type = token.type;
+
+        switch (type) {
             case TokenType.Access:
                 return jwt.sign(token, env.tokens.access.secret, { expiresIn: env.tokens.access.expr });
             case TokenType.Refresh:
                 return jwt.sign(token, env.tokens.refresh.secret, { expiresIn: env.tokens.refresh.expr });
+            case TokenType.Verify:
+                return jwt.sign(token, env.tokens.verify.secret, { expiresIn: env.tokens.verify.expr });
             default:
                 throw new Error(`Unrecognized token type: \"${token?.type}\"`)
         }
     }
 
-    deserialize(type: TokenType, hash: string) : Token | null {
+    deserialize(type: TokenType, hash: string) : Token {
         let token;
         switch (type) {
             case TokenType.Access:
-                token = jwt.verify(hash, env.tokens.access.secret) as Token;
-                break;
+                token = jwt.verify(hash, env.tokens.access.secret) as Token; break;
             case TokenType.Refresh:
-                token = jwt.verify(hash, env.tokens.refresh.secret) as Token;
-                break;
+                token = jwt.verify(hash, env.tokens.refresh.secret) as Token; break;
+            case TokenType.Verify:
+                token = jwt.verify(hash, env.tokens.verify.secret) as Token; break;
             default:
                 throw new Error(`Unrecognized token type: \"${type}\"`)
         }
 
-        return type == token.type
-            ? token
-            : null;
+        if (type != token.type) {
+            // Note: This will never be reached bc if the token's type is incorrect,
+            // the wrong secret will be used, resulting in a failed deserialization.
+            throw InvalidTokenTypeError;
+        }
+        return token;
     }
 }

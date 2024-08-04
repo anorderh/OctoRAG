@@ -1,46 +1,36 @@
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
-import { injectable } from "tsyringe";
+import { inject, injectable, Lifecycle, scoped } from "tsyringe";
 import { env } from '../env';
-import { ObjectId } from 'mongoose';
 import { Token } from '../utils/interfaces/token';
 import { TokenType } from '../utils/enums/token-type';
-import { User } from '../data/models';
+import { httpContext } from '../routing/middleware/http-context';
+import { MongoService } from './mongo.service';
+import { CollectionId } from '../utils/enums/collection-id';
+import { User } from '../data/collections';
 
 
 @injectable()
 export class UserService {
-    userId?: string;
 
-    async getSelf() {
-        if (this.userId == null) {
+    constructor(
+        @inject(MongoService) private mongo: MongoService
+    ) {}
+
+    public async getSelf() {
+        let userCollection = this.mongo.db.collection<User>(CollectionId.User);
+        let currId = httpContext().userId;
+        if (currId == null) {
             throw new Error("Can't get user if request is not authenticated.")
         }
-        let self = await User
-            .findOne({
-                _id: this.userId!
+        
+        let self = await userCollection.findOne({
+                _id: currId
             })
-            .populate([
-                { path: 'usersFollowed' },  
-                { path: 'boardsFollowed' },  
-                { path: 'savedTags' }    
-            ]);
         if (self == null) {
             throw new Error("Can't find current user.");
         }
 
         return self;         
-    }
-
-    async getUserById(id: string) {
-        return await User.findOne({
-                _id: id
-            });
-    }
-
-    async getUserByName(username: string) {
-        return await User.findOne({
-            username: username
-        });
     }
 }

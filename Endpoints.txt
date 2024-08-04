@@ -9,43 +9,20 @@ Auth
 User
 	getUser X
 	getBoards X
+	followUser X
+	unfollowUser X
+	getSelf X
 	getNotifs X
-	
 	getFeed X 
-	getSavedTags X
-	getFollowedBoards X 
-	getFollowedUsers X
-
-	followUser
-	unfollowUser
 
 Board
-	searchBoards
-	viewBoard
-	addBoard
-	deleteBoard
-	editBoard
-	followBoard
-	unfollowBoard
-
-Find
-	searchFinds
-	viewFind
-	addFind
-	editFind
-	deleteFind
-
-Framing
-	addFraming
-	editFraming
-	deleteFraming
-
-Tags
-	searchByTag
-	addTag
-	deleteTag
-	pinTag
-	unpinTag
+	searchBoards X
+	viewBoard X
+	addBoard X
+	deleteBoard X
+	editBoard X
+	followBoard X
+	unfollowBoard X
 
 
 

@@ -6,6 +6,15 @@ export const env = {
         origin: process.env.API_ORIGIN!,
         apiPath: process.env.API_PATH!,
     },
+    email: {
+        host: process.env.EMAIL_HOST!,
+        port: Number(process.env.EMAIL_PORT!),
+        secure: Boolean(process.env.EMAIL_SECURE!),
+        auth: {
+            user: process.env.EMAIL_AUTH_USERNAME!,
+            pass: process.env.EMAIL_AUTH_PASSWORD!
+        }
+    },
     azure: {
         connStr: process.env.AZURE_CONN_STR!,
         container: process.env.AZURE_CONTAINER_NAME!

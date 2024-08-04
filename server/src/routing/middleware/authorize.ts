@@ -1,18 +1,21 @@
 import { NextFunction, Request, Response } from "express";
 import { Middleware } from "../../utils/types/middleware";
-import { AuthService } from "../../services";
+import { AuthService, MongoService } from "../../services";
 import { container } from "tsyringe";
 import { TokenType } from "../../utils/enums/token-type";
-import { Account, User } from "../../data/models";
 import { LogService } from "../../services/log.service";
 import { JsonWebTokenError, TokenExpiredError } from "jsonwebtoken";
-import { ContextService } from "../../services/context.service";
 import { UserService } from "../../services/user.service";
+import { httpContext } from "./http-context";
+import { CollectionId } from "../../utils/enums/collection-id";
+import { User } from "../../data/collections";
 
 export const authorize: Middleware = async function (req: Request, res: Response, next: NextFunction) {
     const authService = container.resolve(AuthService);
-    const userService = container.resolve(UserService);
     const logService = container.resolve(LogService);
+    const mongoService = container.resolve(MongoService);
+
+    const userCollection = await mongoService.db.createCollection<User>(CollectionId.User);
     
     try {
         const hash = req.header('Authorization');
@@ -28,17 +31,15 @@ export const authorize: Middleware = async function (req: Request, res: Response
             return;
         }
 
-        const account = await Account
-            .findOne({
-                _id: token.accountId
-            })
-            .exec();
-        if (!account) {
+        const user = await userCollection.findOne({
+            _id: token.userId
+        });
+        if (!user) {
             res.status(409).send("User does not exist.");
             return;
         }
 
-        userService.userId = account!.userId;
+        httpContext().userId = user._id;
         next();
     } catch (error: any) {
         if (error instanceof TokenExpiredError) {

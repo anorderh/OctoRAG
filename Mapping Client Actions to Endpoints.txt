@@ -1,0 +1,37 @@
+Mapping Client Actions to Endpoints
+
+Visit website
+Make account
+- AUTH Register
+- AUTH Login
+Visit profile
+- USER Get user
+- USER Get feed
+- USER Get notifs
+Search boards
+- BOARD Search
+- BOARD Get board
+- USER Get user
+- BOARD Follow
+- BOARD Unfollow
+- USER Follow
+- USER Unfollow
+Create board
+- BOARD Create
+- BOARD Edit
+
+
+Endpoints to do 
+- USER Edit info X
+- AUTH Edit creds X
+- AUTH Delete account X 
+- AUTH Forget password X
+- BOARD Publish version
+	- Add publish handling i.e. versioning prop and modify related endpoints
+- SUGGEST searchengine
+- SUGGEST generativequery
+- SUGGEST llm
+- INQUIRE :/boardId
+	- Apply RAG onto board's links and ask questions
+
+

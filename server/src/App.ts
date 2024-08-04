@@ -1,36 +1,40 @@
 import express, { Express, Router } from "express";
 import cors from "cors";
 import { env } from "./env";
-import mongoose from "mongoose";
 import { BlobService } from "./services";
 import { InjectionToken, container, injectable } from "tsyringe";
 import { ControllerBase } from "./utils/abstract/controller";
-import { AuthController, TestController } from "./routing/controllers";
+import { AuthController, TestController, UserController } from "./routing/controllers";
 import cookieParser from "cookie-parser";
+import { useHttpContext } from "./routing/middleware/http-context";
+import morgan from "morgan";
+import { BoardController } from "./routing/controllers/board";
+import { MongoService } from "./services/mongo.service";
+import { errorHandler } from "./routing/middleware/error-handler";
 
 @injectable()
 class App {
-    dependencies: Promise<void[]> = Promise.all([
-        mongoose.connect(env.mongo.connStr).then(() => {
-            console.log("Mongoose successfully setup.")
-        }),
-        container.resolve(BlobService).initialize().then(() => {
-            console.log("Azure Blob Service successfully setup.");
-        })
-    ])
     express: Express
     middleware: any[] = [
         cors({
             origin: env.server.origin
         }),
+        morgan('common'),
         express.json(),
         express.urlencoded(),
-        cookieParser()
+        cookieParser(),
+        useHttpContext
     ]
     controllers: ControllerBase[] = [
         container.resolve(AuthController),
-        container.resolve(TestController)
+        container.resolve(TestController),
+        container.resolve(UserController),
+        container.resolve(BoardController)
     ];
+    dependencies: Promise<void[]> = Promise.all([
+        container.resolve(MongoService).initialize(),
+        container.resolve(BlobService).initialize()
+    ])
 
     constructor() {
         this.express = express();
@@ -38,6 +42,7 @@ class App {
         this.controllers.forEach((c) => {
             this.express.use(env.server.apiPath, c.router)
         });
+        this.express.use(errorHandler);
     }
 }
 

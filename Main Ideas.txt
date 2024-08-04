@@ -18,3 +18,29 @@ Framing - Aesthetic or useful organization of finds
 	- Pins --> Tags
 	- Follow --> Boards, other users
 	- Following pulls content into feed, whereas tags can be saved into a users' feed to search specifically for boards and/or content with the mentioned tag
+
+Boards
+	Filtering options
+		Exclude find types
+		Include find types
+		Search string
+		Date made
+			'Today'
+			'Within last week'
+			'Within last month'
+			'Within last year'
+			All time
+		Sorting
+			Most visited
+			Most saved
+			Newest
+
+Displaying boards
+	Instead of having boards be fully customizable w/ positoning and images, have boards be represented as Split Packed Bubble Charts, similar to https://www.highcharts.com/demo/highcharts/packed-bubble-split
+	Organization can be consequently simplified implementation wise
+		- Finds within a board can be given an "importance level"
+			- Higher importance means larger bubble
+			- Higher importance means closer to center
+		- Finds can also be given "groupings", str[]
+			- Each element in array is level of organization
+			- Groups together related findings, but client will also allow subgroupings to be emphasized

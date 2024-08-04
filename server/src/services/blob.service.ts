@@ -1,26 +1,27 @@
 import { BlobClient, BlobItem, BlobServiceClient, BlockBlobClient, ContainerClient } from "@azure/storage-blob";
-import { BlobActionResponse } from "../utils/types/blob-action-response.type";
+import { BlobActionResponse } from "../utils/interfaces/blob-action-response";
 import { BlobActionResult } from "../utils/enums/blob-action-result.enum";
 import { Readable } from "stream";
 import { env } from "../env";
 import { inject, injectable, singleton } from "tsyringe";
+import { LogService } from "./log.service";
 
 @singleton()
 export class BlobService {
-    loaded: Boolean = false;
     client: BlobServiceClient;
 
-    initialize() {
-        if (this.loaded) {
-            throw new Error("Azure Blob Service Client already loaded.");
-        }
+    constructor(
+        @inject(LogService) private logService: LogService,
+    ) {}
 
+    initialize() {
         return new Promise<void>((resolve, reject) => {
             try {
                 this.client = BlobServiceClient.fromConnectionString(env.azure.connStr);
-                this.loaded = true;
+                this.logService.info("Azure File Storage connection established.")
                 resolve();
             } catch(err) {
+                this.logService.error("Azure File Storage connection failed to establish.");
                 reject();
             }
         })
@@ -28,9 +29,6 @@ export class BlobService {
 
     async _clear() {
         try {
-            if (!this.loaded) {
-                throw new Error("Azure Blob Service Client has not been loaded.");
-            }
             for await (const c of this.client.listContainers()) {
                 const container = this.client.getContainerClient(c.name);
                 await container.delete();
@@ -44,9 +42,6 @@ export class BlobService {
 
     async peek(containerName: string, prefix? : string) : Promise<BlobActionResponse> {
         try {
-            if (!this.loaded) {
-                throw new Error("Azure Blob Service Client has not been loaded.");
-            }
             let container : ContainerClient = this.client.getContainerClient(containerName);
             container.createIfNotExists();
             let output : BlobItem[] = [];
@@ -63,9 +58,6 @@ export class BlobService {
 
     async download(containerName : string, blobName: string) : Promise<BlobActionResponse>  {
         try {
-            if (!this.loaded) {
-                throw new Error("Azure Blob Service Client has not been loaded.");
-            }
             let container : ContainerClient = this.client.getContainerClient(containerName);
             container.createIfNotExists();
             let blob : BlobClient = container.getBlobClient(blobName);
@@ -79,9 +71,6 @@ export class BlobService {
 
     async upload(containerName : string, blobName: string, stream: Readable) : Promise<BlobActionResponse> {
         try {
-            if (!this.loaded) {
-                throw new Error("Azure Blob Service Client has not been loaded.");
-            }
             let container : ContainerClient = this.client.getContainerClient(containerName);
             container.createIfNotExists();
             let blockBlob: BlockBlobClient = container.getBlockBlobClient(blobName);

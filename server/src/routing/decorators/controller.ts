@@ -1,7 +1,8 @@
 import { container } from "tsyringe";
 import { RouteInput } from "../../utils/interfaces/route-input";
-import { Router } from "express";
+import { NextFunction, Request, Response, Router } from "express";
 import { Middleware } from "../../utils/types/middleware";
+import { wrapExpressPromise } from "../../utils/extensions/wrap-express-promise";
 
 export function Controller(prefix: string): ClassDecorator {
     return (target: any) => {
@@ -19,9 +20,11 @@ export function Controller(prefix: string): ClassDecorator {
                 let impl = controller[method];
 
                 router[input.httpType](
-                    route,                  // Route
-                    middleware,             // Middleware
-                    impl.bind(controller)   // Method.
+                    route,                      // Route
+                    middleware,                 // Middleware
+                    wrapExpressPromise(         // To invoke error handler.
+                        impl.bind(controller)   // Method.
+                    )
                 )             
             })
         }

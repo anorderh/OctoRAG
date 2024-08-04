@@ -6,6 +6,7 @@
     "configurations": [
         {
             "type": "node",
+            "preLaunchTask": "npm: build - server",
             "request": "launch",
             "name": "Debug Server",
             "skipFiles": [
