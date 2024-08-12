@@ -15,6 +15,21 @@
             "envFile": "${workspaceFolder}/server/.env",
             "program": "${workspaceFolder}/server/src/index.ts",
             "outFiles": ["${workspaceFolder}/server/dist/**/*.js"]
-        }
+        },
+        {
+            "type": "node",
+            "preLaunchTask": "npm: build - server",
+            "request": "launch",
+            "name": "Debug Mocha",
+            "stopOnEntry": true,
+            "skipFiles": [
+              "<node_internals>/**"
+            ],
+            "args": [
+                "${workspaceFolder}/server/dist/test/**/*.js"
+            ],
+            "envFile": "${workspaceFolder}/server/.env",
+            "program": "${workspaceFolder}/server/node_modules/mocha/bin/_mocha",
+          },
     ]
 }

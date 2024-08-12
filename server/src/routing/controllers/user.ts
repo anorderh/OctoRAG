@@ -4,7 +4,6 @@ import { inject, singleton } from "tsyringe";
 import { ControllerBase } from "../../utils/abstract/controller";
 import { UserService } from "../../services/user.service";
 import { AuthService, MongoService } from "../../services";
-import { LogService } from "../../services/log.service";
 import { Blanket } from "../decorators/blanket";
 import morgan from "morgan";
 import { Collection, RemoveUserOptions } from "mongodb";
@@ -29,7 +28,6 @@ export class UserController extends ControllerBase {
 
     constructor(
         @inject(UserService) private userService: UserService,
-        @inject(LogService) private logService: LogService,
         @inject(MongoService) private mongo: MongoService,
     ) {
         super()
@@ -65,7 +63,7 @@ export class UserController extends ControllerBase {
     )
     public async editSelf(req: Request, res: Response) {
         let input = req.body as EditProfileRequest;
-        let self = await httpContext().userId;
+        let self = httpContext().userId;
         await this.userCollection.updateOne({
             _id: self.id
         }, filterNulls(input));
@@ -138,8 +136,6 @@ export class UserController extends ControllerBase {
                 desc: b.desc,
                 creatorId: b.creatorId,
                 tags: b.tags,
-                views: b.views,
-                clicks: b.clicks,
                 saves: b.saves,
                 createdAt: b.createdAt,
                 updatedAt: b.updatedAt

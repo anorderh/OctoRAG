@@ -1,22 +1,14 @@
-import { injectable, singleton } from "tsyringe";
+import { container, injectable, singleton } from "tsyringe";
 import pino, { Logger } from "pino";
+import { InstanceDeps } from "../utils/enums/instance-deps";
 
 @singleton()
 export class LogService {
-    logger: Logger;
-
-    constructor() {
-        this.logger = pino({
+    res = (() => {
+        container.registerInstance(InstanceDeps.Logger, pino({
             transport: {
                 target: 'pino-pretty'
             }
-        })
-    }
-
-    trace = (input: any) => this.logger.trace(input);
-    debug = (input: any) => this.logger.debug(input);
-    info = (input: any) => this.logger.info(input);
-    warn = (input: any) => this.logger.warn(input);
-    error = (input: any) => this.logger.error(input);
-    fatal = (input: any) => this.logger.fatal(input);
+        }));
+    })()
 }

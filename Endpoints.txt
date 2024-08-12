@@ -8,7 +8,7 @@ Auth
 
 User
 	getUser X
-	getBoards X
+	getBoards 
 	followUser X
 	unfollowUser X
 	getSelf X
@@ -16,13 +16,13 @@ User
 	getFeed X 
 
 Board
-	searchBoards X
-	viewBoard X
-	addBoard X
-	deleteBoard X
-	editBoard X
-	followBoard X
-	unfollowBoard X
+	searchBoards 
+	viewBoard 
+	addBoard 
+	deleteBoard 
+	editBoard 
+	followBoard 
+	unfollowBoard 
 
 
 

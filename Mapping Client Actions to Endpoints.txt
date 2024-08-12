@@ -26,12 +26,11 @@ Endpoints to do
 - AUTH Edit creds X
 - AUTH Delete account X 
 - AUTH Forget password X
-- BOARD Publish version
+- BOARD Publish version X
 	- Add publish handling i.e. versioning prop and modify related endpoints
-- SUGGEST searchengine
-- SUGGEST generativequery
-- SUGGEST llm
 - INQUIRE :/boardId
 	- Apply RAG onto board's links and ask questions
+
+
 
 

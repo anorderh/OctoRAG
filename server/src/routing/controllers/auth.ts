@@ -9,7 +9,6 @@ import { Token } from "../../utils/interfaces/token";
 import { TokenType } from "../../utils/enums/token-type";
 import { Blanket } from "../decorators/blanket";
 import morgan from "morgan";
-import { LogService } from "../../services/log.service";
 import { validateHeaderName } from "http";
 import Joi from "joi";
 import { Validate } from "../decorators/validate";
@@ -24,7 +23,6 @@ export class AuthController extends ControllerBase {
     
     constructor(
         @inject(AuthService) private authService: AuthService,
-        @inject(LogService) private logService: LogService,
         @inject(UserService) private userService: UserService,
         @inject(MongoService) private mongo: MongoService,
     ) { 

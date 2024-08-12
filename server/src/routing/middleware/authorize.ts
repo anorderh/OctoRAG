@@ -3,16 +3,17 @@ import { Middleware } from "../../utils/types/middleware";
 import { AuthService, MongoService } from "../../services";
 import { container } from "tsyringe";
 import { TokenType } from "../../utils/enums/token-type";
-import { LogService } from "../../services/log.service";
 import { JsonWebTokenError, TokenExpiredError } from "jsonwebtoken";
 import { UserService } from "../../services/user.service";
 import { httpContext } from "./http-context";
 import { CollectionId } from "../../utils/enums/collection-id";
 import { User } from "../../data/collections";
+import { InstanceDeps } from "../../utils/enums/instance-deps";
+import { Logger } from "pino";
 
 export const authorize: Middleware = async function (req: Request, res: Response, next: NextFunction) {
     const authService = container.resolve(AuthService);
-    const logService = container.resolve(LogService);
+    const logger = container.resolve<Logger>(InstanceDeps.Logger);
     const mongoService = container.resolve(MongoService);
 
     const userCollection = await mongoService.db.createCollection<User>(CollectionId.User);
@@ -50,7 +51,7 @@ export const authorize: Middleware = async function (req: Request, res: Response
             return;
         }
 
-        logService.error(error);
+        logger.error({err: error});
         res.status(540).send();
     }
 }

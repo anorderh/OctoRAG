@@ -1,38 +1,40 @@
 import { Db, MongoClient } from "mongodb";
 import { env } from "../env";
-import { inject, singleton } from "tsyringe"
-import { LogService } from "./log.service";
-import { createBoardCollection, createEventCollection, createUserCollection } from "../data/collections";
+import { container, inject, singleton } from "tsyringe"
+import { createBoardCollection, createEventLogCollection, createUserCollection } from "../data/collections";
+import { InstanceDeps } from "../utils/enums/instance-deps";
+import pino, { Logger } from "pino";
+import { EnsureDep } from "../routing/decorators/ensure-dep";
+import { AsyncService } from "../utils/abstract/async-service";
 
-singleton()
-export class MongoService {
-    client: MongoClient;
-    db: Db;
+@singleton()
+@EnsureDep(InstanceDeps.Logger)
+export class MongoService implements AsyncService {
+    client: MongoClient = new MongoClient(env.mongo.connStr);
+    db: Db = this.client.db();
     collectionSetupArr: Function[] = [
         createUserCollection,
         createBoardCollection,
-        createEventCollection
+        createEventLogCollection
     ]
 
     constructor(
-        @inject(LogService) private logService: LogService,
+        @inject(InstanceDeps.Logger) private logger: Logger,
     ) {}
     
     async initialize(): Promise<void> {
-        return new Promise<void>(async (resolve, reject) => {
-            try {
-                this.client = new MongoClient(env.mongo.connStr);
-                await this.client.connect();
-                this.db = this.client.db();
-                this.createCollections();
+        try {
+            await this.client.connect();
+            this.createCollections();
 
-                this.logService.info("MongoDB connection established.")
-                resolve();
-            } catch(err) {
-                this.logService.error("MongoDB connection failed.")
-                reject();
-            }
-        })
+            this.logger.info("MongoDB connection established.")
+        } catch(err) {
+            this.logger.error("MongoDB connection failed.")
+        }
+    }
+    async cleanup(): Promise<void> {
+        await this.client.close();
+        this.logger.info(`MongoDB connection cleaned up.`);
     }
 
     private createCollections() {

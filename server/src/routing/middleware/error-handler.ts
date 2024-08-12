@@ -1,15 +1,16 @@
 import { NextFunction, Response, Request } from "express";
-import { LogService } from "../../services";
 import { container } from "tsyringe";
 import { ErrorExtensionLibrary } from "../../utils/extensions/error-extension-library";
+import { InstanceDeps } from "../../utils/enums/instance-deps";
+import { Logger } from "pino";
 
 export const errorHandler = async function (err: Error, req: Request, res: Response, next: NextFunction) {
-    let logService = container.resolve(LogService);
-    logService.error(err.stack);
+    let logger = container.resolve<Logger>(InstanceDeps.Logger);
+    logger.error({ err: err });
 
     let customHandler = ErrorExtensionLibrary.get(err);
     if (!!customHandler) {
-        customHandler(res);
+        customHandler(res, err);
     } else {
         res.status(500).send({
             error: 'Internal Server Error Occurred'

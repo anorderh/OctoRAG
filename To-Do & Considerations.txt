@@ -1,0 +1,28 @@
+To-Do
+1. X Rename blob-service to azure-blob.service
+2. X Condense endpoint bodies by integrating services w/ new custom errors being thrown.
+3. Test and confirm endpoints are working properly
+    - Continue implementing Mocha tests
+    - To ensure db state isn't messing with tests, 
+        look into Mocha hook `beforeAll` or `globalSetup` to reset database
+4. Implement RAG for boards, depending on version specified
+    a. Should this be done on server itself in NodeJS? Or serverless invocation of Azure? How should RAG be deployed/scaled
+        for web applications? I assume there also needs to be handling for popular video links and their transcripts?
+    b. SOLUTION:
+    	- RAG will be handled via Pinecone Vector Database.
+    	- When a board is being prepared for RAG, its documents will be loaded into vector db
+    		- This involve parsing the associated Finds' links, grabbing their content, making into vector embeddings, and inserting with namespace associated to chatbotID
+		- After board is loaded, queries will be provided to NodeJS server which will instantiate an index w/ the filtered retriever and use a query engine
+
+Considerations
+1. There are properties which restrict access that aren't being checked
+properly in every endpoint (i.e. active, published, public). This needs
+to be remediated w/ business logic tested for endpoints, to ensure users
+are not modifying data they're not allowed to.
+
+2. Utilizing services within controllers is ideal but when responses are 
+afforded error conditons, the service can't immediately cancel out the parent
+request w/o some handling in the parent itself, requiring an 'ErrorObj' implementation.
+    SOLUTION: Use the error-middleware and ErrorExtensionsLibrary to intentionally
+    throw custom errors that are caught by middleware. Then checks are easier.
+    https://www.reddit.com/r/dotnet/comments/s1j1o0/is_it_conventional_for_the_controller_to_throw/

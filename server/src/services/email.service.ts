@@ -2,15 +2,16 @@ import { inject, injectable, singleton } from "tsyringe";
 import { Transporter } from "nodemailer";
 import * as nodemailer from "nodemailer";
 import { env } from "../env";
-import { LogService } from "./log.service";
 import { Email } from "../utils/interfaces/email";
+import { InstanceDeps } from "../utils/enums/instance-deps";
+import { Logger } from "pino";
 
 @singleton()
 export class EmailService {
     transporter: Transporter;
 
     constructor(
-        @inject(LogService) private logService: LogService
+        @inject(InstanceDeps.Logger) private logger: Logger
     ) {
         this.transporter = nodemailer.createTransport({
             host: env.email.host,
@@ -25,7 +26,7 @@ export class EmailService {
 
     async sendMail(input: Email) {
         const info = this.transporter.sendMail(input);
-        this.logService.info(
+        this.logger.info(
             `Email sent to "${input.to}" - Subject: "${input.subject}".\n${new Date().toString()}`
         )
     }

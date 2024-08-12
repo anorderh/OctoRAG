@@ -1,0 +1,12 @@
+{
+    "extension": [
+      ".ts"
+    ],
+    "spec": "test/**/*.spec.ts",
+    "require": [
+      "tsx",
+      "test/fixtures.ts"
+    ],
+    "parallel": false,
+    "recursive": true
+  }

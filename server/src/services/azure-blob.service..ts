@@ -1,30 +1,28 @@
-import { BlobClient, BlobItem, BlobServiceClient, BlockBlobClient, ContainerClient } from "@azure/storage-blob";
+import { BlobClient, BlobItem, BlobServiceClient, BlockBlobClient, ContainerClient, logger } from "@azure/storage-blob";
 import { BlobActionResponse } from "../utils/interfaces/blob-action-response";
 import { BlobActionResult } from "../utils/enums/blob-action-result.enum";
 import { Readable } from "stream";
 import { env } from "../env";
 import { inject, injectable, singleton } from "tsyringe";
-import { LogService } from "./log.service";
+import { Logger } from "pino";
+import { InstanceDeps } from "../utils/enums/instance-deps";
+import { AsyncService } from "../utils/abstract/async-service";
 
 @singleton()
-export class BlobService {
+export class AzureBlobService implements AsyncService {
     client: BlobServiceClient;
 
     constructor(
-        @inject(LogService) private logService: LogService,
+        @inject(InstanceDeps.Logger) private logger: Logger
     ) {}
 
-    initialize() {
-        return new Promise<void>((resolve, reject) => {
-            try {
-                this.client = BlobServiceClient.fromConnectionString(env.azure.connStr);
-                this.logService.info("Azure File Storage connection established.")
-                resolve();
-            } catch(err) {
-                this.logService.error("Azure File Storage connection failed to establish.");
-                reject();
-            }
-        })
+    async initialize(): Promise<void> {
+        this.client = BlobServiceClient.fromConnectionString(env.azure.connStr);
+        this.logger.info("Azure File Storage connection established.")
+    }
+    async cleanup() {
+        // No explicit handling needed.
+        this.logger.info(`Azure File Storage cleaned up.`);
     }
 
     async _clear() {

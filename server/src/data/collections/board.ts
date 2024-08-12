@@ -8,14 +8,25 @@ export interface Board {
     desc: string;
     creatorId: ObjectId;
     followers: ObjectId[];
-    finds: Find[];
+    versions: Version[];
     tags: string[];
-    views: number;
-    clicks: number;
     saves: number;
     createdAt: Date;
     updatedAt: Date;
     active: boolean;
+    public: boolean;
+}
+
+export interface Version {
+    _id: ObjectId;
+    index: number;
+    desc: string;
+    finds: Find[];
+    visits: number;
+    createdAt: Date;
+    updatedAt: Date;
+    active: boolean;
+    published: boolean
 }
 
 export interface Find {
@@ -42,7 +53,7 @@ export interface Relation {
 }
 
 export const createBoardCollection = (db: Db) => {
-    db.createCollection(CollectionId.User, {
+    db.createCollection(CollectionId.Board, {
         validator: {
             $jsonSchema: {
                 bsonType: "object",
@@ -59,42 +70,59 @@ export const createBoardCollection = (db: Db) => {
                             bsonType: "objectId"
                         }
                     },
-                    finds: {
+                    versions: {
                         bsonType: "array",
                         items: {
                             bsonType: "object",
-                            required: ["_id", "title", "link", "type", "level", "active"],
+                            required: ["_id", "index", "active"],
                             properties: {
-                                _id: {bsonType: "objectId"},
-                                title: {bsonType: "string"},
-                                desc: {bsonType: "string"},
-                                link: {bsonType: "string"},
-                                type: {enum: Object.keys(FindType)},
-                                relations: {
+                                _id: { bsonType: "objectId" },
+                                index: { bsonType: "number" },
+                                desc: { bsonType: "string" },
+                                finds: {
                                     bsonType: "array",
                                     items: {
                                         bsonType: "object",
-                                        required: ["_id", "destFind", "label"],
+                                        required: ["_id", "title", "link", "type", "level", "active"],
                                         properties: {
                                             _id: {bsonType: "objectId"},
-                                            destFind: {bsonType: "objectId"},
-                                            label: {bsonType: "string"},
-                                            desc: {bsonType: "string"}
-                                        }
+                                            title: {bsonType: "string"},
+                                            desc: {bsonType: "string"},
+                                            link: {bsonType: "string"},
+                                            type: {enum: Object.keys(FindType)},
+                                            relations: {
+                                                bsonType: "array",
+                                                items: {
+                                                    bsonType: "object",
+                                                    required: ["_id", "destFind", "label"],
+                                                    properties: {
+                                                        _id: {bsonType: "objectId"},
+                                                        destFind: {bsonType: "objectId"},
+                                                        label: {bsonType: "string"},
+                                                        desc: {bsonType: "string"}
+                                                    }
+                                                }
+                                            },
+                                            grouping: {
+                                                bsonType: "array",
+                                                items: {bsonType: "string"}
+                                            },
+                                            level: {bsonType: "number"},
+                                            views: {bsonType: "number"},
+                                            clicks: {bsonType: "number"},
+                                            createdAt: {bsonType: "date"},
+                                            updatedAt: {bsonType: "date"},
+                                            active: {bsonType: "bool"}
+                                        },
+                                        additionalProperties: false
                                     }
                                 },
-                                grouping: {
-                                    bsonType: "array",
-                                    items: {bsonType: "string"}
-                                },
-                                level: {bsonType: "number"},
-                                views: {bsontype: "number"},
-                                clicks: {bsontype: "number"},
+                                visits: {bsonType: "number"},
                                 createdAt: {bsonType: "date"},
                                 updatedAt: {bsonType: "date"},
-                                active: {bsonType: "bool"}
-                            },
-                            additionalProperties: false
+                                active: {bsonType: "bool"},
+                                published: {bsonType: "bool"}
+                            }
                         }
                     },
                     tags: {
@@ -103,8 +131,6 @@ export const createBoardCollection = (db: Db) => {
                             bsonType: "string",
                         }
                     },
-                    views: {bsonType: "number"},
-                    clicks: {bsonType: "number"},
                     saves: {bsonType: "number"},
                     createdAt: {bsonType: "date"},
                     updatedAt: {bsonType: "date"},
