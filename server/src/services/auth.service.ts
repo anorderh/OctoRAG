@@ -4,8 +4,8 @@ import { injectable } from "tsyringe";
 import { env } from '../env';
 import { Token } from '../utils/interfaces/token';
 import { TokenType } from '../utils/enums/token-type';
-import { ObjectId } from 'mongodb';
-import { InvalidTokenTypeError } from '../utils/extensions/error-extension-library';
+import { InvalidTokenTypeError } from '../error-handling/errors';
+
 
 
 @injectable()
@@ -30,7 +30,9 @@ export class AuthService {
             case TokenType.Verify:
                 return jwt.sign(token, env.tokens.verify.secret, { expiresIn: env.tokens.verify.expr });
             default:
-                throw new Error(`Unrecognized token type: \"${token?.type}\"`)
+                throw new InvalidTokenTypeError({
+                    body: `Unrecognized token type: \"${token?.type}\"`
+                })
         }
     }
 
@@ -44,13 +46,9 @@ export class AuthService {
             case TokenType.Verify:
                 token = jwt.verify(hash, env.tokens.verify.secret) as Token; break;
             default:
-                throw new Error(`Unrecognized token type: \"${type}\"`)
-        }
-
-        if (type != token.type) {
-            // Note: This will never be reached bc if the token's type is incorrect,
-            // the wrong secret will be used, resulting in a failed deserialization.
-            throw InvalidTokenTypeError;
+                throw new InvalidTokenTypeError({
+                    body: `Unrecognized token type: \"${type}\"`
+                })
         }
         return token;
     }

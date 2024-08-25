@@ -5,7 +5,6 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "type": "node",
             "preLaunchTask": "npm: build - server",
             "request": "launch",
             "name": "Debug Server",
@@ -14,22 +13,34 @@
             ],
             "envFile": "${workspaceFolder}/server/.env",
             "program": "${workspaceFolder}/server/src/index.ts",
-            "outFiles": ["${workspaceFolder}/server/dist/**/*.js"]
-        },
-        {
+            "outFiles": ["${workspaceFolder}/server/dist/**/*.js"],
             "type": "node",
+        },
+        {   
             "preLaunchTask": "npm: build - server",
-            "request": "launch",
-            "name": "Debug Mocha",
-            "stopOnEntry": true,
-            "skipFiles": [
-              "<node_internals>/**"
-            ],
             "args": [
-                "${workspaceFolder}/server/dist/test/**/*.js"
+                "-u",
+                "bdd",
+                "--timeout",
+                "999999",
+                "--colors",
+                "${workspaceFolder}/server/dist/test/**/*.js",
+                "--require",
+                "${workspaceFolder}/server/dist/test/fixtures.js",
+                // Specify test.
+                "-g",
+                "'Board Controller'"
             ],
+            "internalConsoleOptions": "openOnSessionStart",
+            "name": "Mocha Tests",
             "envFile": "${workspaceFolder}/server/.env",
             "program": "${workspaceFolder}/server/node_modules/mocha/bin/_mocha",
-          },
+            "request": "launch",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "node"
+          }
+
     ]
 }

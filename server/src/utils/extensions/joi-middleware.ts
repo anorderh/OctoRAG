@@ -1,17 +1,22 @@
 import { NextFunction, Request, Response } from "express";
 import { RequestProp } from "../types/request-prop";
 import Joi from "joi";
+import { JoiValidationMiddlewareError } from "../../error-handling/errors";
 
 export function createJoiMiddleware(
     appliedProp : RequestProp,
     schema: Joi.ObjectSchema // Apply validation to body if not specified.
 ) {
     return (req: Request, res: Response, next: NextFunction) => {
-        const {error} = schema.validate(req[appliedProp]);
+        const {value, error} = schema.validate(req[appliedProp]);
         if (error) {
-            return res.status(400).send(error.details[0].message);
+            let errorMsg = error.details[0].message;
+            throw new JoiValidationMiddlewareError({
+                body: `Joi validation error occurred: "${errorMsg}"`
+            })
         }
         
+        req[appliedProp]= value; // Reapply prop w/ Joi validation.
         next();
     }
 }

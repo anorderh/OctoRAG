@@ -1,5 +1,6 @@
 import { CreateCollectionOptions, Db, ObjectId } from "mongodb";
 import { CollectionId } from "../../utils/enums/collection-id";
+import { CollectionSetup } from "../../utils/types/collection-setup";
 
 export interface User {
     _id: ObjectId;
@@ -27,7 +28,7 @@ export interface Notification{
     link: string
 }
 
-export const createUserCollection = (db: Db) => {
+export const createUserCollection : CollectionSetup = (db: Db) => {
     db.createCollection(CollectionId.User, {
         validator: {
             $jsonSchema: {

@@ -1,6 +1,6 @@
 import { container } from "tsyringe";
 import { instancedDependencies } from "../../utils/extensions/instance-deps";
-import { MissingCustomDependencyHandler } from "../../utils/extensions/error-extension-library";
+import { UnsupportedError } from "../../error-handling/errors";
 
 export function EnsureDep(input: string | string[]): ClassDecorator {
     return (target: any) => {
@@ -12,9 +12,7 @@ export function EnsureDep(input: string | string[]): ClassDecorator {
             // Confirm handler exists.
             let handler = instancedDependencies[curr];
             if (handler == null) {
-                throw new MissingCustomDependencyHandler(
-                    `No registration handler is associated with token "${handler}"`
-                );
+                throw new Error(`No registration handler is associated with token "${handler}"`)
             }
 
             // Register.

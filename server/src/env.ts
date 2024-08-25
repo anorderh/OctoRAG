@@ -1,10 +1,12 @@
 import 'dotenv/config';
 
 export const env = {
+    node_env: process.env.NODE_ENV!,
     server: {
         port: process.env.PORT!,
         origin: process.env.API_ORIGIN!,
         apiPath: process.env.API_PATH!,
+        domain: process.env.API_DOMAIN!
     },
     email: {
         host: process.env.EMAIL_HOST!,
@@ -42,7 +44,8 @@ export const env = {
     defaults: {
         pagination: {
             skip: 0,
-            limit: 10
+            limit: 10,
+            maxLimit: 50
         }
     }
 }

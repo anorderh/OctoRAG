@@ -8,6 +8,7 @@ import { httpContext } from '../routing/middleware/http-context';
 import { MongoService } from './mongo.service';
 import { CollectionId } from '../utils/enums/collection-id';
 import { User } from '../data/collections';
+import { InvalidUserError } from '../error-handling/errors';
 
 
 @injectable()
@@ -21,14 +22,19 @@ export class UserService {
         let userCollection = this.mongo.db.collection<User>(CollectionId.User);
         let currId = httpContext().userId;
         if (currId == null) {
-            throw new Error("Can't get user if request is not authenticated.")
+            throw new InvalidUserError({
+                status: 401,
+                body: "Can't get current user for authenticated requests."
+            })
         }
         
         let self = await userCollection.findOne({
                 _id: currId
             })
         if (self == null) {
-            throw new Error("Can't find current user.");
+            throw new InvalidUserError({
+                body: "Can't find current user."
+            })
         }
 
         return self;         

@@ -10,7 +10,7 @@ export interface FindResponse {
     type: FindType;
     relations: Relation[];
     grouping: string[];
-    level: number;
+    rank: number;
     views: number;
     clicks: number;
     createdAt: Date;

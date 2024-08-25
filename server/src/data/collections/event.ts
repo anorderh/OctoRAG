@@ -2,6 +2,7 @@ import { CreateCollectionOptions, Db, ObjectId } from "mongodb";
 import { Event } from "../../utils/enums/event";
 import { EventGroup } from "../../utils/enums/event-group";
 import { CollectionId } from "../../utils/enums/collection-id";
+import { CollectionSetup } from "../../utils/types/collection-setup";
 
 export interface EventLog {
     _id: ObjectId;
@@ -19,7 +20,7 @@ export interface UserEventLog extends EventLog {
     userId: ObjectId;
 }
 
-export const createEventLogCollection = (db: Db) => {
+export const createEventLogCollection : CollectionSetup = (db: Db) => {
     db.createCollection(CollectionId.EventLog, {
         validator: {
             $jsonSchema: {

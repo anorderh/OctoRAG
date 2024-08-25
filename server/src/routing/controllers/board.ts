@@ -6,7 +6,7 @@ import { UserService } from "../../services/user.service";
 import { AuthService, MongoService } from "../../services";
 import { Blanket } from "../decorators/blanket";
 import morgan from "morgan";
-import { Collection, ObjectId, RemoveUserOptions } from "mongodb";
+import { Collection, ObjectId, RemoveUserOptions, WithId } from "mongodb";
 import { usePagination } from "../../utils/extensions/use-pagination";
 import Joi, { object } from "joi";
 import { Validate } from "../decorators/validate";
@@ -15,7 +15,6 @@ import { FindType } from "../../utils/enums/find-type";
 import { readFileSync } from "fs";
 import { SortingOption } from "../../utils/enums/board-filtering/sorting-options";
 import { DateOption } from "../../utils/enums/board-filtering/date-options";
-import { SearchBoardRequest } from "../../data/models/request/search-boards";
 import { create } from "lodash";
 import { calcDateRange } from "../../utils/extensions/calc-date-range";
 import { BoardService } from "../../services/board.service";
@@ -24,7 +23,10 @@ import { join } from "path";
 import { CollectionId } from "../../utils/enums/collection-id";
 import { objectId } from "../../utils/extensions/objectid-validation";
 import { filterNulls } from "../../utils/extensions/filter-nulls";
-import { Board, Find, User } from "../../data/collections";
+import { Board, Find, Relation, User } from "../../data/collections";
+import { executeMongoChecks } from "../../utils/extensions/mongo-checks";
+import { hasBoardAuth, isValidBoard } from "../../utils/validation/board";
+import { version } from "os";
 
 
 @Controller('/board')
@@ -48,26 +50,27 @@ export class BoardController extends ControllerBase {
         'body', {
             searchStr: Joi.string(),
             includedTypes: Joi.array().items(
-                Joi.string().valid(...Object.keys(FindType))
+                Joi.string().valid(...Object.values(FindType))
             ),
             excludedTypes: Joi.array().items(
-                Joi.string().valid(...Object.keys(FindType))
+                Joi.string().valid(...Object.values(FindType))
             ),
-            createdDateRange: Joi.string().valid(...Object.keys(DateOption)).required(),
-            lastUpdatedDateRange: Joi.string().valid(...Object.keys(DateOption)).required(),
-            sort: Joi.string().valid(...Object.keys(SortingOption)).required()
+            createdAtOption: Joi.string().valid(...Object.values(DateOption)).required(),
+            updatedAtOption: Joi.string().valid(...Object.values(DateOption)).required(),
+            tags: Joi.array().items(Joi.string()),
+            sort: Joi.string().valid(...Object.values(SortingOption)).required()
         }
     )
     public async searchBoards(req: Request, res: Response) {
         let {
+            searchStr,
             includedTypes,
             excludedTypes,
-            searchStr,
-            createdAtDateRange,
-            updatedAtDateRange,
-            tagIds,
+            createdAtOption,
+            updatedAtOption,
+            tags,
             sort
-        } = new SearchBoardRequest(req.body).input;
+        } = req.body;
 
         let pipeline: any[] = [];
         // Optional filtering.
@@ -78,7 +81,9 @@ export class BoardController extends ControllerBase {
                     $match: {
                         finds: {
                             $elemMatch: {
-                                type: { $in: includedTypes}
+                                type: {
+                                    $in: includedTypes
+                                }
                             }
                         }
                     }
@@ -93,7 +98,7 @@ export class BoardController extends ControllerBase {
                         finds: {
                             $elemMatch: {
                                 type: {
-                                    $not: [ {$in: includedTypes} ]
+                                    $nin: includedTypes
                                 }
                             }
                         }
@@ -111,18 +116,20 @@ export class BoardController extends ControllerBase {
             })
         }
         // If provided, ensure boards have all provided tags.
-        if (!!tagIds && tagIds.length > 0) {
+        if (!!tags && tags.length > 0) {
             pipeline.push({
                 $match: {
-                    $setIsSubset: ["$tags", tagIds]
+                    tags: {
+                        $all: tags
+                    }
                 }
             })
         }
 
         // Required Filtering.
         // Apply date range for creation date.
-        if (createdAtDateRange != DateOption.ALL_TIME) {
-            let [startDate, endDate] = calcDateRange(createdAtDateRange)
+        if (!!createdAtOption && createdAtOption != DateOption.ALL_TIME) {
+            let [startDate, endDate] = calcDateRange(createdAtOption)
             pipeline.push({
                 $match: {
                     createdAt: { $gte: startDate, $lte: endDate}
@@ -130,8 +137,8 @@ export class BoardController extends ControllerBase {
             })
         }
         // Apply date range for updated date.
-        if (updatedAtDateRange != DateOption.ALL_TIME) {
-            let [startDate, endDate] = calcDateRange(updatedAtDateRange)
+        if (!!updatedAtOption && updatedAtOption != DateOption.ALL_TIME) {
+            let [startDate, endDate] = calcDateRange(updatedAtOption)
             pipeline.push({
                 $match: {
                     updatedAt: { $gte: startDate, $lte: endDate}
@@ -140,12 +147,6 @@ export class BoardController extends ControllerBase {
         }
         // Apply sorting option.
         switch (sort) {
-            case SortingOption.MOST_POPULAR: {
-                pipeline.push({
-                    $sort: { views: -1 }
-                })
-                break;
-            }
             case SortingOption.MOST_SAVED: {
                 pipeline.push({
                     $sort: { saves: -1 }
@@ -158,7 +159,19 @@ export class BoardController extends ControllerBase {
                 })
                 break;
             }
+            default: { // SortingOption.MOST_POPULAR
+                pipeline.push({
+                    $sort: { views: -1 }
+                })
+                break;
+            }
         }
+        // Apply visibility constraints.
+        pipeline.push({
+            $match: {
+                public: true
+            }
+        })
         // Apply pagination.
         let pag = usePagination(req);
         pipeline.concat([
@@ -169,12 +182,6 @@ export class BoardController extends ControllerBase {
                 $limit: pag.limit
             }
         ])
-        // Apply visibility constraints.
-        pipeline.push({
-            $match: {
-                public: true
-            }
-        })
 
         let boards = await this.boardCollection.aggregate(pipeline).toArray();
         res.status(200).send(boards);
@@ -184,21 +191,18 @@ export class BoardController extends ControllerBase {
     @Authorize()
     @Validate(
         'body', {
-            board: Joi.object({
-                _id: objectId.required(),
-                title: Joi.string().required(),
-                desc: Joi.string(),
-                tags: Joi.array().items(Joi.string()),
-                public: Joi.boolean().required()
-            }),
+            title: Joi.string().required(),
+            desc: Joi.string(),
+            tags: Joi.array().items(Joi.string()),
+            public: Joi.boolean().required()
         },
     )
     public async addBoard(req: Request, res: Response) {
         let userId = httpContext().userId;
 
         let [createdAt, updatedAt]  = [new Date(), new Date()]
-        await this.boardCollection.insertOne({
-            _id: req.body._id,
+        let board = await this.boardCollection.insertOne({
+            _id: new ObjectId(),
             title: req.body.title,
             desc: req.body.desc,
             creatorId: userId,
@@ -211,7 +215,10 @@ export class BoardController extends ControllerBase {
             active: true,
             public: req.body.public
         })
-        res.status(200).send("Board added.")
+        res.status(200).send({
+            msg: "Board added",
+            _id: board.insertedId
+        })
     }
 
     @Post('/add/:_id/version')
@@ -223,25 +230,23 @@ export class BoardController extends ControllerBase {
     )
     @Validate(
         'body', {
-            _id: objectId.required(),
             title: Joi.string().required(),
             desc: Joi.string(),
             finds: Joi.array().items(
                 Joi.object({
-                    _id: objectId.required(),
                     title: Joi.string().required(),
+                    index: Joi.number().required(),
                     desc: Joi.string(),
                     link: Joi.string().required(),
                     relations: Joi.array().items(
                         Joi.object({
-                            _id: objectId.required(),
-                            destFind: objectId.required(),
+                            destIdx: Joi.number().required(),
                             label: Joi.string().required(),
                             desc: Joi.string()
                         })
-                    ),
+                    ).default([]),
                     grouping: Joi.array().items(Joi.string()),
-                    level: Joi.number().required(),
+                    rank: Joi.number().required(),
                 })
             ).min(1).required(),
         }
@@ -249,25 +254,43 @@ export class BoardController extends ControllerBase {
     public async addVersion(req: Request, res: Response) {
         // Confirm board's existence.
         let boardId = new ObjectId(req.params._id);
-        let board = await this.boardService.getBoard(boardId);
+        let board: Board = await this.boardCollection.findOne({
+            _id: boardId
+        }).then(executeMongoChecks<Board>([
+            isValidBoard,
+            hasBoardAuth
+        ]))
         
+        // Generate hidden properties server-side.
+        let versionIdx = board.versions.length + 1;
         let [createdAt, updatedAt]  = [new Date(), new Date()]
+
+        let versionId = new ObjectId();
         await this.boardCollection.updateOne({
             _id: boardId
         }, {
             $push: {
                 versions: {
-                    _id: req.body.id,
-                    index: req.body.index,
+                    _id: versionId,
+                    index: versionIdx,
                     desc: req.body.desc,
                     finds: req.body.finds.map((f: Find) => {
                         return {
-                            _id: f._id,
+                            _id: new ObjectId(),
                             title: f.title,
                             desc: f.desc,
                             link: f.link,
-                            relations: f.relations,
+                            index: f.index,
+                            type: FindType.Other,
+                            relations: f.relations.map((r: Relation) => {
+                                return {
+                                    destIdx: r.destIdx,
+                                    label: r.label,
+                                    desc: r.desc
+                                }
+                            }),
                             grouping: f.grouping,
+                            rank: f.rank,
                             views: 0,
                             clicks: 0,
                             createdAt: createdAt,
@@ -282,8 +305,12 @@ export class BoardController extends ControllerBase {
                     published: false
                 }
             }
+        });
+        
+        res.status(200).send({
+            msg: "Version added.",
+            _id: versionId
         })
-        res.status(200).send("Version added.")
     }
 
     @Patch('/edit/:_id')
@@ -303,10 +330,15 @@ export class BoardController extends ControllerBase {
     public async editBoard(req: Request, res: Response) {
         // Confirm board's existence.
         let boardId = new ObjectId(req.params._id);
-        let board = await this.boardService.getBoard(boardId);
+        let board: Board = await this.boardCollection.findOne({
+            _id: boardId
+        }).then(executeMongoChecks<Board>([
+            isValidBoard,
+            hasBoardAuth
+        ]))
 
         // Update board.
-        let updatedAt = Date.now()
+        let updatedAt = new Date();
         await this.boardCollection.updateOne(
             { _id: boardId },
             {
@@ -318,37 +350,40 @@ export class BoardController extends ControllerBase {
                 })
             }
         );
-        res.status(200).send("Board edited.");
+        res.status(200).send({
+            msg: "Board edited.",
+            _id: boardId
+        })
     }
 
-    @Patch('/edit/:_id/version')
+    @Patch('/edit/:_id/version/:_ver_id')
     @Authorize()
     @Validate(
         'params', {
             _id: objectId.required(),
+            _ver_id: objectId.required()
         }
     )
     @Validate(
         'body', {
-            _id: objectId.required(),
             title: Joi.string(),
             desc: Joi.string(),
             finds: Joi.array().items(
                 Joi.object({
-                    _id: objectId.required(),
+                    _id: objectId,
+                    index: Joi.number().required(),
                     title: Joi.string().required(),
                     desc: Joi.string(),
                     link: Joi.string().required(),
                     relations: Joi.array().items(
                         Joi.object({
-                            _id: objectId.required(),
-                            destFind: objectId.required(),
+                            destIdx: Joi.number().required(),
                             label: Joi.string().required(),
                             desc: Joi.string()
                         })
-                    ),
+                    ).default([]),
                     grouping: Joi.array().items(Joi.string()),
-                    level: Joi.number().required(),
+                    rank: Joi.number().required(),
                 })
             ).min(1).required(),
         },
@@ -356,42 +391,54 @@ export class BoardController extends ControllerBase {
     public async editVersion(req: Request, res: Response) {
         // Confirm board's existence.
         let boardId = new ObjectId(req.params._id);
-        let board = await this.boardService.getBoard(boardId);
+        let versionId = new ObjectId(req.params._ver_id);
+        let board = await this.boardCollection.findOne({
+            _id: boardId,
+            "versions._id": versionId
+        }).then(executeMongoChecks<Board>([
+            isValidBoard,
+            hasBoardAuth
+        ]));
 
         // Update version and its associated finds.
-        let versionId = new ObjectId(req.body._id);
-        let updatedAt = Date.now()
+        let version = board.versions.find(v => v._id.equals(versionId));
+        let updatedAt = new Date();
         await this.boardCollection.updateOne(
             { _id: boardId, "versions._id": versionId},
             {
                 $set: filterNulls({
                     "versions.$.title": req.body.title,
                     "versions.$.desc": req.body.desc,
+                    "versions.$.finds": req.body.finds.map((f: Find) => {
+                        return {
+                            _id: new ObjectId(),
+                            title: f.title,
+                            index: f.index,
+                            desc: f.desc,
+                            link: f.link,
+                            relations: f.relations,
+                            grouping: f.grouping,
+                            rank: f.rank,
+                            type: FindType.Other,
+                            views: 0,
+                            clicks: 0,
+                            createdAt: version.createdAt,
+                            updatedAt: updatedAt,
+                            active: true
+                        }
+                    }),
                     updatedAt: updatedAt,
                 })
             }
         );
-        for (let find of req.body.finds) {
-            await this.boardCollection.updateOne(
-                { 
-                    _id: boardId, 
-                    "versions._id": versionId,
-                    "versions.finds._id": find._id
-                }, {
-                    "versions.$.finds.$.title": find.title,
-                    "versions.$.finds.$.desc": find.desc,
-                    "versions.$.finds.$.link": find.link,
-                    "versions.$.finds.$.relations": find.relations,
-                    "versions.$.finds.$.grouping": find.grouping,
-                    "versions.$.finds.$.level": find.level,
-                    updatedAt: updatedAt
-                }
-            )
-        }
-        res.status(200).send("Board edited.");
+
+        res.status(200).send({
+            msg: "Version edited.",
+            _id: versionId
+        })
     }
 
-    @Post('/publish/:_id/version/:_ver_id')
+    @Post('/:_id/publish/version/:_ver_id')
     @Authorize()
     @Validate(
         'params', {
@@ -402,10 +449,21 @@ export class BoardController extends ControllerBase {
     public async publishVersion(req: Request, res: Response) {
         // Confirm board's existence.
         let boardId = new ObjectId(req.params._id);
-        let board = await this.boardService.getBoard(boardId);
+        let board: Board = await this.boardCollection.findOne({
+            _id: boardId
+        }).then(executeMongoChecks<Board>([
+            isValidBoard,
+            hasBoardAuth
+        ]))
+
+        // Confirm version's existence.
+        let versionId = new ObjectId(req.params._ver_id)
+        if (!board.versions.map(v => v._id).some(id => id.equals(versionId))) {
+            res.status(409).send("Specified version does not exist.");
+            return;
+        }
 
         // Update relationships.
-        let versionId = new Object(req.params._ver_id)
         await this.boardCollection.updateOne({
             _id: boardId,
             'versions._id': versionId
@@ -414,10 +472,13 @@ export class BoardController extends ControllerBase {
                 'versions.$.published': true
             }
         })
-        res.status(200).send("Board followed.");
+        res.status(200).send({
+            msg: "Version published",
+            _id: versionId
+        });
     }
 
-    @Delete('/:_id/delete')
+    @Delete('/delete/:_id')
     @Authorize()
     @Validate(
         'params', {
@@ -427,7 +488,12 @@ export class BoardController extends ControllerBase {
     public async deleteBoard(req: Request, res: Response) {
         // Confirm board's existence.
         let boardId = new ObjectId(req.params._id);
-        let board = await this.boardService.getBoard(boardId);
+        let board: Board = await this.boardCollection.findOne({
+            _id: boardId
+        }).then(executeMongoChecks<Board>([
+            isValidBoard,
+            hasBoardAuth
+        ]))
 
         // Delete board & remove following users' relationships.
         await this.boardCollection.deleteOne({
@@ -435,9 +501,7 @@ export class BoardController extends ControllerBase {
         });
         await this.userCollection.updateMany(
             {
-                boardsFollowed: {
-                    $elemMatch: boardId
-                }, 
+                boardsFollowed: boardId
             },
             {
                 $pull: {
@@ -445,7 +509,10 @@ export class BoardController extends ControllerBase {
                 }
             }
         );
-        res.status(200).send("Board deleted");
+        res.status(200).send({
+            msg: "Board deleted",
+            _id: boardId
+        });
     }
 
     @Delete('/delete/:_id/version/:_ver_id')
@@ -459,10 +526,20 @@ export class BoardController extends ControllerBase {
     public async deleteVersion(req: Request, res: Response) {
         // Confirm board's existence.
         let boardId = new ObjectId(req.params._id);
-        let board = await this.boardService.getBoard(boardId);
+        let board: Board = await this.boardCollection.findOne({
+            _id: boardId,
+        }).then(executeMongoChecks<Board>([
+            isValidBoard,
+            hasBoardAuth
+        ]))
 
-        // Remove version.
-        let versionId = new Object(req.params._ver_id)
+        // Confirm version's existence.
+        let versionId = new ObjectId(req.params._ver_id)
+        if (!board.versions.map(v => v._id).some(id => id.equals(versionId))) {
+            res.status(409).send("Specified version does not exist.")
+            return;
+        }
+
         await this.boardCollection.updateOne({
             _id: boardId
         }, {
@@ -472,7 +549,10 @@ export class BoardController extends ControllerBase {
                 }
             }
         });
-        res.status(200).send("Version deleted");
+        res.status(200).send({
+            msg: "Version deleted",
+            _id: versionId
+        });
     }
 
     @Post('/follow/:_id')
@@ -487,7 +567,11 @@ export class BoardController extends ControllerBase {
         let userId = httpContext().userId;
 
         // Confirm board existence.
-        let board = await this.boardService.getBoard(boardId, false);
+        let board: Board = await this.boardCollection.findOne({
+            _id: boardId
+        }).then(executeMongoChecks<Board>([
+            isValidBoard
+        ]))
 
         // Update relationships.
         await this.boardCollection.updateOne({
@@ -504,7 +588,10 @@ export class BoardController extends ControllerBase {
                 followers: boardId
             }
         })
-        res.status(200).send("Board followed.");
+        res.status(200).send({
+            msg: "Board followed",
+            _id: boardId
+        });
     }
 
     @Post('/unfollow/:_id')
@@ -519,7 +606,11 @@ export class BoardController extends ControllerBase {
         let userId = httpContext().userId;
 
         // Confirm board existence.
-        let board = await this.boardService.getBoard(boardId, false);
+        let board: Board = await this.boardCollection.findOne({
+            _id: boardId
+        }).then(executeMongoChecks<Board>([
+            isValidBoard
+        ]))
 
         // Update relationships.
         await this.boardCollection.updateOne({
@@ -536,7 +627,10 @@ export class BoardController extends ControllerBase {
                 boardsFollowed: boardId
             }
         })
-        res.status(200).send("Board unfollowed.");
+        res.status(200).send({
+            msg: "Board unfollowed",
+            _id: boardId
+        });
     }
 
     @Get('/:_id')
@@ -547,7 +641,11 @@ export class BoardController extends ControllerBase {
     ) 
     public async getBoard(req: Request, res: Response) {
         let boardId = new ObjectId(req.params._id);
-        let board = await this.boardService.getBoard(boardId, false);
+        let board: Board = await this.boardCollection.findOne({
+            _id: boardId
+        }).then(executeMongoChecks<Board>([
+            isValidBoard
+        ]))
 
         res.status(200).send(board);
     }

@@ -1,10 +1,16 @@
 To-Do
 1. X Rename blob-service to azure-blob.service
 2. X Condense endpoint bodies by integrating services w/ new custom errors being thrown.
-3. Test and confirm endpoints are working properly
+3. X Test and confirm endpoints are working properly
+    - Research "commonjs" vs "esm" further and use ESM so that modern JS packages can be supported
+        - This relates to compiling chai from TS to JS, where it only supports ESM syntax
+        - Need this so unit tests can be debugged
     - Continue implementing Mocha tests
     - To ensure db state isn't messing with tests, 
         look into Mocha hook `beforeAll` or `globalSetup` to reset database
+4. Figure out a good way that both our testing framework and API can handle diff envs
+    - Cookies 'secure' flag needs to be removed
+    - Middleware disable and/or enabling
 4. Implement RAG for boards, depending on version specified
     a. Should this be done on server itself in NodeJS? Or serverless invocation of Azure? How should RAG be deployed/scaled
         for web applications? I assume there also needs to be handling for popular video links and their transcripts?

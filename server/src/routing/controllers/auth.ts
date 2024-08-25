@@ -97,7 +97,7 @@ export class AuthController extends ControllerBase {
         });
         res.cookie(env.tokens.refresh.name, refreshToken, {
             httpOnly: true,
-            secure: true
+            secure: false // False for http protocol, set to true later when using https!
         });
         
         // Generate access token for immediate access.
@@ -129,7 +129,7 @@ export class AuthController extends ControllerBase {
             return;
         }
         const user = await this.userCollection.findOne({
-            _id: token!.userId
+            _id: new ObjectId(token.userId)
         });
         if (user == null) {
             res.status(409).send("Account does not exist");
@@ -159,32 +159,37 @@ export class AuthController extends ControllerBase {
             'credentials.email': email
         });
 
+        let credentialHash;
         if (user != null) { // Allow the request to complete, even for invalid email addresses.
             let credentialToken = {
                 type: TokenType.Verify,
                 userId: user._id,
                 payload: TokenPayload.ChangePassword
             } as Token;
-            let credentialHash = this.authService.serialize(credentialToken);
+            credentialHash = this.authService.serialize(credentialToken);
 
             // TODO - Send email.
         }
-        res.status(200).send("Password change request attempted.");
+
+        res.status(200).send(
+            // "Password change request attempted."
+            { hash: credentialHash ?? "Faulty token" } // DEBUG: Provide hash in response to verify functionality.
+        );
     }
 
     @Post("/request/change/password/confirm")
     @Validate(
         'body', {
             hash: Joi.string().required(),
-            password: Joi.string().required()
+            newPassword: Joi.string().required()
         }
     )
     public async confirmPasswordChange(req: Request, res: Response) {
-        let {hash, password} = req.body;
+        let {hash, newPassword} = req.body;
 
         let token = this.authService.deserialize(TokenType.Verify, hash);
-        let user = this.userCollection.findOne({
-            _id: token.userId
+        let user = await this.userCollection.findOne({
+            _id: new ObjectId(token.userId)
         })
         if (
             token.payload != TokenPayload.ChangePassword
@@ -194,10 +199,13 @@ export class AuthController extends ControllerBase {
             return;
         }
 
+        let newPasswordHash = await this.authService.hash(newPassword);
         await this.userCollection.updateOne({
-            _id: token.userId
+            _id: new ObjectId(token.userId)
         }, {
-            "credentials.password": await this.authService.hash(password)
+            $set: {
+                "credentials.password": newPasswordHash
+            }
         });
         res.status(200).send("Password succesfully updated.")
     }
@@ -214,7 +222,10 @@ export class AuthController extends ControllerBase {
         let credentialHash = this.authService.serialize(credentialToken);
         // TODO - Send email.
 
-        res.status(200).send("Email change request attempted.");
+        res.status(200).send(
+            // "Email change request attempted."
+            { hash: credentialHash ?? "Faulty token" } // DEBUG: Provide hash in response to verify functionality.
+        );
     }
 
     @Post("/request/change/email/confirm")
@@ -222,11 +233,11 @@ export class AuthController extends ControllerBase {
     @Validate(
         'body', {
             hash: Joi.string().required(),
-            email: Joi.string().required()
+            newEmail: Joi.string().required()
         }
     )
     public async confirmEmailChange(req: Request, res: Response) {
-        let {hash, email} = req.body;
+        let {hash, newEmail} = req.body;
 
         let user = await this.userService.getSelf();
         let token = this.authService.deserialize(TokenType.Verify, hash);
@@ -239,9 +250,11 @@ export class AuthController extends ControllerBase {
         }
 
         await this.userCollection.updateOne({
-            _id: token.userId
+            _id: new ObjectId(token.userId)
         }, {
-            "credentials.email": email
+            $set: {
+                "credentials.email": newEmail
+            }
         });
         res.status(200).send("Email succesfully updated.")
     }
@@ -258,7 +271,10 @@ export class AuthController extends ControllerBase {
         let credentialHash = this.authService.serialize(credentialToken);
         // TODO - Send email.
 
-        res.status(200).send("Deletion request attempted.");
+        res.status(200).send(
+            // "Deletion request attempted."
+            { hash: credentialHash ?? "Faulty token" } // DEBUG: Provide hash in response to verify functionality.
+        );
     }
 
     @Post("/request/deletion/confirm")

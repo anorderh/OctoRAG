@@ -1,6 +1,7 @@
 import { CreateCollectionOptions, Db, ObjectId } from "mongodb";
 import { CollectionId } from "../../utils/enums/collection-id";
 import { FindType } from "../../utils/enums/find-type";
+import { CollectionSetup } from "../../utils/types/collection-setup";
 
 export interface Board {
     _id: ObjectId;
@@ -31,13 +32,14 @@ export interface Version {
 
 export interface Find {
     _id: ObjectId;
+    index: number;
     title: string;
     desc: string;
     link: string;
     type: FindType;
     relations: Relation[];
     grouping: string[];
-    level: number;
+    rank: number;
     views: number;
     clicks: number;
     createdAt: Date;
@@ -46,19 +48,18 @@ export interface Find {
 }
 
 export interface Relation {
-    _id: ObjectId;
-    destFind: ObjectId;
+    destIdx: number;
     label: string;
     desc: string;
 }
 
-export const createBoardCollection = (db: Db) => {
+export const createBoardCollection : CollectionSetup = (db: Db) => {
     db.createCollection(CollectionId.Board, {
         validator: {
             $jsonSchema: {
                 bsonType: "object",
                 title: "Board Validation",
-                required: ["_id", "title", "creatorId", "active"],
+                required: ["_id", "title", "creatorId", "active", "public"],
                 properties: {
                     _id: {bsonType: "objectId"},
                     title: {bsonType: "string"},
@@ -74,7 +75,7 @@ export const createBoardCollection = (db: Db) => {
                         bsonType: "array",
                         items: {
                             bsonType: "object",
-                            required: ["_id", "index", "active"],
+                            required: ["_id", "index", "finds", "active"],
                             properties: {
                                 _id: { bsonType: "objectId" },
                                 index: { bsonType: "number" },
@@ -83,9 +84,10 @@ export const createBoardCollection = (db: Db) => {
                                     bsonType: "array",
                                     items: {
                                         bsonType: "object",
-                                        required: ["_id", "title", "link", "type", "level", "active"],
+                                        required: ["_id", "index", "title", "link", "type", "rank", "active"],
                                         properties: {
                                             _id: {bsonType: "objectId"},
+                                            index: {bsonType: "number"},
                                             title: {bsonType: "string"},
                                             desc: {bsonType: "string"},
                                             link: {bsonType: "string"},
@@ -94,10 +96,9 @@ export const createBoardCollection = (db: Db) => {
                                                 bsonType: "array",
                                                 items: {
                                                     bsonType: "object",
-                                                    required: ["_id", "destFind", "label"],
+                                                    required: ["destIdx", "label"],
                                                     properties: {
-                                                        _id: {bsonType: "objectId"},
-                                                        destFind: {bsonType: "objectId"},
+                                                        destIdx: {bsonType: "number"},
                                                         label: {bsonType: "string"},
                                                         desc: {bsonType: "string"}
                                                     }
@@ -107,7 +108,7 @@ export const createBoardCollection = (db: Db) => {
                                                 bsonType: "array",
                                                 items: {bsonType: "string"}
                                             },
-                                            level: {bsonType: "number"},
+                                            rank: {bsonType: "number"},
                                             views: {bsonType: "number"},
                                             clicks: {bsonType: "number"},
                                             createdAt: {bsonType: "date"},
@@ -134,7 +135,8 @@ export const createBoardCollection = (db: Db) => {
                     saves: {bsonType: "number"},
                     createdAt: {bsonType: "date"},
                     updatedAt: {bsonType: "date"},
-                    active: {bsonType: "bool"}
+                    active: {bsonType: "bool"},
+                    public: {bsonType: "bool"}
                 },
                 additionalProperties: false
             }

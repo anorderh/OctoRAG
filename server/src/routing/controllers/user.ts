@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { Authorize, Controller, Get, Post } from "../decorators";
+import { Authorize, Controller, Get, Patch, Post } from "../decorators";
 import { inject, singleton } from "tsyringe";
 import { ControllerBase } from "../../utils/abstract/controller";
 import { UserService } from "../../services/user.service";
@@ -53,7 +53,7 @@ export class UserController extends ControllerBase {
         return res.status(200).send(userRes);
     }
 
-    @Post('/edit')
+    @Patch('/edit')
     @Authorize()
     @Validate(
         'body', {
@@ -63,10 +63,12 @@ export class UserController extends ControllerBase {
     )
     public async editSelf(req: Request, res: Response) {
         let input = req.body as EditProfileRequest;
-        let self = httpContext().userId;
+        let selfId = httpContext().userId;
         await this.userCollection.updateOne({
-            _id: self.id
-        }, filterNulls(input));
+            _id: selfId
+        }, {
+            $set: filterNulls(input)
+        });
 
         res.status(200).send("Profile edited.")
     }
@@ -80,33 +82,37 @@ export class UserController extends ControllerBase {
 
     @Get('/feed')
     @Authorize()
+    @Validate(
+        'query', {
+            skip: Joi.number(),
+            limit: Joi.number()
+        }
+    )
     public async getFeed(req: Request, res: Response) {
         let self = await this.userService.getSelf();
         let pag = usePagination(req);
         let logs = await this.eventLogCollection.aggregate([
             // All event logs associated w/ user's following.
-            [
-                {
-                    $match: { 
-                        $or: [
-                            { userId: { $in: self.usersFollowed }},
-                            { boardId: { $in: self.boardsFollowed },}
-                        ]
-                    }
+            {
+                $match: { 
+                    $or: [
+                        { userId: { $in: self.usersFollowed }},
+                        { boardId: { $in: self.boardsFollowed },}
+                    ]
                 }
-            ],
+            },
             // Sort by descending date
             {
                 $sort: { occurred: -1 }
             },
-            // Appyl pagination.
+            // Apply pagination.
             {
                 $skip: pag.skip,
             },
             {
                 $limit: pag.limit
             }
-        ]);
+        ]).toArray();
         res.status(200).send(logs);
     }
 
@@ -161,7 +167,7 @@ export class UserController extends ControllerBase {
             return;
         }
         let self = await this.userService.getSelf();
-        if (self._id == user._id) {
+        if (self._id.equals(user._id)) {
             res.status(405).send("Cannot follow self.");
             return;
         }
@@ -201,7 +207,7 @@ export class UserController extends ControllerBase {
             return;
         }
         let self = await this.userService.getSelf();
-        if (self._id == user._id) {
+        if (self._id.equals(user._id)) {
             res.status(405).send("Cannot unfollow self.");
             return;
         }

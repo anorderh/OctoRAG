@@ -10,7 +10,7 @@ export interface Find {
     desc: string;
     grouping: string[];
     findType: FindType;
-    level: number;
+    rank: number;
     views: number;
     clicks: number;
     createdAt: Date;
@@ -28,7 +28,7 @@ export const Find = model<Find>(
         desc: {type: String},
         grouping: [{type: String}],
         findType: { type: String, enum: Object.values(FindType), required: true },
-        level: { type: Number, required: true },
+        rank: { type: Number, required: true },
         views: { type: Number, default: 0 },
         clicks: { type: Number, default: 0 },
         active: { type: Boolean, default: true }

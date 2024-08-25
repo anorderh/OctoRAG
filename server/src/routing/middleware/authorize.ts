@@ -3,20 +3,20 @@ import { Middleware } from "../../utils/types/middleware";
 import { AuthService, MongoService } from "../../services";
 import { container } from "tsyringe";
 import { TokenType } from "../../utils/enums/token-type";
-import { JsonWebTokenError, TokenExpiredError } from "jsonwebtoken";
+import { JsonWebTokenError, TokenExpiredError} from "jsonwebtoken";
 import { UserService } from "../../services/user.service";
 import { httpContext } from "./http-context";
 import { CollectionId } from "../../utils/enums/collection-id";
 import { User } from "../../data/collections";
 import { InstanceDeps } from "../../utils/enums/instance-deps";
 import { Logger } from "pino";
+import { ObjectId } from "mongodb";
 
 export const authorize: Middleware = async function (req: Request, res: Response, next: NextFunction) {
     const authService = container.resolve(AuthService);
     const logger = container.resolve<Logger>(InstanceDeps.Logger);
     const mongoService = container.resolve(MongoService);
-
-    const userCollection = await mongoService.db.createCollection<User>(CollectionId.User);
+    const userCollection = mongoService.db.collection<User>(CollectionId.User);
     
     try {
         const hash = req.header('Authorization');
@@ -33,7 +33,7 @@ export const authorize: Middleware = async function (req: Request, res: Response
         }
 
         const user = await userCollection.findOne({
-            _id: token.userId
+            _id: new ObjectId(token.userId)
         });
         if (!user) {
             res.status(409).send("User does not exist.");
@@ -52,6 +52,6 @@ export const authorize: Middleware = async function (req: Request, res: Response
         }
 
         logger.error({err: error});
-        res.status(540).send();
+        res.status(500).send();
     }
 }
