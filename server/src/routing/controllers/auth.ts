@@ -97,7 +97,7 @@ export class AuthController extends ControllerBase {
         });
         res.cookie(env.tokens.refresh.name, refreshToken, {
             httpOnly: true,
-            secure: false // False for http protocol, set to true later when using https!
+            secure: env.server.secure // Cookie security via HTTP/HTTPS
         });
         
         // Generate access token for immediate access.

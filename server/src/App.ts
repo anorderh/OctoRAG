@@ -15,7 +15,8 @@ import pino, { Logger } from "pino";
 import { InstanceDeps } from "./utils/enums/instance-deps";
 import { AsyncService } from "./utils/abstract/async-service";
 import { Server } from "http";
-import { instancedDependencies } from "./utils/extensions/instance-deps";
+import { instancedDependencies } from "./dependencies";
+import { includeIf } from "./utils/extensions/include-if";
 
 export class App {
     express: Express
@@ -26,12 +27,12 @@ export class App {
         cors({
             origin: env.server.origin
         }),
-        morgan('common'),
+        includeIf(env.logging.http, morgan('common')),
         express.json(),
         express.urlencoded(),
         cookieParser(),
         useHttpContext
-    ]
+    ].filter(m => !!m);
     injection = {
         controllers: [
             AuthController,

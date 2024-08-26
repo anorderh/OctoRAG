@@ -5,10 +5,10 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "rm -rf dist && npx tsc",
-    "start": "npx tsx src/index.ts",
-    "start_debug": "npx --node-options=--inspect tsx src/index.ts",
-    "test": "npx mocha NODE_ENV=test --timeout 2000",
-    "test_debug": "NODE_ENV=test npx --node-options=--inspect mocha --timeout 2000"
+    "start": "APP_ENV=development npx tsx src/index.ts",
+    "start_debug": "APP_ENV=development npx --node-options=--inspect tsx src/index.ts",
+    "test": "APP_ENV=test npx mocha --timeout 2000",
+    "test_debug": "APP_ENV=test npx --node-options=--inspect mocha --timeout 2000"
   },
   "keywords": [],
   "author": "",
@@ -33,6 +33,7 @@
     "morgan": "^1.10.0",
     "nodemailer": "^6.9.14",
     "pino": "^9.3.1",
+    "pino-abstract-transport": "^1.2.0",
     "pino-pretty": "^11.2.1",
     "reflect-metadata": "^0.2.2",
     "tsyringe": "^4.8.0"
