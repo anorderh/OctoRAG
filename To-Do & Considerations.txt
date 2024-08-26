@@ -8,9 +8,14 @@ To-Do
     - Continue implementing Mocha tests
     - To ensure db state isn't messing with tests, 
         look into Mocha hook `beforeAll` or `globalSetup` to reset database
-4. Figure out a good way that both our testing framework and API can handle diff envs
+4. X Figure out a good way that both our testing framework and API can handle diff envs
     - Cookies 'secure' flag needs to be removed
     - Middleware disable and/or enabling
+4. X Integrate EventCollection into rest of endpoints'
+    - Seperate enums for boardevents & userEvents (i.e. BoardEventType, UserEventType)
+    - Create service to post events within endpoints
+4. Data seeding
+    - Users, Create boards/versions/finds, Follow
 4. Implement RAG for boards, depending on version specified
     a. Should this be done on server itself in NodeJS? Or serverless invocation of Azure? How should RAG be deployed/scaled
         for web applications? I assume there also needs to be handling for popular video links and their transcripts?

@@ -13,7 +13,7 @@ exports.mochaGlobalSetup = async function () {
 }
 
 exports.mochaGlobalTeardown = async function () {
-    await clearDatabase();
+    // await clearDatabase();
     await this.app.stopListening();
 }
 

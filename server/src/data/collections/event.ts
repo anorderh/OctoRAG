@@ -1,15 +1,15 @@
 import { CreateCollectionOptions, Db, ObjectId } from "mongodb";
-import { Event } from "../../utils/enums/event";
-import { EventGroup } from "../../utils/enums/event-group";
+import { EventType } from "../../utils/enums/event-type";
 import { CollectionId } from "../../utils/enums/collection-id";
 import { CollectionSetup } from "../../utils/types/collection-setup";
+import { BoardEvent, UserEvent } from "../../utils/constants/event";
 
 export interface EventLog {
     _id: ObjectId;
-    event: Event;
-    group: EventGroup;
-    content: string;
+    type: EventType,
+    event: string;
     occurred: Date;
+    ref?: any;
 }
 
 export interface BoardEventLog extends EventLog { 
@@ -29,26 +29,26 @@ export const createEventLogCollection : CollectionSetup = (db: Db) => {
                 oneOf: [
                     {
                         type: "object",
-                        required: ["_id", "event", "group", "content", "occurred", "boardId"],
+                        required: ["_id", "type", "event", "occurred", "boardId"],
                         properties: {
                             _id: {bsonType: "objectId"},
-                            event: {enum: Object.keys(Event)},
-                            group: {enum: Object.keys(EventGroup)},
-                            content: {bsonType: "string"},
+                            type: {bsonType: "number", enum: Object.values(EventType)},
+                            event: {bsonType: "string", enum: Object.values(BoardEvent)},
                             occurred: { bsonType: "date"},
-                            boardId: {bsonType: "objectId"}
+                            boardId: {bsonType: "objectId"},
+                            ref: {bsonType: ["object", "string", "objectId", "null"]}
                         }
                     },
                     {
                         type: "object",
-                        required: ["_id", "event", "group", "content", "occurred", "userId"],
+                        required: ["_id", "type", "event", "occurred", "userId"],
                         properties: {
                             _id: {bsonType: "objectId"},
-                            event: {enum: Object.keys(Event)},
-                            group: {enum: Object.keys(EventGroup)},
-                            content: {bsonType: "string"},
+                            type: {bsonType: "number", enum: Object.values(EventType)},
+                            event: {bsonType: "string", enum: Object.values(UserEvent)},
                             occurred: { bsonType: "date"},
-                            userId: {bsonType: "objectId"}
+                            userId: {bsonType: "objectId"},
+                            ref: {bsonType: ["object", "string", "objectId", "null"]}
                         }
                     },
                 ]

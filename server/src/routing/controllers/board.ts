@@ -23,10 +23,13 @@ import { join } from "path";
 import { CollectionId } from "../../utils/enums/collection-id";
 import { objectId } from "../../utils/extensions/objectid-validation";
 import { filterNulls } from "../../utils/extensions/filter-nulls";
-import { Board, Find, Relation, User } from "../../data/collections";
+import { Board, Find, Relation, User, UserEventLog } from "../../data/collections";
 import { executeMongoChecks } from "../../utils/extensions/mongo-checks";
 import { hasBoardAuth, isValidBoard } from "../../utils/validation/board";
 import { version } from "os";
+import { EventService } from "../../services/event.service";
+import { BoardEvent, UserEvent } from "../../utils/constants/event";
+import { EventType } from "../../utils/enums/event-type";
 
 
 @Controller('/board')
@@ -38,7 +41,8 @@ export class BoardController extends ControllerBase {
     constructor(
         @inject(UserService) private userService: UserService,
         @inject(BoardService) private boardService: BoardService,
-        @inject(MongoService) private mongo: MongoService
+        @inject(MongoService) private mongo: MongoService,
+        @inject(EventService) private eventService: EventService
     ) {
         super()
         this.boardCollection = this.mongo.db.collection<Board>(CollectionId.Board);
@@ -214,7 +218,15 @@ export class BoardController extends ControllerBase {
             updatedAt: updatedAt,
             active: true,
             public: req.body.public
-        })
+        });
+
+        // Track event.
+        await this.eventService.postEvent(EventType.User, {
+            event: UserEvent.CreatedBoard,
+            userId: userId,
+            ref: board.insertedId
+        });
+
         res.status(200).send({
             msg: "Board added",
             _id: board.insertedId
@@ -329,6 +341,7 @@ export class BoardController extends ControllerBase {
     )
     public async editBoard(req: Request, res: Response) {
         // Confirm board's existence.
+        let userId = httpContext().userId;
         let boardId = new ObjectId(req.params._id);
         let board: Board = await this.boardCollection.findOne({
             _id: boardId
@@ -350,6 +363,18 @@ export class BoardController extends ControllerBase {
                 })
             }
         );
+
+        // Track events.
+        await this.eventService.postEvent(EventType.Board, {
+            event: BoardEvent.Updated,
+            boardId: boardId,
+        });
+        await this.eventService.postEvent(EventType.User, {
+            event: UserEvent.UpdatedBoard,
+            userId: userId,
+            ref: boardId
+        });
+
         res.status(200).send({
             msg: "Board edited.",
             _id: boardId
@@ -390,6 +415,7 @@ export class BoardController extends ControllerBase {
     )
     public async editVersion(req: Request, res: Response) {
         // Confirm board's existence.
+        let userId = httpContext().userId;
         let boardId = new ObjectId(req.params._id);
         let versionId = new ObjectId(req.params._ver_id);
         let board = await this.boardCollection.findOne({
@@ -432,6 +458,17 @@ export class BoardController extends ControllerBase {
             }
         );
 
+        // Track events.
+        await this.eventService.postEvent(EventType.Board, {
+            event: BoardEvent.UpdatedVersion,
+            boardId: boardId,
+        });
+        await this.eventService.postEvent(EventType.User, {
+            event: UserEvent.UpdatedVersion,
+            userId: userId,
+            ref: boardId
+        });
+
         res.status(200).send({
             msg: "Version edited.",
             _id: versionId
@@ -448,6 +485,7 @@ export class BoardController extends ControllerBase {
     )
     public async publishVersion(req: Request, res: Response) {
         // Confirm board's existence.
+        let userId = httpContext().userId;
         let boardId = new ObjectId(req.params._id);
         let board: Board = await this.boardCollection.findOne({
             _id: boardId
@@ -472,6 +510,18 @@ export class BoardController extends ControllerBase {
                 'versions.$.published': true
             }
         })
+
+        // Track events.
+        await this.eventService.postEvent(EventType.Board, {
+            event: BoardEvent.PublishedVersion,
+            boardId: boardId,
+        });
+        await this.eventService.postEvent(EventType.User, {
+            event: UserEvent.PublishedVersion,
+            userId: userId,
+            ref: boardId
+        });
+
         res.status(200).send({
             msg: "Version published",
             _id: versionId
