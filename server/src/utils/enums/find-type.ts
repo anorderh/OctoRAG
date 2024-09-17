@@ -1,8 +1,10 @@
 export enum FindType {
-    Youtube="Youtube",
-    X="X",
-    Tiktok="Tiktok",
-    Reddit="Reddit",
-    Wikpedia="Wikipedia",
+    HTML="HTML",
+    YoutubeVideo="YoutubeVideo",
+    GithubRepo="GithubRepo",
     Other="Other"
+    // X="X",
+    // Tiktok="Tiktok",
+    // Reddit="Reddit",
+    // Wikpedia="Wikipedia",
 }

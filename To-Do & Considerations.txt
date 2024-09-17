@@ -14,9 +14,34 @@ To-Do
 4. X Integrate EventCollection into rest of endpoints'
     - Seperate enums for boardevents & userEvents (i.e. BoardEventType, UserEventType)
     - Create service to post events within endpoints
-4. Data seeding
+4. X Data seeding
     - Users, Create boards/versions/finds, Follow
 4. Implement RAG for boards, depending on version specified
+    TO-DO: 
+        1. x Figure out why 'context' is failing to be retrieved in chain
+            Possibly bc 'vectorstore' does not have 'namespace' specified in config,
+            instead currently using `index.namespace(...)` to discern this
+        2. Ensure that Finds' chunks are properly being given metadata associated with their resource.
+            This will vary per resource. A Youtube video should have the desc and title made available.
+            This should also then be present when injecting documents into the LLM prompts.
+    Pinecone examples
+        https://github.com/pinecone-io/examples/blob/master/learn/generation/better-rag/xx-serverless-rag.ipynb
+        https://github.com/pinecone-io/examples/blob/master/learn/generation/rag-for-hybrid/rag-for-hybrid-search.ipynb
+        https://python.langchain.com/v0.2/docs/how_to/qa_chat_history_how_to/
+        https://v02.api.js.langchain.com/functions/langchain.chains_history_aware_retriever.createHistoryAwareRetriever.html
+        https://docs.pinecone.io/examples/sample-apps/namespace-notes
+    Pinecone Lifetime Management
+    - Vector embedding indices are only allowed for board's most recent version
+    - Vector embeddings would presumably some sort of lifetime in production
+        - To prevent excessive data storage? Look into this later.
+    - Maintain 
+    a. Steps:
+        1. Implement service to programmatically pull text from webpages
+        2. Generate vector embeddings from text using OpenAI model
+        3. Store into Pinecone
+            a. Create index for embeddings and have metadata tag referencing board's version
+            b. Only allow most recent board's version to have RAG applied
+        4. Utilize Langchain node.js SDK create a RAG app from the index
     a. Should this be done on server itself in NodeJS? Or serverless invocation of Azure? How should RAG be deployed/scaled
         for web applications? I assume there also needs to be handling for popular video links and their transcripts?
     b. SOLUTION:
@@ -24,6 +49,7 @@ To-Do
     	- When a board is being prepared for RAG, its documents will be loaded into vector db
     		- This involve parsing the associated Finds' links, grabbing their content, making into vector embeddings, and inserting with namespace associated to chatbotID
 		- After board is loaded, queries will be provided to NodeJS server which will instantiate an index w/ the filtered retriever and use a query engine
+5. Introduce local Azure functions and move Pinecone code into it
 
 Considerations
 1. There are properties which restrict access that aren't being checked

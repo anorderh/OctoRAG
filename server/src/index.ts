@@ -1,5 +1,6 @@
 import "reflect-metadata";
-import { App } from "./App";
+import { InjectionToken, container, injectable } from "tsyringe";
+import { App } from './App';
 
-let app = new App();
+let app = container.resolve(App);
 app.startListening();

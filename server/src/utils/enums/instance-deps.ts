@@ -1,3 +1,5 @@
 export enum InstanceDeps {
-    Logger = 'Logger'
+    Logger = 'Logger',
+    OpenAI = 'OpenAI',
+    Pinecone = 'Pinecone'
 }

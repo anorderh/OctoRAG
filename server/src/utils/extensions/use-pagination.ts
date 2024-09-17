@@ -1,7 +1,7 @@
 import { Request } from "express";
-import { Pagination } from "../interfaces/pagination";
-import { env } from "../../env";
-import { PaginationLimitExceededError } from "../../error-handling/errors";
+import { Pagination } from '../interfaces/pagination';
+import { env } from '../../env';
+import { PaginationLimitExceededError } from '../../error-handling/errors';
 
 export function usePagination(req: Request) : Pagination {
     let pag = {

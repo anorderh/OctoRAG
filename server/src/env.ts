@@ -1,20 +1,15 @@
 import 'dotenv/config';
 import dotenv, { config } from 'dotenv';
+import { pathes } from './pathes';
 
-// Hacky solution to handle VSCode Debug profiles & npm scripts having different spawn location.
-let appEnv = process.env.APP_ENV!;
-let cwdPrefix = Boolean(process.env.VSCODE_DEBUG) 
-    ? "./server"
-    : "."
-let prematureEnv = {
-    config: `${cwdPrefix}/config/.env.${appEnv}`,
-    logs: `${cwdPrefix}/logs`,
-}
-dotenv.config({ path: prematureEnv.config })
+dotenv.config({ path: pathes.config })
 
 export const env = {
     pathes: {
-        logs: prematureEnv.logs
+        temp: pathes.temp,
+        logs: pathes.logs,
+        chrome: process.env.PUPPETEER_CHROME_EXECUTABLE_PATH!,
+        seedData: pathes.seedData
     },
     server: {
         port: process.env.PORT!,
@@ -65,6 +60,27 @@ export const env = {
             skip: 0,
             limit: 10,
             maxLimit: 50
+        },
+        chunking: {
+            chunkSize: 512,
+            chunkOverlap: 35,
+            batchSize: 100,
         }
+    },
+    openai: {
+        apiKey: process.env.OPENAI_API_KEY!,
+        llmModel: {
+            name: process.env.OPENAI_LLM_MODEL!
+        },
+        embeddingModel: {
+            name: process.env.OPENAI_EMBEDDINGS_MODEL!,
+            dimensions: Number(process.env.OPENAI_EMBEDDINGS_MODEL_DIMENSIONALITY!)
+        }
+    },
+    pinecone: {
+        apiKey: process.env.PINECONE_API_KEY!,
+        ragIndexName: process.env.PINECONE_RAG_INDEX_NAME!,
+        cloud: process.env.PINECONE_CSP!,
+        region: process.env.PINECONE_CSP_REGION!
     }
 }

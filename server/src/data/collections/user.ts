@@ -1,6 +1,6 @@
 import { CreateCollectionOptions, Db, ObjectId } from "mongodb";
-import { CollectionId } from "../../utils/enums/collection-id";
-import { CollectionSetup } from "../../utils/types/collection-setup";
+import { CollectionId } from '../../utils/enums/collection-id';
+import { CollectionSetup } from '../../utils/types/collection-setup';
 
 export interface User {
     _id: ObjectId;
@@ -64,7 +64,7 @@ export const createUserCollection : CollectionSetup = (db: Db) => {
                         bsonType: "array",
                         items: {
                             bsonType: "object",
-                            required: ["_id", "eventType", "eventId", "msg", "occurred"],
+                            required: ["_id", "eventId", "msg", "occurred"],
                             properties: {
                                 _id: {bsonType: "objectId"},
                                 eventId: {bsonType: "objectId"},

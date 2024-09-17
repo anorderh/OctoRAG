@@ -1,22 +1,22 @@
 import { Request, Response } from "express";
-import { Authorize, Controller, Get, Patch, Post } from "../decorators";
+import { Authorize, Controller, Get, Patch, Post } from '../decorators';
 import { inject, singleton } from "tsyringe";
-import { ControllerBase } from "../../utils/abstract/controller";
-import { UserService } from "../../services/user.service";
-import { AuthService, MongoService } from "../../services";
-import { Blanket } from "../decorators/blanket";
+import { ControllerBase } from '../../utils/abstract/controller';
+import { UserService } from '../../services/user.service';
+import { AuthService, MongoService } from '../../services';
+import { Blanket } from '../decorators/blanket';
 import morgan from "morgan";
 import { Collection, RemoveUserOptions } from "mongodb";
-import { usePagination } from "../../utils/extensions/use-pagination";
+import { usePagination } from '../../utils/extensions/use-pagination';
 import Joi from "joi";
-import { Validate } from "../decorators/validate";
-import { Board, EventLog, User } from "../../data/collections";
-import { CollectionId } from "../../utils/enums/collection-id";
-import { UserResponse } from "../../data/models/response/user";
-import { BoardResponse } from "../../data/models/response/board";
-import { httpContext } from "../middleware/http-context";
-import { EditProfileRequest } from "../../data/models/request/edit-profile";
-import { filterNulls } from "../../utils/extensions/filter-nulls";
+import { Validate } from '../decorators/validate';
+import { Board, EventLog, User } from '../../data/collections';
+import { CollectionId } from '../../utils/enums/collection-id';
+import { UserResponse } from '../../data/models/response/user';
+import { BoardResponse } from '../../data/models/response/board';
+import { httpContext } from '../middleware/http-context';
+import { EditProfileRequest } from '../../data/models/request/edit-profile';
+import { filterNulls } from '../../utils/extensions/filter-nulls';
 
 
 @Controller('/user')

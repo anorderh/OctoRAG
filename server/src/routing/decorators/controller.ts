@@ -1,9 +1,9 @@
 import { container } from "tsyringe";
-import { RouteInput } from "../../utils/interfaces/route-input";
+import { RouteInput } from '../../utils/interfaces/route-input';
 import { NextFunction, Request, Response, Router } from "express";
-import { Middleware } from "../../utils/types/middleware";
-import { wrapExpressPromise } from "../../utils/extensions/wrap-express-promise";
-import { Route } from "../../utils/types/route";
+import { Middleware } from '../../utils/types/middleware';
+import { wrapExpressPromise } from '../../utils/extensions/wrap-express-promise';
+import { Route } from '../../utils/types/route';
 
 export function Controller(prefix: string): ClassDecorator {
     return (target: any) => {

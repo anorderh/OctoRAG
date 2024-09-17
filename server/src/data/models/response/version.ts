@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import { FindResponse } from "./find";
+import { FindResponse } from './find';
 
 export interface VersionResponse {
     _id: ObjectId;

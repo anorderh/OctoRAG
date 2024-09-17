@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import { VersionResponse } from "./version";
+import { VersionResponse } from './version';
 
 export interface BoardResponse {
     _id: ObjectId;

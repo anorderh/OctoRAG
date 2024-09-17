@@ -1,13 +1,13 @@
 import { Db, MongoClient } from "mongodb";
-import { env } from "../env";
+import { env } from '../env';
 import { container, inject, singleton } from "tsyringe"
-import { createBoardCollection, createEventLogCollection, createUserCollection } from "../data/collections";
-import { InstanceDeps } from "../utils/enums/instance-deps";
+import { createBoardCollection, createEventLogCollection, createUserCollection } from '../data/collections';
+import { InstanceDeps } from '../utils/enums/instance-deps';
 import pino, { Logger, P } from "pino";
-import { AsyncService } from "../utils/abstract/async-service";
-import { CollectionId } from "../utils/enums/collection-id";
-import { CollectionSetup } from "../utils/types/collection-setup";
-import { EnsureDep } from "../routing/decorators/ensure-dep";
+import { AsyncService } from '../utils/abstract/async-service';
+import { CollectionId } from '../utils/enums/collection-id';
+import { CollectionSetup } from '../utils/types/collection-setup';
+import { EnsureDep } from '../routing/decorators/ensure-dep';
 
 @singleton()
 @EnsureDep(InstanceDeps.Logger)
@@ -25,15 +25,9 @@ export class MongoService implements AsyncService {
     ) {}
     
     async initialize(): Promise<void> {
-        try {
-            await this.client.connect();
-
-            this.createCollections();
-
-            this.logger.info("MongoDB connection established.")
-        } catch(err) {
-            this.logger.error("MongoDB connection failed.")
-        }
+        await this.client.connect();
+        this.createCollections();
+        this.logger.info("MongoDB connection established.")
     }
 
     async cleanup(): Promise<void> {

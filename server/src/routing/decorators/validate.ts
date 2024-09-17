@@ -1,8 +1,8 @@
 import Joi, { ObjectSchema, PartialSchemaMap } from "joi";
-import { Middleware } from "../../utils/types/middleware";
-import { authorize } from "../middleware/authorize";
-import { createJoiMiddleware } from "../../utils/extensions/joi-middleware";
-import { RequestProp } from "../../utils/types/request-prop";
+import { Middleware } from '../../utils/types/middleware';
+import { authorize } from '../middleware/authorize';
+import { createJoiMiddleware } from '../../utils/extensions/joi-middleware';
+import { RequestProp } from '../../utils/types/request-prop';
 
 export function Validate(prop: RequestProp, schema: PartialSchemaMap) {
     return (target: any, propertyKey: string): void => {

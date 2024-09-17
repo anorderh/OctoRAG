@@ -1,23 +1,24 @@
 import express, { Express, Router } from "express";
 import cors from "cors";
-import { env } from "./env";
-import { AzureBlobService } from "./services";
+import { env } from './env.js';
+import { AzureBlobService } from './services';
 import { InjectionToken, container, injectable } from "tsyringe";
-import { ControllerBase } from "./utils/abstract/controller";
-import { AuthController, TestController, UserController } from "./routing/controllers";
+import { ControllerBase } from './utils/abstract/controller.js';
+import { AuthController, TestController, UserController } from './routing/controllers';
 import cookieParser from "cookie-parser";
-import { useHttpContext } from "./routing/middleware/http-context";
+import { useHttpContext } from './routing/middleware/http-context.js';
 import morgan from "morgan";
-import { BoardController } from "./routing/controllers/board";
-import { MongoService } from "./services/mongo.service";
-import { errorHandler } from "./error-handling/error-handler";
+import { BoardController } from './routing/controllers/board.js';
+import { MongoService } from './services/mongo.service.js';
+import { errorHandler } from './error-handling/error-handler.js';
 import pino, { Logger } from "pino";
-import { InstanceDeps } from "./utils/enums/instance-deps";
-import { AsyncService } from "./utils/abstract/async-service";
+import { InstanceDeps } from './utils/enums/instance-deps.js';
+import { AsyncService } from './utils/abstract/async-service.js';
 import { Server } from "http";
-import { instancedDependencies } from "./dependencies";
-import { includeIf } from "./utils/extensions/include-if";
+import { instancedDependencies } from './dependencies.js';
+import { RagService } from "./services/rag.service.js";
 
+@injectable()
 export class App {
     express: Express
     server: Server;
@@ -27,7 +28,7 @@ export class App {
         cors({
             origin: env.server.origin
         }),
-        includeIf(env.logging.http, morgan('common')),
+        env.logging.http ? morgan('common') : null,
         express.json(),
         express.urlencoded(),
         cookieParser(),
@@ -42,7 +43,8 @@ export class App {
         ] as InjectionToken<ControllerBase>[],
         asyncServices: [
             MongoService,
-            AzureBlobService
+            AzureBlobService,
+            RagService
         ] as InjectionToken<AsyncService>[]
     }
     logger: Logger;

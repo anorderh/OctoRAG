@@ -2,18 +2,13 @@ import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 import { inject, injectable, Lifecycle, scoped } from "tsyringe";
 import { env } from '../env';
-import { Token } from '../utils/interfaces/token';
-import { TokenType } from '../utils/enums/token-type';
-import { httpContext } from '../routing/middleware/http-context';
 import { MongoService } from './mongo.service';
 import { CollectionId } from '../utils/enums/collection-id';
 import { BoardEventLog, EventLog, User, UserEventLog } from '../data/collections';
-import { InvalidUserError } from '../error-handling/errors';
 import { Collection, ObjectId } from 'mongodb';
 import { InstanceDeps } from '../utils/enums/instance-deps';
 import { Logger } from 'pino';
 import { EventInput } from '../utils/interfaces/event-input';
-import { includeIf } from '../utils/extensions/include-if';
 import { EventType } from '../utils/enums/event-type';
 
 
@@ -52,6 +47,6 @@ export class EventService {
                 break;
             }
         }
-        this.logger.info(`Event occurred! - ${JSON.stringify(input)}`);
+        this.logger.info(`Event occurred! - $ON.stringify(input)}`);
     }
 }

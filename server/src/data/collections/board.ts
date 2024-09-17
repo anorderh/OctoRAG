@@ -1,7 +1,7 @@
 import { CreateCollectionOptions, Db, ObjectId } from "mongodb";
-import { CollectionId } from "../../utils/enums/collection-id";
-import { FindType } from "../../utils/enums/find-type";
-import { CollectionSetup } from "../../utils/types/collection-setup";
+import { CollectionId } from '../../utils/enums/collection-id';
+import { FindType } from '../../utils/enums/find-type';
+import { CollectionSetup } from '../../utils/types/collection-setup';
 
 export interface Board {
     _id: ObjectId;
