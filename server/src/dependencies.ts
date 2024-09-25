@@ -6,9 +6,11 @@ import { env } from './env';
 import path from "path";
 import OpenAI from 'openai';
 import { Pinecone } from "@pinecone-database/pinecone";
+import Innertube from "youtubei.js";
+import { Octokit } from "@octokit/rest";
 
-export const instancedDependencies : {[id: string]: Function} = {
-    [InstanceDeps.Logger]: () => {
+export const instancedDependencies : {[id: string]: () => Promise<void>} = {
+    [InstanceDeps.Logger]: async () => {
         // Prepare log output (create dir if it doesn't exist)
         let timestamp = new Date().toISOString().replace(/[:.-]/g, '_');
         let logFilePath = `${env.pathes.logs}/${`log_${timestamp}.log`}`;
@@ -42,7 +44,7 @@ export const instancedDependencies : {[id: string]: Function} = {
             }
         , transport))
     },
-    [InstanceDeps.OpenAI]: () => {
+    [InstanceDeps.OpenAI]: async () => {
         container.registerInstance<OpenAI>(
             InstanceDeps.OpenAI,
             new OpenAI({
@@ -50,7 +52,7 @@ export const instancedDependencies : {[id: string]: Function} = {
             })
         )
     },
-    [InstanceDeps.Pinecone]: () => {
+    [InstanceDeps.Pinecone]: async () => {
         container.registerInstance<Pinecone>(
             InstanceDeps.Pinecone,
             new Pinecone({
@@ -58,4 +60,16 @@ export const instancedDependencies : {[id: string]: Function} = {
             })
         )
     },
+    [InstanceDeps.Innertube]: async () => {
+        container.registerInstance<Innertube>(
+            InstanceDeps.Innertube,
+            await Innertube.create()
+        )
+    },
+    [InstanceDeps.Octokit]: async () => {
+        container.registerInstance<Octokit>(
+            InstanceDeps.Octokit,
+            new Octokit()
+        )
+    }
 }

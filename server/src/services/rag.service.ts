@@ -47,7 +47,8 @@ import { EnsureDep } from "src/routing/decorators/ensure-dep";
 import { instancedDependencies } from "src/dependencies";
 import { index } from "cheerio/dist/commonjs/api/traversing";
 import { StringOutputParser } from "@langchain/core/output_parsers";
-import { formatDocumentsAsString } from "langchain/util/document";
+import { formatDocumentsAsChunk } from "src/utils/extensions/format-doc-as-chunk";
+import { Scrape } from "src/scraping/models/scrape";
 
 export interface RagSession {
     id: string;
@@ -314,7 +315,7 @@ Use three sentences maximum and keep the answer concise. \
                 [this.contextMessagesKey]: (input: Record<string, unknown>) => {
                     return contextualizedQuestion(input)
                         .pipe(retriever)
-                        .pipe(formatDocumentsAsString)
+                        .pipe(formatDocumentsAsChunk)
                 },
             })
             .assign({
@@ -339,43 +340,30 @@ Use three sentences maximum and keep the answer concise. \
         return conversationalRagChain
     }
 
-    private async createNamespaceForBoard(namespaceId: string, board: Board) {            
-        // Scrape most recent version's finds.
+    private async createNamespaceForBoard(namespaceId: string, board: Board) {
+        // Grab relevant entities & infrastructure.     
         let mostRecentVersion = BoardHelpers.getMostRecentVersion(board);
-        let scrapes: ScrapeResult[] = [];
-        for(let f of mostRecentVersion.finds) {
-            let res = await this.scrapeService.scrape(f);
-            scrapes = scrapes.concat(res)
-        };
-
-        // Load scrapes into vector index.
         let index = this.filterIndexByNamespace(namespaceId)
-        let batchSize = env.defaults.chunking.batchSize;
-        for (let s of scrapes) {
-            // Chunk scrape content.
-            let chunks = await this.generateChunks(s.text);
 
-            // Transform chunks into records and batch load.
-            for (let i = 0; i < chunks.length; i += batchSize) {
-                let batch = chunks.slice(i, i + batchSize);
-                let records = await this.buildPineconeRecords(batch, s);
-                await index.upsert(records);
+        // Process over finds.
+        for(let f of mostRecentVersion.finds) {
+            let scrape : Scrape | null = await this.scrapeService.scrape(f);
+
+            // Check if atleast 1 scrape option succeeded.
+            if (scrape != null) {
+                // Batch load into Pinecone db.
+                let batchSize = env.defaults.chunking.batchSize;
+                for (let i = 0; i < scrape.chunks.length; i += batchSize) {
+                    let batch = scrape.chunks.slice(i, i + batchSize);
+                    let records = await this.createPineconeRecords(batch);
+                    await index.upsert(records);
+                }
             }
-        }
+        };
     }
 
-    private async generateChunks(input: string, chunkSize?: number, chunkOverlap?: number) {
-        let splitter = new RecursiveCharacterTextSplitter({
-            chunkSize: chunkSize ?? env.defaults.chunking.chunkSize,
-            chunkOverlap: chunkOverlap ?? env.defaults.chunking.chunkOverlap
-        });
-        let chunks = await splitter.createDocuments([input]);
-
-        return chunks;
-    }
-
-    private async buildPineconeRecords(chunks: Document<Record<string, any>>[], scrape: ScrapeResult) {
-        let chunkPrefix = "webbed";
+    private async createPineconeRecords(chunks: Document<Record<string, any>>[]) {
+        let chunkPrefix = "webbed-chunk";
         let records = await Promise.all(chunks.map(async (c) => {
             // Generate embeddings.
             let embeddings = (await this.openai.embeddings.create({
@@ -385,17 +373,14 @@ Use three sentences maximum and keep the answer concise. \
 
             // Associate metadata.
             return {
-                id: `${chunkPrefix}#${new UUID().toString()}`,
+                id: `${chunkPrefix}#${c.id}`,
                 values: embeddings,
                 metadata: {
-                    doi: scrape.doi,
-                    source: scrape.source,
-                    subgroup: scrape.subgroup,
-                    text: c.pageContent,
+                    'text': c.pageContent, // You NEED to define 'text' to perform RAG.
+                    ...c.metadata
                 }
             } as PineconeRecord
         }))
-
         return records;
     }
 }

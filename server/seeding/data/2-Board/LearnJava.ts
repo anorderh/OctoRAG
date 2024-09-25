@@ -92,7 +92,7 @@ export = {
                         title: 'Java Annotations Reference',
                         desc: "Official Java documentation going over annotations.",
                         link: 'https://dev.java/learn/annotations/',
-                        type: FindType.HTML,
+                        type: FindType.Webpage,
                         relations: [
                             {
                                 destIdx: 3,

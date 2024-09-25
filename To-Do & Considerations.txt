@@ -21,15 +21,24 @@ To-Do
         1. x Figure out why 'context' is failing to be retrieved in chain
             Possibly bc 'vectorstore' does not have 'namespace' specified in config,
             instead currently using `index.namespace(...)` to discern this
-        2. Ensure that Finds' chunks are properly being given metadata associated with their resource.
+        2. X Ensure that Finds' chunks are properly being given metadata associated with their resource.
             This will vary per resource. A Youtube video should have the desc and title made available.
             This should also then be present when injecting documents into the LLM prompts.
+        3. X Create a pagination decorator
+        4. X Look into making a pipeline chain stage that generates a Chunk header based on provided metadata
+        5. Introduce more find types (3-5, Reddit, Twitter, MP4, PDFs to more holistically encompass internet resources)
+        6. Create more sample boards to ensure testing
+        7. Duplicate repo and begin working on client, emulating Azure RAG app example
+            a. For deployment, look into Azure RAG app resources
     Pinecone examples
         https://github.com/pinecone-io/examples/blob/master/learn/generation/better-rag/xx-serverless-rag.ipynb
         https://github.com/pinecone-io/examples/blob/master/learn/generation/rag-for-hybrid/rag-for-hybrid-search.ipynb
         https://python.langchain.com/v0.2/docs/how_to/qa_chat_history_how_to/
         https://v02.api.js.langchain.com/functions/langchain.chains_history_aware_retriever.createHistoryAwareRetriever.html
         https://docs.pinecone.io/examples/sample-apps/namespace-notes
+        https://github.com/pinecone-io/examples/blob/master/learn/generation/langchain/rag-chatbot.ipynb
+        https://github.com/pinecone-io/examples/blob/master/learn/generation/langchain/managing_rag_docs_langchain.ipynb
+        https://github.com/pinecone-io/examples/blob/master/learn/generation/langchain/rag-chatbot.ipynb
     Pinecone Lifetime Management
     - Vector embedding indices are only allowed for board's most recent version
     - Vector embeddings would presumably some sort of lifetime in production

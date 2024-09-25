@@ -20,9 +20,10 @@ import { RagService } from "./services/rag.service.js";
 
 @injectable()
 export class App {
+    port: string;
+    logger: Logger;
     express: Express
     server: Server;
-    port: string;
 
     middleware: any[] = [
         cors({
@@ -34,6 +35,7 @@ export class App {
         cookieParser(),
         useHttpContext
     ].filter(m => !!m);
+
     injection = {
         controllers: [
             AuthController,
@@ -47,38 +49,44 @@ export class App {
             RagService
         ] as InjectionToken<AsyncService>[]
     }
-    logger: Logger;
-
 
     constructor() {
-        // Setup express server.
-        this.express = express();
         this.port = env.server.port;
-
-        // Initialize and inject non-class values.
-        Object.entries(instancedDependencies).forEach(([key, handler]) => {
-            if (!container.isRegistered(key)) {
-                handler();
-            }
-        })
         this.logger = container.resolve(InstanceDeps.Logger);
+    }
 
-        // Setup middleware.
+    public async start() {
+        await this.build();
+        await this.listen();
+    }
+
+    private async build(): Promise<void> {
+        this.logger.info(`Building Express app...`);
+        this.express = express();
+
+        this.logger.info(`Instantiating custom dependencies...`);
+        let deps = Object.entries(instancedDependencies);
+        for(let [key, init] of deps) {
+            if (!container.isRegistered(key)) {
+                await init();
+            }
+        }
+
+        this.logger.info(`Setting up middleware...`);
         this.middleware.forEach((m) => this.express.use(m)); 
 
-        // Setup routing.
+        this.logger.info(`Setting up controllers...`);
         for (let token of this.injection.controllers) {
             let controller = container.resolve(token);
             this.express.use(env.server.apiPath, controller.router)
         }
 
-        // Setup error handler.
+        this.logger.info(`Setting up error handler...`);
         this.express.use(errorHandler);
     }
 
-    public async startListening(): Promise<void> {
-        this.logger.info(`Starting app...`);
-
+    private async listen(): Promise<void> {
+        this.logger.info(`Starting Express app...`);
         // Connect async services.
         for (let token of this.injection.asyncServices) {
             let service = container.resolve(token);
@@ -86,15 +94,15 @@ export class App {
         }
 
         this.server = this.express.listen(this.port, () => {
-            this.logger.info(`Server is running on port ${this.port}.`)
+            this.logger.info(`Server is listening on port ${this.port}.`)
         });
         this.logger.info('App started!');
     }
 
-    public async stopListening(): Promise<void> {
-        this.logger.info('Stopping app...');
+    public async stop(): Promise<void> {
+        this.logger.info('Stopping Express app...');
         this.server.close();
-        this.logger.info(`Server has stopped running.`);
+        this.logger.info(`Server has stopped listening.`);
 
         // Cleanup async services.
         for (let token of this.injection.asyncServices) {

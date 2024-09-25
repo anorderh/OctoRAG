@@ -1,5 +1,7 @@
 export enum InstanceDeps {
     Logger = 'Logger',
     OpenAI = 'OpenAI',
-    Pinecone = 'Pinecone'
+    Pinecone = 'Pinecone',
+    Innertube = 'Innertube',
+    Octokit = 'Octokit'
 }

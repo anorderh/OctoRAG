@@ -57,14 +57,14 @@ export const env = {
     },
     defaults: {
         pagination: {
-            skip: 0,
-            limit: 10,
-            maxLimit: 50
+            skip: Number(process.env.DEFAULT_PAGINATION_SKIP!),
+            limit: Number(process.env.DEFAULT_PAGINATION_LIMIT!),
+            maxLimit: Number(process.env.DEFAULT_PAGINATION_MAX_LIMIT!),
         },
         chunking: {
-            chunkSize: 512,
-            chunkOverlap: 35,
-            batchSize: 100,
+            chunkSize: Number(process.env.DEFAULT_CHUNKING_SIZE!),
+            chunkOverlap: Number(process.env.DEFAULT_CHUNKING_OVERLAP!),
+            batchSize: Number(process.env.DEFAULT_CHUNKING_BATCH_SIZE!),
         }
     },
     openai: {
@@ -82,5 +82,8 @@ export const env = {
         ragIndexName: process.env.PINECONE_RAG_INDEX_NAME!,
         cloud: process.env.PINECONE_CSP!,
         region: process.env.PINECONE_CSP_REGION!
+    },
+    youtube: {
+        apiKey: process.env.YOUTUBE_API_KEY!
     }
 }

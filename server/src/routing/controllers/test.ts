@@ -18,7 +18,6 @@ import { ScrapeResult } from "src/utils/interfaces/scrape-result";
 import { InstanceDeps } from "src/utils/enums/instance-deps";
 import { Logger } from "pino";
 
-
 @Controller('/test')
 @singleton()
 export class TestController extends ControllerBase {
@@ -55,17 +54,20 @@ export class TestController extends ControllerBase {
         ]))
 
         let mostRecentVersion = BoardHelpers.getMostRecentVersion(board);
-        let output: ScrapeResult[] = [];
         for(var f of mostRecentVersion.finds) {
-            output.concat(
-                await this.scrapeService.scrape(f)
-            )
-        }
-        this.logger.debug(
-            "SCRAPED OUTPUT:\n\n" +
-            JSON.stringify(output, null, 2)
-        );
+            let scrape = await this.scrapeService.scrape(f);
 
+            if (scrape != null) {
+                this.logger.info(
+                    "OUTPUT:\n\n" +
+                    JSON.stringify(
+                        scrape.entries.map(e => e.body), 
+                        null, 
+                        2
+                    )
+                );
+            }
+        }
         res.status(200).send("Scrape printed to console.");
     }
 

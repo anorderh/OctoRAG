@@ -9,12 +9,12 @@ import { container } from "tsyringe";
 exports.mochaGlobalSetup = async function () {
     this.app = new App();
     await clearDatabase();
-    await this.app.startListening();
+    await this.app.start();
 }
 
 exports.mochaGlobalTeardown = async function () {
     // await clearDatabase();
-    await this.app.stopListening();
+    await this.app.stop();
 }
 
 async function clearDatabase() {

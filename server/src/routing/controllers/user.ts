@@ -7,7 +7,6 @@ import { AuthService, MongoService } from '../../services';
 import { Blanket } from '../decorators/blanket';
 import morgan from "morgan";
 import { Collection, RemoveUserOptions } from "mongodb";
-import { usePagination } from '../../utils/extensions/use-pagination';
 import Joi from "joi";
 import { Validate } from '../decorators/validate';
 import { Board, EventLog, User } from '../../data/collections';
@@ -17,6 +16,7 @@ import { BoardResponse } from '../../data/models/response/board';
 import { httpContext } from '../middleware/http-context';
 import { EditProfileRequest } from '../../data/models/request/edit-profile';
 import { filterNulls } from '../../utils/extensions/filter-nulls';
+import { Paginate } from "../decorators/paginate";
 
 
 @Controller('/user')
@@ -88,9 +88,10 @@ export class UserController extends ControllerBase {
             limit: Joi.number()
         }
     )
+    @Paginate()
     public async getFeed(req: Request, res: Response) {
         let self = await this.userService.getSelf();
-        let pag = usePagination(req);
+        let pag = httpContext().pagination;
         let logs = await this.eventLogCollection.aggregate([
             // All event logs associated w/ user's following.
             {

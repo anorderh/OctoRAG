@@ -7,7 +7,6 @@ import { AuthService, MongoService } from '../../services';
 import { Blanket } from '../decorators/blanket';
 import morgan from "morgan";
 import { Collection, ObjectId, RemoveUserOptions, WithId } from "mongodb";
-import { usePagination } from '../../utils/extensions/use-pagination';
 import Joi, { object } from "joi";
 import { Validate } from '../decorators/validate';
 import { httpContext } from '../middleware/http-context';
@@ -17,7 +16,6 @@ import { SortingOption } from '../../utils/enums/board-filtering/sorting-options
 import { DateOption } from '../../utils/enums/board-filtering/date-options';
 import { create } from "lodash";
 import { calcDateRange } from '../../utils/extensions/calc-date-range';
-import { BoardService } from '../../services/board.service';
 import { AggregateOptions } from "mongodb";
 import { join } from "path";
 import { CollectionId } from '../../utils/enums/collection-id';
@@ -30,6 +28,7 @@ import { version } from "os";
 import { EventService } from '../../services/event.service';
 import { BoardEvent, UserEvent } from '../../utils/constants/event';
 import { EventType } from '../../utils/enums/event-type';
+import { Paginate } from "../decorators/paginate";
 
 
 @Controller('/board')
@@ -40,7 +39,6 @@ export class BoardController extends ControllerBase {
 
     constructor(
         @inject(UserService) private userService: UserService,
-        @inject(BoardService) private boardService: BoardService,
         @inject(MongoService) private mongo: MongoService,
         @inject(EventService) private eventService: EventService
     ) {
@@ -65,6 +63,7 @@ export class BoardController extends ControllerBase {
             sort: Joi.string().valid(...Object.values(SortingOption)).required()
         }
     )
+    @Paginate()
     public async searchBoards(req: Request, res: Response) {
         let {
             searchStr,
@@ -177,7 +176,7 @@ export class BoardController extends ControllerBase {
             }
         })
         // Apply pagination.
-        let pag = usePagination(req);
+        let pag = httpContext().pagination;
         pipeline.concat([
             {
                 $skip: pag.skip,

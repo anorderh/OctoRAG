@@ -28,8 +28,10 @@
   "license": "ISC",
   "dependencies": {
     "@azure/storage-blob": "^12.23.0",
+    "@googleapis/youtube": "^20.0.0",
     "@langchain/core": "^0.2.32",
     "@langchain/pinecone": "^0.0.9",
+    "@octokit/rest": "^21.0.2",
     "@pinecone-database/pinecone": "^3.0.2",
     "@types/cheerio": "^0.22.35",
     "@types/cookie-parser": "^1.4.7",
@@ -59,7 +61,9 @@
     "pino-pretty": "^11.2.1",
     "reflect-metadata": "^0.2.2",
     "save-dev": "^0.0.1-security",
-    "tsyringe": "^4.8.0"
+    "tsyringe": "^4.8.0",
+    "youtube-transcript": "^1.2.1",
+    "youtubei.js": "^10.5.0"
   },
   "devDependencies": {
     "@types/adm-zip": "^0.5.5",
@@ -82,7 +86,6 @@
     "cookie": "^0.6.0",
     "tough-cookie": "^4.1.4",
     "tsx": "^4.17.0",
-    "typescript": "^5.5.3",
-    "youtube-transcript": "^1.2.1"
+    "typescript": "^5.5.3"
   }
 }

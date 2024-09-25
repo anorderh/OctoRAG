@@ -1,0 +1,1 @@
+export type ErrorParams = {status?: number, body?: any};
