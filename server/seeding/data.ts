@@ -24,6 +24,18 @@ export const data = {
                         },
                         javaAnnotations: {
                             id: new ObjectId()
+                        },
+                        redditPost: {
+                            id: new ObjectId()
+                        },
+                        tiktokPost: {
+                            id: new ObjectId()
+                        },
+                        twitterPost: {
+                            id: new ObjectId()
+                        },
+                        pdf: {
+                            id: new ObjectId()
                         }
                     }
                 }

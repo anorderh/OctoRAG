@@ -1,7 +1,7 @@
 import express, { Express, Router } from "express";
 import cors from "cors";
 import { env } from './env.js';
-import { AzureBlobService } from './services';
+import { AzureBlobService } from "./services/azure-blob.service..js";
 import { InjectionToken, container, injectable } from "tsyringe";
 import { ControllerBase } from './utils/abstract/controller.js';
 import { AuthController, TestController, UserController } from './routing/controllers';

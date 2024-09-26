@@ -3,5 +3,7 @@ export enum InstanceDeps {
     OpenAI = 'OpenAI',
     Pinecone = 'Pinecone',
     Innertube = 'Innertube',
-    Octokit = 'Octokit'
+    Octokit = 'Octokit',
+    Reddit = 'Reddit',
+    WebDriver = 'WebDriver',
 }

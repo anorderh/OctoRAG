@@ -38,14 +38,12 @@ import { createHistoryAwareRetriever } from "langchain/chains/history_aware_retr
 import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
 import { createRetrievalChain } from "langchain/chains/retrieval";
 import { Runnable, RunnableBinding, RunnableMap, RunnablePassthrough, RunnableSequence, RunnableWithMessageHistory } from "@langchain/core/runnables";
-import { BaseChatMessageHistory } from "@langchain/core/dist/chat_history";
+import { BaseChatMessageHistory } from "@langchain/core/chat_history";
 import { ChatMessageHistory } from "langchain/memory";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { AsyncService } from "src/utils/abstract/async-service";
 import { BoardHelpers } from "src/utils/extensions/board-helpers";
 import { EnsureDep } from "src/routing/decorators/ensure-dep";
-import { instancedDependencies } from "src/dependencies";
-import { index } from "cheerio/dist/commonjs/api/traversing";
 import { StringOutputParser } from "@langchain/core/output_parsers";
 import { formatDocumentsAsChunk } from "src/utils/extensions/format-doc-as-chunk";
 import { Scrape } from "src/scraping/models/scrape";

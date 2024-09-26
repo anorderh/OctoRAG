@@ -1,5 +1,5 @@
 import { container } from "tsyringe";
-import { instancedDependencies } from '../../dependencies';
+import { instancedDependencies } from '../../dependencies.js';
 import { UnsupportedError } from '../../error-handling/errors';
 
 export function EnsureDep(input: string | string[]): ClassDecorator {

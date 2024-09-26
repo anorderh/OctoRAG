@@ -12,7 +12,6 @@ import { Document } from "@langchain/core/documents";
 import path from "path";
 import { InstanceDeps } from "src/utils/enums/instance-deps";
 import { container } from "tsyringe";
-import { Octokit } from "@octokit/rest";
 import { FindType } from "src/utils/enums/find-type";
 import { ScrapeOption } from "../models/scrape-option";
 import { ScrapeEntry, ScrapeMetadata } from "../models/scrape-entry";

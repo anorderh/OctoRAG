@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import dotenv, { config } from 'dotenv';
-import { pathes } from './pathes';
+import { pathes } from './pathes.js';
 
 dotenv.config({ path: pathes.config })
 
@@ -85,5 +85,24 @@ export const env = {
     },
     youtube: {
         apiKey: process.env.YOUTUBE_API_KEY!
+    },
+    reddit: {
+        clientId: process.env.REDDIT_CLIENT_ID!,
+        clientSecret: process.env.REDDIT_CLIENT_SECRET!,
+        userAgent: process.env.REDDIT_USER_AGENT!,
+        username: process.env.REDDIT_USERNAME!,
+        password: process.env.REDDIT_PASSWORD!
+    },
+    twitter: {
+        apiKey: process.env.TWITTER_API_KEY!,
+        apiKeySecret: process.env.TWITTER_API_KEY_SECRET!,
+        bearerToken: process.env.TWITTER_BEARER_TOKEN!,
+        accessToken: process.env.TWITTER_ACCESS_TOKEN!,
+        accessTokenSecret: process.env.TWITTER_ACCESS_TOKEN_SECRET!,
+        username: process.env.TWITTER_USERNAME!,
+        password: process.env.TWITTER_PASSWORD!
+    },
+    llamacloud: {
+        apiKey: process.env.LLAMACLOUD_API_KEY!
     }
 }

@@ -6,12 +6,20 @@ import { GithubRepoScrapeOption } from "../options/github-repo";
 import { YoutubeVideoScrapeOption } from "../options/youtube-video";
 import { WebpageScrapeOption } from "../options/webpage";
 import { Find } from "src/data/collections";
+import { RedditPostScrapeOption } from "../options/reddit-post";
+import { TiktokPostScrapeOption } from "../options/tiktok-post";
+import { PDFScrapeOption } from "../options/pdf";
+import { TwitterPostScrapeOption } from "../options/twitter-post";
 
 export class Scrape {
     static options: {[key: string]: ScrapeOption<any>} = {
         [FindType.Webpage]: WebpageScrapeOption,
         [FindType.GithubRepo]: GithubRepoScrapeOption,
-        [FindType.YoutubeVideo]: YoutubeVideoScrapeOption
+        [FindType.YoutubeVideo]: YoutubeVideoScrapeOption,
+        [FindType.RedditPost]: RedditPostScrapeOption,
+        [FindType.TwitterPost]: TwitterPostScrapeOption,
+        [FindType.TiktokPost]: TiktokPostScrapeOption,
+        [FindType.PDF]: PDFScrapeOption
     }
     
     url: URL;

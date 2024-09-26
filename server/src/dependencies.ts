@@ -1,13 +1,17 @@
 import { container } from "tsyringe";
-import { InstanceDeps } from './utils/enums/instance-deps';
-import pino, { Logger, multistream } from "pino";
+import { InstanceDeps } from './utils/enums/instance-deps.js';
+import { pino, Logger, multistream } from "pino";
 import * as fs from 'fs';
-import { env } from './env';
+import { env } from './env.js';
 import path from "path";
 import OpenAI from 'openai';
 import { Pinecone } from "@pinecone-database/pinecone";
-import Innertube from "youtubei.js";
+import { Innertube } from "youtubei.js";
 import { Octokit } from "@octokit/rest";
+import Snoowrap from "snoowrap";
+import { TokScript } from "./utils/extensions/tokscript.js";
+import { Browser, Builder, WebDriver } from "selenium-webdriver";
+import { Options } from "selenium-webdriver/chrome.js";
 
 export const instancedDependencies : {[id: string]: () => Promise<void>} = {
     [InstanceDeps.Logger]: async () => {
@@ -70,6 +74,29 @@ export const instancedDependencies : {[id: string]: () => Promise<void>} = {
         container.registerInstance<Octokit>(
             InstanceDeps.Octokit,
             new Octokit()
+        )
+    },
+    [InstanceDeps.Reddit]: async () => {
+        container.registerInstance<Snoowrap>(
+            InstanceDeps.Reddit,
+            new Snoowrap({
+                clientId: env.reddit.clientId,
+                clientSecret: env.reddit.clientSecret,
+                userAgent: env.reddit.userAgent,
+                username: env.reddit.username,
+                password: env.reddit.password
+            })
+        )
+    },
+    [InstanceDeps.WebDriver]: async () => {
+        let options = new Options();
+        // options.addArguments("--headless=new")
+        container.registerInstance<WebDriver>(
+            InstanceDeps.WebDriver,
+            await new Builder()
+                .forBrowser(Browser.CHROME)
+                .setChromeOptions(options)
+                .build()
         )
     }
 }

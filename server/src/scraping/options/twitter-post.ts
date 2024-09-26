@@ -14,62 +14,77 @@ import { Builder, Browser, By, WebDriver} from "selenium-webdriver";
 import { InstanceDeps } from "src/utils/enums/instance-deps";
 import { container } from "tsyringe";
 import { tryFindElement } from "src/utils/extensions/webdriver-attempt";
-import { P } from "pino";
 
-export interface WebpageMetadata extends ScrapeMetadata {
+export interface TwitterMetadata extends ScrapeMetadata {
     link: string,
-    title: string,
+    author: string
 }
 
-export const WebpageScrapeOption: ScrapeOption<WebpageMetadata> = {
+export const TwitterPostScrapeOption: ScrapeOption<TwitterMetadata> = {
     fetch: async (url: URL) => {
         const driver = container.resolve<WebDriver>(InstanceDeps.WebDriver);
-        const charMaxLimit = 30000; // Max webpage char limit.
 
         // Instantiate browser.
         await driver.get(url.toString());
-        await driver.sleep(3000); // Hardcoded wait for page loading.
 
-        // Grab elements' text.
-        let titleElement = await tryFindElement({
-            driver,
-            by: By.css('title')
+        // Grab elements.
+        let articleElement = await tryFindElement({
+            driver: driver,
+            by: By.css('article'),
+            wait: 5000
         });
-        let title = titleElement
-            ? await titleElement.getText()
-            : "No title provided";
-        let bodyElement = await tryFindElement({
-            driver,
-            by: By.css('body')
-        });
-        let body = bodyElement
-            ? (await bodyElement.getText()).replace(/\s\s+/g, ' ')
-            : "";
-
-        // Validate parsing.
-        if (body.trim().length == 0) {
+        if (articleElement == null) {
             throw new ScrapeEntryFailedError({
-                body: `The webpage scrape for "${url.href}" is prohibited due to no valid body being parsed.`
-            })
-        } else if (body.length > charMaxLimit) {
-            throw new ScrapeEntryFailedError({
-                body: `The webpage scrape for "${url.href}" is prohibited due to passing the maximum character limit allowed.`
+                body: "Twitter Post scrape failed due to article element not being located."
             })
         }
+        let tweetElement = await tryFindElement({
+            driver: driver,
+            element: articleElement,
+            by: By.css('[data-testid="tweetText"]'),
+            wait: 5000
+        });
+        if (tweetElement == null) {
+            throw new ScrapeEntryFailedError({
+                body: "Twitter Post scrape failed due to tweet element not being located."
+            })
+        }
+        let authorElement = await tryFindElement({
+            driver: driver,
+            element: articleElement,
+            by: By.css('[data-testid="User-Name"]'),
+            wait: 5000
+        });
+        if (authorElement == null) {
+            throw new ScrapeEntryFailedError({
+                body: `The Twitter Post scrape failed due to no author being parsed.`
+            })
+        }
+
+        // Validate elements' text.
+        let [author, tweet] = [
+            (await authorElement.getText()) ?? "No author provided",
+            await tweetElement.getText()
+        ].map(t => t.replace("\n", " ").trim())
+        if (tweet.trim().length == 0) {
+            throw new ScrapeEntryFailedError({
+                body: `The Tweet Post scrape failed due to no valid body being parsed.`
+            })
+        };
 
         return [
             {
                 id: new UUID().toString(),
-                body: body,
+                body: tweet,
                 metadata: {
-                    type: FindType.Webpage,
+                    type: FindType.TwitterPost,
                     link: url.href,
-                    title
+                    author
                 }
-            } as ScrapeEntry<WebpageMetadata>
+            } as ScrapeEntry<TwitterMetadata>
         ];
     },
-    chunk: async (entries: ScrapeEntry<WebpageMetadata>[]) => {
+    chunk: async (entries: ScrapeEntry<TwitterMetadata>[]) => {
         let splitter = new RecursiveCharacterTextSplitter({
             chunkSize: env.defaults.chunking.chunkSize,
             chunkOverlap: env.defaults.chunking.chunkOverlap

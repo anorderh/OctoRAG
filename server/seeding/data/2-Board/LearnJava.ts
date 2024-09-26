@@ -38,24 +38,6 @@ export = {
                 let finds = data.boards.learnJava.versions[1].finds;
 
                 return [
-                    // {
-                    //     _id: finds.tutorialsPoint.id,
-                    //     index: 1,
-                    //     title: 'TutorialsPoint Java Quickstart',
-                    //     desc: "Overview going over Java's origins and key features.",
-                    //     link: 'https://www.tutorialspoint.com/java/java_quick_guide.htm',
-                    //     type: FindType.HTML,
-                    //     relations: [
-                    //         {
-                    //             destIdx: 3,
-                    //             label: "Practical application of concepts",
-                    //             desc: "To see Java-related concepts in action"
-                    //         }
-                    //     ],
-                    //     grouping: ["static"],
-                    //     rank: 1,
-                    //     ...getFindEntityProps()
-                    // },
                     {
                         _id: finds.youtubeVideo.id,
                         index: 2,
@@ -104,6 +86,54 @@ export = {
                         rank: 2,
                         ...getFindEntityProps()
                     },
+                    {
+                        _id: finds.redditPost.id,
+                        index: 4,
+                        title: 'Favourite debugging patterns in Java',
+                        desc: "Java debugging",
+                        link: 'https://www.reddit.com/r/java/comments/1fodrl7/what_are_your_favourite_debugging_patterns_in_java/',
+                        type: FindType.RedditPost,
+                        relations: [],
+                        grouping: ["static"],
+                        rank: 2,
+                        ...getFindEntityProps()
+                    },
+                    {
+                        _id: finds.twitterPost.id,
+                        index: 5,
+                        title: 'Twitter Java post about common tasks',
+                        desc: "Sample",
+                        link: 'https://x.com/java/status/1831703837687607313',
+                        type: FindType.TwitterPost,
+                        relations: [],
+                        grouping: ["static"],
+                        rank: 2,
+                        ...getFindEntityProps()
+                    },
+                    {
+                        _id: finds.tiktokPost.id,
+                        index: 6,
+                        title: 'Tiktok video about Java static keyword',
+                        desc: "Sample",
+                        link: 'https://www.tiktok.com/@.braintickle/video/7180527400738884907?lang=en',
+                        type: FindType.TiktokPost,
+                        relations: [],
+                        grouping: ["static"],
+                        rank: 4,
+                        ...getFindEntityProps()
+                    },
+                    {
+                        _id: finds.pdf.id,
+                        index: 7,
+                        title: 'PDF by Tutorials point about using Java',
+                        desc: "Sample",
+                        link: 'https://www.tutorialspoint.com/java/java_tutorial.pdf',
+                        type: FindType.PDF,
+                        relations: [],
+                        grouping: ["static"],
+                        rank: 4,
+                        ...getFindEntityProps()
+                    }
                 ]
             })(),
             ...getVersionEntityProps()
