@@ -1,12 +1,12 @@
 import { BlobClient, BlobItem, BlobServiceClient, BlockBlobClient, ContainerClient, logger } from "@azure/storage-blob";
-import { BlobActionResponse } from '../utils/interfaces/blob-action-response';
-import { BlobActionResult } from '../utils/enums/blob-action-result.enum';
+import { BlobActionResponse } from '../utils/interfaces/blob-action-response.js';
+import { BlobActionResult } from '../utils/enums/blob-action-result.enum.js';
 import { Readable } from "stream";
-import { env } from '../env';
+import { env } from '../env.js';
 import { inject, injectable, singleton } from "tsyringe";
 import { Logger } from "pino";
-import { InstanceDeps } from '../utils/enums/instance-deps';
-import { AsyncService } from '../utils/abstract/async-service';
+import { InstanceDeps } from '../utils/enums/instance-deps.js';
+import { AsyncService } from '../utils/abstract/async-service.js';
 
 @singleton()
 export class AzureBlobService implements AsyncService {

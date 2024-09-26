@@ -1,3 +1,3 @@
-export * from './board';
-export * from './user';
-export * from './event';
+export * from './board.js';
+export * from './user.js';
+export * from './event.js';

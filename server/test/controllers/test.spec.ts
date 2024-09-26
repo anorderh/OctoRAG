@@ -1,6 +1,6 @@
-import { Agent } from "../agent";
+import { Agent } from "../agent.js";
 import { expect } from "chai";
-import { env } from "../../src/env";
+import { env } from "../../src/env.js";
 import cookie from 'cookie';
 
 let creds = {

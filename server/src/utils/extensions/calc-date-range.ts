@@ -1,4 +1,4 @@
-import { DateOption } from "../enums/board-filtering/date-options";
+import { DateOption } from "../enums/board-filtering/date-options.js";
 
 export function calcDateRange(option: DateOption) : [Date, Date] {
     let currDate = new Date();

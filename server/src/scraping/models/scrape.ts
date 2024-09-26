@@ -1,15 +1,15 @@
-import { ScrapeEntry, ScrapeMetadata } from "./scrape-entry";
+import { ScrapeEntry, ScrapeMetadata } from "./scrape-entry.js";
 import { Document } from "@langchain/core/documents";
-import { ScrapeOption } from "./scrape-option";
-import { FindType } from "src/utils/enums/find-type";
-import { GithubRepoScrapeOption } from "../options/github-repo";
-import { YoutubeVideoScrapeOption } from "../options/youtube-video";
-import { WebpageScrapeOption } from "../options/webpage";
-import { Find } from "src/data/collections";
-import { RedditPostScrapeOption } from "../options/reddit-post";
-import { TiktokPostScrapeOption } from "../options/tiktok-post";
-import { PDFScrapeOption } from "../options/pdf";
-import { TwitterPostScrapeOption } from "../options/twitter-post";
+import { ScrapeOption } from "./scrape-option.js";
+import { FindType } from "src/utils/enums/find-type.js";
+import { GithubRepoScrapeOption } from "../options/github-repo.js";
+import { YoutubeVideoScrapeOption } from "../options/youtube-video.js";
+import { WebpageScrapeOption } from "../options/webpage.js";
+import { Find } from "src/data/collections/board.js";
+import { RedditPostScrapeOption } from "../options/reddit-post.js";
+import { TiktokPostScrapeOption } from "../options/tiktok-post.js";
+import { PDFScrapeOption } from "../options/pdf.js";
+import { TwitterPostScrapeOption } from "../options/twitter-post.js";
 
 export class Scrape {
     static options: {[key: string]: ScrapeOption<any>} = {

@@ -1,14 +1,14 @@
 import { NextFunction, Request, Response } from "express";
-import { Middleware } from '../../utils/types/middleware';
-import { AuthService, MongoService } from '../../services';
+import { Middleware } from '../../utils/types/middleware.js';
+import { AuthService, MongoService } from '../../services/index.js';
 import { container } from "tsyringe";
-import { TokenType } from '../../utils/enums/token-type';
-import {JsonWebTokenError, TokenExpiredError} from "jsonwebtoken";
-import { UserService } from '../../services/user.service';
-import { httpContext } from './http-context';
-import { CollectionId } from '../../utils/enums/collection-id';
-import { User } from '../../data/collections';
-import { InstanceDeps } from '../../utils/enums/instance-deps';
+import { TokenType } from '../../utils/enums/token-type.js';
+import jwt from 'jsonwebtoken';
+import { UserService } from '../../services/user.service.js';
+import { httpContext } from './http-context.js';
+import { CollectionId } from '../../utils/enums/collection-id.js';
+import { User } from '../../data/collections/index.js';
+import { InstanceDeps } from '../../utils/enums/instance-deps.js';
 import { Logger } from "pino";
 import { ObjectId } from "mongodb";
 
@@ -43,10 +43,10 @@ export const authorize: Middleware = async function (req: Request, res: Response
         httpContext().userId = user._id;
         next();
     } catch (error: any) {
-        if (error instanceof TokenExpiredError) {
+        if (error instanceof jwt.TokenExpiredError) {
             res.status(401).send("Token expired.");
             return;
-        } else if (error instanceof JsonWebTokenError) {
+        } else if (error instanceof jwt.JsonWebTokenError) {
             res.status(401).send("Malformed access token");
             return;
         }

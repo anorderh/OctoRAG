@@ -1,6 +1,6 @@
-import { FindType } from "../../../src/utils/enums/find-type";
-import { data } from "../../data";
-import { getFindEntityProps, getVersionEntityProps } from "../../helpers";
+import { FindType } from "../../../src/utils/enums/find-type.js";
+import { data } from "../../data.js";
+import { getFindEntityProps, getVersionEntityProps } from "../../helpers.js";
 
 /*
 Static HTML content
@@ -23,7 +23,7 @@ Processing...
 3. Download all resources and vectorize into vector db
 */
 
-export = {
+export default {
     _id: data.boards.learnJava.id,
     title: "Java 101",
     desc: "Resources for studying the Java programming language.",

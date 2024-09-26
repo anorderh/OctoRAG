@@ -1,22 +1,22 @@
 import { Request, Response } from "express";
-import { Authorize, Controller, Get, Patch, Post } from '../decorators';
+import { Authorize, Controller, Get, Patch, Post } from '../decorators/index.js';
 import { inject, singleton } from "tsyringe";
-import { ControllerBase } from '../../utils/abstract/controller';
-import { UserService } from '../../services/user.service';
-import { AuthService, MongoService } from '../../services';
-import { Blanket } from '../decorators/blanket';
+import { ControllerBase } from '../../utils/abstract/controller.js';
+import { UserService } from '../../services/user.service.js';
+import { AuthService, MongoService } from '../../services/index.js';
+import { Blanket } from '../decorators/blanket.js';
 import morgan from "morgan";
 import { Collection, RemoveUserOptions } from "mongodb";
 import Joi from "joi";
-import { Validate } from '../decorators/validate';
-import { Board, EventLog, User } from '../../data/collections';
-import { CollectionId } from '../../utils/enums/collection-id';
-import { UserResponse } from '../../data/models/response/user';
-import { BoardResponse } from '../../data/models/response/board';
-import { httpContext } from '../middleware/http-context';
-import { EditProfileRequest } from '../../data/models/request/edit-profile';
-import { filterNulls } from '../../utils/extensions/filter-nulls';
-import { Paginate } from "../decorators/paginate";
+import { Validate } from '../decorators/validate.js';
+import { Board, EventLog, User } from '../../data/collections/index.js';
+import { CollectionId } from '../../utils/enums/collection-id.js';
+import { UserResponse } from '../../data/models/response/user.js';
+import { BoardResponse } from '../../data/models/response/board.js';
+import { httpContext } from '../middleware/http-context.js';
+import { EditProfileRequest } from '../../data/models/request/edit-profile.js';
+import { filterNulls } from '../../utils/extensions/filter-nulls.js';
+import { Paginate } from "../decorators/paginate.js";
 
 
 @Controller('/user')

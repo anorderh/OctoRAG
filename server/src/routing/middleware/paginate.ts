@@ -1,11 +1,11 @@
 import { NextFunction } from "express";
-import { Middleware } from "src/utils/types/middleware";
+import { Middleware } from "src/utils/types/middleware.js";
 import { Request, Response } from "express";
-import { Pagination } from "src/utils/interfaces/pagination";
-import { env } from "src/env";
-import { PaginationLimitExceededError } from "src/error-handling/errors";
-import { httpContext } from "./http-context";
-import { InstanceDeps } from "src/utils/enums/instance-deps";
+import { Pagination } from "src/utils/interfaces/pagination.js";
+import { env } from "src/env.js";
+import { PaginationLimitExceededError } from "src/error-handling/errors.js";
+import { httpContext } from "./http-context.js";
+import { InstanceDeps } from "src/utils/enums/instance-deps.js";
 import { container } from "tsyringe";
 import { Logger } from "pino";
 

@@ -1,9 +1,9 @@
-import { Agent } from "../agent";
+import { Agent } from "../agent.js";
 import { expect } from "chai";
-import { env } from "../../src/env";
+import { env } from "../../src/env.js";
 import cookie from 'cookie';
-import { Database } from "../database";
-import { Board, Relation } from "../../src/data/collections";
+import { Database } from "../database.js";
+import { Board, Relation } from "../../src/data/collections/index.js";
 import { ObjectId } from "mongodb";
 
 let sampleData = {

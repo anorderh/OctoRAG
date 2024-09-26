@@ -1,5 +1,5 @@
 import Joi, { object } from "joi";
-import { Middleware } from '../../utils/types/middleware';
+import { Middleware } from '../../utils/types/middleware.js';
 
 export function Middleware(handler: Middleware) {
     return (target: any, propertyKey: string): void => {

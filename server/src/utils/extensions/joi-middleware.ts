@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
-import { RequestProp } from '../types/request-prop';
+import { RequestProp } from '../types/request-prop.js';
 import Joi from "joi";
-import { JoiValidationMiddlewareError } from '../../error-handling/errors';
+import { JoiValidationMiddlewareError } from '../../error-handling/errors.js';
 
 export function createJoiMiddleware(
     appliedProp : RequestProp,

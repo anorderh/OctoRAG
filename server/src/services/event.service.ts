@@ -1,15 +1,15 @@
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 import { inject, injectable, Lifecycle, scoped } from "tsyringe";
-import { env } from '../env';
-import { MongoService } from './mongo.service';
-import { CollectionId } from '../utils/enums/collection-id';
-import { BoardEventLog, EventLog, User, UserEventLog } from '../data/collections';
+import { env } from '../env.js';
+import { MongoService } from './mongo.service.js';
+import { CollectionId } from '../utils/enums/collection-id.js';
+import { BoardEventLog, EventLog, User, UserEventLog } from '../data/collections/index.js';
 import { Collection, ObjectId } from 'mongodb';
-import { InstanceDeps } from '../utils/enums/instance-deps';
+import { InstanceDeps } from '../utils/enums/instance-deps.js';
 import { Logger } from 'pino';
-import { EventInput } from '../utils/interfaces/event-input';
-import { EventType } from '../utils/enums/event-type';
+import { EventInput } from '../utils/interfaces/event-input.js';
+import { EventType } from '../utils/enums/event-type.js';
 
 
 @injectable()

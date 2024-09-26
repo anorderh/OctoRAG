@@ -1,4 +1,4 @@
-import { FindType } from '../enums/find-type';
+import { FindType } from '../enums/find-type.js';
 
 export interface ScrapeOptions {
     type: FindType;

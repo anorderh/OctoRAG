@@ -1,22 +1,23 @@
 import { Request, Response } from "express";
-import { Authorize, Controller, Get, Post } from '../decorators';
+import { Authorize, Controller, Get, Post } from '../decorators/index.js';
 import { inject, singleton } from "tsyringe";
-import { ControllerBase } from '../../utils/abstract/controller';
-import { ScrapeService } from '../../services/scrape.service';
-import { Validate } from '../decorators/validate';
-import { objectId } from '../../utils/extensions/objectid-validation';
+import { ControllerBase } from '../../utils/abstract/controller.js';
+import { ScrapeService } from '../../services/scrape.service.js';
+import { Validate } from '../decorators/validate.js';
+import { objectId } from '../../utils/extensions/objectid-validation.js';
 import { Collection, ObjectId } from "mongodb";
-import { MongoService } from '../../services';
-import { Board } from '../../data/collections';
-import { CollectionId } from '../../utils/enums/collection-id';
-import { executeMongoChecks } from '../../utils/extensions/mongo-checks';
-import { isValidBoard } from '../../utils/validation/board';
-import { RagService } from "src/services/rag.service";
+import { MongoService } from '../../services/index.js';
+import { Board } from '../../data/collections/index.js';
+import { CollectionId } from '../../utils/enums/collection-id.js';
+import { executeMongoChecks } from '../../utils/extensions/mongo-checks.js';
+import { isValidBoard } from '../../utils/validation/board.js';
+import { RagService } from "src/services/rag.service.js";
 import Joi from "joi";
-import { BoardHelpers } from "src/utils/extensions/board-helpers";
-import { ScrapeResult } from "src/utils/interfaces/scrape-result";
-import { InstanceDeps } from "src/utils/enums/instance-deps";
+import { BoardHelpers } from "src/utils/extensions/board-helpers.js";
+import { ScrapeResult } from "src/utils/interfaces/scrape-result.js";
+import { InstanceDeps } from "src/utils/enums/instance-deps.js";
 import { Logger } from "pino";
+import { ScrapeEntry } from "src/scraping/models/scrape-entry.js";
 
 @Controller('/test')
 @singleton()
@@ -61,7 +62,7 @@ export class TestController extends ControllerBase {
                 this.logger.info(
                     "OUTPUT:\n\n" +
                     JSON.stringify(
-                        scrape.entries.map(e => e.body), 
+                        scrape.entries.map((e: ScrapeEntry<any>) => e.body), 
                         null, 
                         2
                     )

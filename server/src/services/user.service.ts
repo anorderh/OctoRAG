@@ -1,14 +1,14 @@
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 import { inject, injectable, Lifecycle, scoped } from "tsyringe";
-import { env } from '../env';
-import { Token } from '../utils/interfaces/token';
-import { TokenType } from '../utils/enums/token-type';
-import { httpContext } from '../routing/middleware/http-context';
-import { MongoService } from './mongo.service';
-import { CollectionId } from '../utils/enums/collection-id';
-import { User } from '../data/collections';
-import { InvalidUserError } from '../error-handling/errors';
+import { env } from '../env.js';
+import { Token } from '../utils/interfaces/token.js';
+import { TokenType } from '../utils/enums/token-type.js';
+import { httpContext } from '../routing/middleware/http-context.js';
+import { MongoService } from './mongo.service.js';
+import { CollectionId } from '../utils/enums/collection-id.js';
+import { User } from '../data/collections/index.js';
+import { InvalidUserError } from '../error-handling/errors.js';
 
 
 @injectable()

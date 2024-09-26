@@ -1,6 +1,6 @@
 import { CreateCollectionOptions, Db, ObjectId } from "mongodb";
-import { CollectionId } from '../../utils/enums/collection-id';
-import { CollectionSetup } from '../../utils/types/collection-setup';
+import { CollectionId } from '../../utils/enums/collection-id.js';
+import { CollectionSetup } from '../../utils/types/collection-setup.js';
 
 export interface User {
     _id: ObjectId;

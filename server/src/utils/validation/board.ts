@@ -1,7 +1,7 @@
-import { Board } from "../../data/collections"
-import { InvalidBoardError } from "../../error-handling/errors"
-import { httpContext } from "../../routing/middleware/http-context"
-import { MongoCheck } from "../extensions/mongo-checks"
+import { Board } from "../../data/collections/index.js"
+import { InvalidBoardError } from "../../error-handling/errors.js"
+import { httpContext } from "../../routing/middleware/http-context.js"
+import { MongoCheck } from "../extensions/mongo-checks.js"
 
 export const isValidBoard : MongoCheck<Board | null> = (board) => {
     if (board == null) {

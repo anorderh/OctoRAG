@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { ErrorParams } from "./error-params";
+import { ErrorParams } from "./error-params.js";
 
 export abstract class CustomErrorBase extends Error {
     public status: number = 500;

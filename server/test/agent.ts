@@ -1,12 +1,12 @@
 
-import { env } from "../src/env";
-import axios, { Axios, AxiosInstance, AxiosRequestConfig, AxiosResponse, CreateAxiosDefaults } from 'axios';
+import { env } from "../src/env.js";
+import axios, { Axios, AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosStatic, CreateAxiosDefaults } from 'axios';
 import { expect, assert} from "chai";
 import {wrapper} from 'axios-cookiejar-support';
 import { Cookie, CookieJar } from "tough-cookie";
 export class Agent {
     jar: CookieJar;
-    axiosInstance: AxiosInstance
+    axiosInstance: AxiosInstance | AxiosStatic
 
     constructor(config?: CreateAxiosDefaults) {
         this.jar = new CookieJar();
@@ -17,9 +17,8 @@ export class Agent {
                 jar: this.jar,
                 validateStatus: () => true, // Don't throw errors on failed requests.
                 ...(config ?? {}),
-            }
-        ))
-    }
+            })
+    )}
 
     public async register(username: string, email: string, password: string) {
         return await this.http.post(

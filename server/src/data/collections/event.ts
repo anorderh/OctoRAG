@@ -1,8 +1,8 @@
 import { CreateCollectionOptions, Db, ObjectId } from "mongodb";
-import { EventType } from '../../utils/enums/event-type';
-import { CollectionId } from '../../utils/enums/collection-id';
-import { CollectionSetup } from '../../utils/types/collection-setup';
-import { BoardEvent, UserEvent } from '../../utils/constants/event';
+import { EventType } from '../../utils/enums/event-type.js';
+import { CollectionId } from '../../utils/enums/collection-id.js';
+import { CollectionSetup } from '../../utils/types/collection-setup.js';
+import { BoardEvent, UserEvent } from '../../utils/constants/event.js';
 
 export interface EventLog {
     _id: ObjectId;

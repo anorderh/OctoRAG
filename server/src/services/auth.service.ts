@@ -1,10 +1,10 @@
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 import { injectable } from "tsyringe";
-import { env } from '../env';
-import { Token } from '../utils/interfaces/token';
-import { TokenType } from '../utils/enums/token-type';
-import { InvalidTokenTypeError } from '../error-handling/errors';
+import { env } from '../env.js';
+import { Token } from '../utils/interfaces/token.js';
+import { TokenType } from '../utils/enums/token-type.js';
+import { InvalidTokenTypeError } from '../error-handling/errors.js';
 
 
 

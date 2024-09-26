@@ -2,18 +2,17 @@ import axios from "axios";
 import * as cheerio from 'cheerio';
 import fs from 'fs';
 import { UUID } from "mongodb";
-import { ScrapeResult } from "src/utils/interfaces/scrape-result";
+import { ScrapeResult } from "src/utils/interfaces/scrape-result.js";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
-import { env } from "src/env";
-import { limitStringLength } from "src/utils/extensions/limit-str-length";
+import { env } from "src/env.js";
+import { limitStringLength } from "src/utils/extensions/limit-str-length.js";
 import { Document } from "@langchain/core/documents";
-import { FindType } from "src/utils/enums/find-type";
-import { ScrapeOption } from "../models/scrape-option";
-import { ScrapeEntry, ScrapeMetadata } from "../models/scrape-entry";
-import { ScrapeEntryFailedError } from "src/error-handling/errors";
-import { parseRegex } from "src/utils/extensions/parse-regex";
-import pdf from 'pdf-parse';
-import { downloadFile } from "src/utils/extensions/download-file";
+import { FindType } from "src/utils/enums/find-type.js";
+import { ScrapeOption } from "../models/scrape-option.js";
+import { ScrapeEntry, ScrapeMetadata } from "../models/scrape-entry.js";
+import { ScrapeEntryFailedError } from "src/error-handling/errors.js";
+import { parseRegex } from "src/utils/extensions/parse-regex.js";
+import { downloadFile } from "src/utils/extensions/download-file.js";
 import { LlamaParseReader } from "@llamaindex/cloud/reader";
 
 export interface PDFMetadata extends ScrapeMetadata {
@@ -47,9 +46,9 @@ export const PDFScrapeOption: ScrapeOption<PDFMetadata> = {
         
 
         // Read PDF into str array and delete file.
-        let data = await pdf(fs.readFileSync(pdfPath));
+        // let data = await pdf(fs.readFileSync(pdfPath));
         fs.unlinkSync(pdfPath);
-        let content = data.text;
+        let content = "";
 
         return [
             {

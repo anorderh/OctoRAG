@@ -1,5 +1,5 @@
 import path from "path";
-import { env } from "../src/env";
+import { env } from "../src/env.js";
 import { Seeder, SeederConfig } from "mongo-seeding";
 
  const config = {

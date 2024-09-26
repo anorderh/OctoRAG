@@ -4,7 +4,7 @@ import { env } from './env.js';
 import { AzureBlobService } from "./services/azure-blob.service..js";
 import { InjectionToken, container, injectable } from "tsyringe";
 import { ControllerBase } from './utils/abstract/controller.js';
-import { AuthController, TestController, UserController } from './routing/controllers';
+import { AuthController, TestController, UserController } from './routing/controllers/index.js';
 import cookieParser from "cookie-parser";
 import { useHttpContext } from './routing/middleware/http-context.js';
 import morgan from "morgan";

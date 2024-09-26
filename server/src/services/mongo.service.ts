@@ -1,13 +1,13 @@
 import { Db, MongoClient } from "mongodb";
-import { env } from '../env';
+import { env } from '../env.js';
 import { container, inject, singleton } from "tsyringe"
-import { createBoardCollection, createEventLogCollection, createUserCollection } from '../data/collections';
-import { InstanceDeps } from '../utils/enums/instance-deps';
+import { createBoardCollection, createEventLogCollection, createUserCollection } from '../data/collections/index.js';
+import { InstanceDeps } from '../utils/enums/instance-deps.js';
 import pino, { Logger, P } from "pino";
-import { AsyncService } from '../utils/abstract/async-service';
-import { CollectionId } from '../utils/enums/collection-id';
-import { CollectionSetup } from '../utils/types/collection-setup';
-import { EnsureDep } from '../routing/decorators/ensure-dep';
+import { AsyncService } from '../utils/abstract/async-service.js';
+import { CollectionId } from '../utils/enums/collection-id.js';
+import { CollectionSetup } from '../utils/types/collection-setup.js';
+import { EnsureDep } from '../routing/decorators/ensure-dep.js';
 
 @singleton()
 @EnsureDep(InstanceDeps.Logger)

@@ -1,10 +1,10 @@
 import { ObjectId } from "mongodb";
 import { container } from "tsyringe";
-import { AuthService } from "../../../src/services";
-import { dummyData } from "../../data";
-import { PASSWORD_HASH_CONSTANT } from "../../constants";
+import { AuthService } from "../../../src/services/index.js";
+import { dummyData } from "../../data.js";
+import { PASSWORD_HASH_CONSTANT } from "../../constants.js";
 
-export = [
+export default [
     {
         _id: dummyData.users.A.id,
         username: "User A",

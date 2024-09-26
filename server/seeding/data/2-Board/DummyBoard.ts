@@ -1,10 +1,10 @@
 import { ObjectId } from "mongodb";
 import { container } from "tsyringe";
-import { AuthService } from "../../../src/services";
-import { dummyData } from "../../data";
-import { FindType } from "../../../src/utils/enums/find-type";
+import { AuthService } from "../../../src/services/index.js";
+import { dummyData } from "../../data.js";
+import { FindType } from "../../../src/utils/enums/find-type.js";
 
-export = [
+export default [
     {
         _id: dummyData.boards.A.id,
         title: "Board A",

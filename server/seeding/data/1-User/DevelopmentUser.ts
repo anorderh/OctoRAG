@@ -1,8 +1,8 @@
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
-import { data } from "../../data"
+import { data } from "../../data.js"
 
-export = {
+export default {
     _id: data.users.development.id,
     username: "Development User",
     credentials: {

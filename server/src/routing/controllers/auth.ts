@@ -1,20 +1,20 @@
 import { inject, injectable, singleton } from "tsyringe";
-import { AuthService, MongoService, UserService } from '../../services';
-import { Get, Post, Delete, Patch, Controller, Middleware, Authorize } from '../decorators';
+import { AuthService, MongoService, UserService } from '../../services/index.js';
+import { Get, Post, Delete, Patch, Controller, Middleware, Authorize } from '../decorators/index.js';
 import { Request, Response, Router } from "express";
-import { User } from '../../data/collections';
-import { ControllerBase } from '../../utils/abstract/controller';
-import { env } from '../../env';
-import { Token } from '../../utils/interfaces/token';
-import { TokenType } from '../../utils/enums/token-type';
-import { Blanket } from '../decorators/blanket';
+import { User } from '../../data/collections/index.js';
+import { ControllerBase } from '../../utils/abstract/controller.js';
+import { env } from '../../env.js';
+import { Token } from '../../utils/interfaces/token.js';
+import { TokenType } from '../../utils/enums/token-type.js';
+import { Blanket } from '../decorators/blanket.js';
 import morgan from "morgan";
 import { validateHeaderName } from "http";
 import Joi from "joi";
-import { Validate } from '../decorators/validate';
-import { CollectionId } from '../../utils/enums/collection-id';
+import { Validate } from '../decorators/validate.js';
+import { CollectionId } from '../../utils/enums/collection-id.js';
 import { Collection, ObjectId } from "mongodb";
-import { TokenPayload } from '../../utils/enums/token-payload';
+import { TokenPayload } from '../../utils/enums/token-payload.js';
 
 @Controller('/auth')
 @singleton()

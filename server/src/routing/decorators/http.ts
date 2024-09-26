@@ -1,5 +1,5 @@
-import { HttpVerb } from '../../utils/enums/http-verbs';
-import { RouteInput } from '../../utils/interfaces/route-input';
+import { HttpVerb } from '../../utils/enums/http-verbs.js';
+import { RouteInput } from '../../utils/interfaces/route-input.js';
 
 export function Get(path: string) {
     return (target: any, propertyKey: string): void => {

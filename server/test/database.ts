@@ -1,7 +1,7 @@
 import { container } from "tsyringe";
-import { createUserCollection, User } from "../src/data/collections"
-import { MongoService } from "../src/services"
-import { CollectionId } from "../src/utils/enums/collection-id";
+import { createUserCollection, User } from "../src/data/collections/index.js"
+import { MongoService } from "../src/services/index.js"
+import { CollectionId } from "../src/utils/enums/collection-id.js";
 
 
 export class Database {

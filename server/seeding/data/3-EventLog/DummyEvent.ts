@@ -1,9 +1,9 @@
-import { BoardEvent, UserEvent } from "../../../src/utils/constants/event";
-import { EventType } from "../../../src/utils/enums/event-type";
-import { dummyData } from "../../data";
+import { BoardEvent, UserEvent } from "../../../src/utils/constants/event.js";
+import { EventType } from "../../../src/utils/enums/event-type.js";
+import { dummyData } from "../../data.js";
 
 
-export = [
+export default [
     {
         _id: dummyData.events.A.id,
         type: EventType.User,

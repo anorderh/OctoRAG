@@ -1,20 +1,19 @@
 import axios from "axios";
 import * as cheerio from 'cheerio';
 import { UUID } from "mongodb";
-import { ScrapeResult } from "src/utils/interfaces/scrape-result";
+import { ScrapeResult } from "src/utils/interfaces/scrape-result.js";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
-import { env } from "src/env";
-import { limitStringLength } from "src/utils/extensions/limit-str-length";
+import { env } from "src/env.js";
+import { limitStringLength } from "src/utils/extensions/limit-str-length.js";
 import { Document } from "@langchain/core/documents";
-import { FindType } from "src/utils/enums/find-type";
-import { ScrapeOption } from "../models/scrape-option";
-import { ScrapeEntry, ScrapeMetadata } from "../models/scrape-entry";
-import { ScrapeEntryFailedError } from "src/error-handling/errors";
+import { FindType } from "src/utils/enums/find-type.js";
+import { ScrapeOption } from "../models/scrape-option.js";
+import { ScrapeEntry, ScrapeMetadata } from "../models/scrape-entry.js";
+import { ScrapeEntryFailedError } from "src/error-handling/errors.js";
 import { Builder, Browser, By, WebDriver} from "selenium-webdriver";
-import { InstanceDeps } from "src/utils/enums/instance-deps";
+import { InstanceDeps } from "src/utils/enums/instance-deps.js";
 import { container } from "tsyringe";
-import { tryFindElement } from "src/utils/extensions/webdriver-attempt";
-import { P } from "pino";
+import { tryFindElement } from "src/utils/extensions/webdriver-attempt.js";
 
 export interface WebpageMetadata extends ScrapeMetadata {
     link: string,

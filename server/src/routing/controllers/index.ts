@@ -1,3 +1,3 @@
-export * from './auth';
-export * from './test';
-export * from './user';
+export * from './auth.js';
+export * from './test.js';
+export * from './user.js';

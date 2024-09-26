@@ -1,24 +1,24 @@
 import axios from "axios";
 import * as cheerio from 'cheerio';
 import { UUID } from "mongodb";
-import { InvalidFindLinkFormatError, ScrapeEntryFailedError } from "src/error-handling/errors";
-import { downloadFile } from "src/utils/extensions/download-file";
-import { env } from "src/env";
+import { InvalidFindLinkFormatError, ScrapeEntryFailedError } from "src/error-handling/errors.js";
+import { downloadFile } from "src/utils/extensions/download-file.js";
+import { env } from "src/env.js";
 import AdmZip from "adm-zip";
 import * as fs from 'fs';
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
-import { fileExtToTextSplitterLang } from "src/utils/extensions/file-ext-to-text-splitter-lang";
+import { fileExtToTextSplitterLang } from "src/utils/extensions/file-ext-to-text-splitter-lang.js";
 import { Document } from "@langchain/core/documents";
 import path from "path";
 import { decode } from "html-entities";
 import Innertube from "youtubei.js/agnostic";
 import { container, inject } from "tsyringe";
-import { limitStringLength } from "src/utils/extensions/limit-str-length";
+import { limitStringLength } from "src/utils/extensions/limit-str-length.js";
 import { YoutubeTranscript } from "youtube-transcript";
-import { FindType } from "src/utils/enums/find-type";
-import { InstanceDeps } from "src/utils/enums/instance-deps";
-import { ScrapeOption } from "../models/scrape-option";
-import { ScrapeEntry, ScrapeMetadata } from "../models/scrape-entry";
+import { FindType } from "src/utils/enums/find-type.js";
+import { InstanceDeps } from "src/utils/enums/instance-deps.js";
+import { ScrapeOption } from "../models/scrape-option.js";
+import { ScrapeEntry, ScrapeMetadata } from "../models/scrape-entry.js";
 
 export interface YoutubeTranscriptMetadata extends ScrapeMetadata {
     title: string;

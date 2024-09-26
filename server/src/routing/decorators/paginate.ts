@@ -1,6 +1,6 @@
-import { Middleware } from '../../utils/types/middleware';
-import { authorize } from '../middleware/authorize';
-import { paginate } from '../middleware/paginate';
+import { Middleware } from '../../utils/types/middleware.js';
+import { authorize } from '../middleware/authorize.js';
+import { paginate } from '../middleware/paginate.js';
 
 export function Paginate() {
     return (target: any, propertyKey: string): void => {

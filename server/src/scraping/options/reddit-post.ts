@@ -1,23 +1,22 @@
 import axios from "axios";
 import * as cheerio from 'cheerio';
 import { UUID } from "mongodb";
-import { InvalidFindLinkFormatError, ScrapeEntryFailedError } from "src/error-handling/errors";
-import { downloadFile } from "src/utils/extensions/download-file";
-import { env } from "src/env";
+import { InvalidFindLinkFormatError, ScrapeEntryFailedError } from "src/error-handling/errors.js";
+import { downloadFile } from "src/utils/extensions/download-file.js";
+import { env } from "src/env.js";
 import AdmZip from "adm-zip";
 import * as fs from 'fs';
 import { RecursiveCharacterTextSplitter, RecursiveCharacterTextSplitterParams } from "langchain/text_splitter";
-import { fileExtToTextSplitterLang } from "src/utils/extensions/file-ext-to-text-splitter-lang";
+import { fileExtToTextSplitterLang } from "src/utils/extensions/file-ext-to-text-splitter-lang.js";
 import { Document } from "@langchain/core/documents";
 import path from "path";
-import { InstanceDeps } from "src/utils/enums/instance-deps";
+import { InstanceDeps } from "src/utils/enums/instance-deps.js";
 import { container } from "tsyringe";
-import { Octokit } from "@octokit/rest";
-import { FindType } from "src/utils/enums/find-type";
-import { ScrapeOption } from "../models/scrape-option";
-import { ScrapeEntry, ScrapeMetadata } from "../models/scrape-entry";
+import { FindType } from "src/utils/enums/find-type.js";
+import { ScrapeOption } from "../models/scrape-option.js";
+import { ScrapeEntry, ScrapeMetadata } from "../models/scrape-entry.js";
 import Snoowrap from "snoowrap";
-import { parseRegex } from "src/utils/extensions/parse-regex";
+import { parseRegex } from "src/utils/extensions/parse-regex.js";
 
 export interface RedditPostMetadata extends ScrapeMetadata {
     link: string;

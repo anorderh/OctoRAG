@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { Route } from '../types/route';
+import { Route } from '../types/route.js';
 
 export function wrapExpressPromise(method: Route) {
     return (req: Request, res: Response, next: NextFunction) => {

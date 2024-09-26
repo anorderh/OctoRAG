@@ -1,5 +1,5 @@
-import { ChunkType } from "src/utils/enums/chunk-type";
-import { FindType } from "src/utils/enums/find-type";
+import { ChunkType } from "src/utils/enums/chunk-type.js";
+import { FindType } from "src/utils/enums/find-type.js";
 
 export interface ScrapeMetadata {
     type: FindType

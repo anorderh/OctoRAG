@@ -1,6 +1,6 @@
 import { ObjectId } from "mongodb";
-import { Relation } from '../../collections';
-import { FindType } from '../../../utils/enums/find-type';
+import { Relation } from '../../collections/index.js';
+import { FindType } from '../../../utils/enums/find-type.js';
 
 export interface FindResponse {
     _id: ObjectId;

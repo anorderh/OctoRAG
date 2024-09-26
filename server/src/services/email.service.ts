@@ -1,9 +1,9 @@
 import { inject, injectable, singleton } from "tsyringe";
 import { Transporter } from "nodemailer";
 import * as nodemailer from "nodemailer";
-import { env } from '../env';
-import { Email } from '../utils/interfaces/email';
-import { InstanceDeps } from '../utils/enums/instance-deps';
+import { env } from '../env.js';
+import { Email } from '../utils/interfaces/email.js';
+import { InstanceDeps } from '../utils/enums/instance-deps.js';
 import { Logger } from "pino";
 
 @singleton()

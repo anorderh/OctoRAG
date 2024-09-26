@@ -1,4 +1,4 @@
-import { Board } from "src/data/collections";
+import { Board } from "src/data/collections/board.js";
 
 export class BoardHelpers {
     public static getMostRecentVersion(board: Board) {
