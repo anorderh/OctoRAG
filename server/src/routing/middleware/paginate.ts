@@ -1,17 +1,16 @@
 import { NextFunction } from "express";
-import { Middleware } from "src/utils/types/middleware.js";
 import { Request, Response } from "express";
-import { Pagination } from "src/utils/interfaces/pagination.js";
-import { env } from "src/env.js";
 import { PaginationLimitExceededError } from "src/error-handling/errors.js";
 import { httpContext } from "./http-context.js";
-import { InstanceDeps } from "src/utils/enums/instance-deps.js";
 import { container } from "tsyringe";
 import { Logger } from "pino";
+import { Middleware } from "../utils/types/middleware.js";
+import { DependencyInjectionToken } from "src/dependencies/utils/constants/dependency-injection-token.js";
+import { env } from "src/shared/utils/constants/env.js";
+import { Pagination } from "../utils/interfaces/pagination.js";
+import { App } from "src/App.js";
 
-export const paginate: Middleware = async function (req: Request, res: Response, next: NextFunction) {
-    const logger = container.resolve<Logger>(InstanceDeps.Logger);
-    
+export const paginate: Middleware = async function (req: Request, res: Response, next: NextFunction) {    
     try {
         let pag = {
             skip: Number(req.query?.skip ?? env.defaults.pagination.skip),
@@ -29,7 +28,7 @@ export const paginate: Middleware = async function (req: Request, res: Response,
             return;
         }
 
-        logger.error({err: error});
+        App.logger.error({err: error});
         res.status(500).send();
     }
 }

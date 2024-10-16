@@ -1,20 +1,24 @@
 import { inject, injectable, singleton } from "tsyringe";
-import { AuthService, MongoService, UserService } from '../../services/index.js';
+
 import { Get, Post, Delete, Patch, Controller, Middleware, Authorize } from '../decorators/index.js';
 import { Request, Response, Router } from "express";
-import { User } from '../../data/collections/index.js';
-import { ControllerBase } from '../../utils/abstract/controller.js';
-import { env } from '../../env.js';
-import { Token } from '../../utils/interfaces/token.js';
-import { TokenType } from '../../utils/enums/token-type.js';
 import { Blanket } from '../decorators/blanket.js';
 import morgan from "morgan";
 import { validateHeaderName } from "http";
 import Joi from "joi";
 import { Validate } from '../decorators/validate.js';
-import { CollectionId } from '../../utils/enums/collection-id.js';
 import { Collection, ObjectId } from "mongodb";
-import { TokenPayload } from '../../utils/enums/token-payload.js';
+import { UserService } from "src/services/data/user.service.js";
+import { MongoService } from "src/services/data/mongo.service.js";
+import { User } from "src/data/collections/user.collection.js";
+import { ControllerBase } from "../utils/abstract/controller.abstract.js";
+import { CollectionId } from "src/data/utils/constants/collection-id.js";
+import { TokenType } from "src/shared/utils/constants/token-type.js";
+import { TokenPayload } from "src/shared/utils/constants/token-payload.js";
+import { Token } from "src/shared/utils/interfaces/token.js";
+import { TokenUtility } from "src/shared/utils/classes/token.util.js";
+import { env } from "src/shared/utils/constants/env.js";
+import { EnsureDep } from "../decorators/ensure-dep.js";
 
 @Controller('/auth')
 @singleton()
@@ -22,7 +26,6 @@ export class AuthController extends ControllerBase {
     userCollection: Collection<User>;
     
     constructor(
-        @inject(AuthService) private authService: AuthService,
         @inject(UserService) private userService: UserService,
         @inject(MongoService) private mongo: MongoService,
     ) { 
@@ -57,7 +60,7 @@ export class AuthController extends ControllerBase {
             username: req.body.username,
             credentials: {
                 email: req.body.email,
-                password: await this.authService.hash(req.body.password)
+                password: await TokenUtility.hash(req.body.password)
             },
             pfpPath: "",
             desc: "",
@@ -85,13 +88,13 @@ export class AuthController extends ControllerBase {
         if (user == null) {
             res.status(409).send("Invalid username.")
             return;
-        } else if (!await this.authService.validate(req.body.password, user.credentials.password)) {
+        } else if (!await TokenUtility.validate(req.body.password, user.credentials.password)) {
             res.status(409).send("Invalid password.")
             return;
         }
 
         // Generate refresh token for prolonged access.
-        const refreshToken = this.authService.serialize({
+        const refreshToken = TokenUtility.serialize({
             type: TokenType.Refresh, 
             userId: user._id
         });
@@ -101,7 +104,7 @@ export class AuthController extends ControllerBase {
         });
         
         // Generate access token for immediate access.
-        const accessToken = this.authService.serialize({
+        const accessToken = TokenUtility.serialize({
             type: TokenType.Access, 
             userId: user._id
         });
@@ -123,7 +126,7 @@ export class AuthController extends ControllerBase {
             res.status(401).send("Missing refresh token.");
             return;
         }
-        let token = this.authService.deserialize(TokenType.Refresh, currRefreshToken);
+        let token = TokenUtility.deserialize(TokenType.Refresh, currRefreshToken);
         if (!token) {
             res.status(401).send("Invalid refresh token");
             return;
@@ -137,7 +140,7 @@ export class AuthController extends ControllerBase {
         }
 
         // Generate new access token.
-        let newAccessToken = this.authService.serialize({
+        let newAccessToken = TokenUtility.serialize({
             type: TokenType.Access, 
             userId: user._id
         });
@@ -166,7 +169,7 @@ export class AuthController extends ControllerBase {
                 userId: user._id,
                 payload: TokenPayload.ChangePassword
             } as Token;
-            credentialHash = this.authService.serialize(credentialToken);
+            credentialHash = TokenUtility.serialize(credentialToken);
 
             // TODO - Send email.
         }
@@ -187,7 +190,7 @@ export class AuthController extends ControllerBase {
     public async confirmPasswordChange(req: Request, res: Response) {
         let {hash, newPassword} = req.body;
 
-        let token = this.authService.deserialize(TokenType.Verify, hash);
+        let token = TokenUtility.deserialize(TokenType.Verify, hash);
         let user = await this.userCollection.findOne({
             _id: new ObjectId(token.userId)
         })
@@ -199,7 +202,7 @@ export class AuthController extends ControllerBase {
             return;
         }
 
-        let newPasswordHash = await this.authService.hash(newPassword);
+        let newPasswordHash = await TokenUtility.hash(newPassword);
         await this.userCollection.updateOne({
             _id: new ObjectId(token.userId)
         }, {
@@ -219,7 +222,7 @@ export class AuthController extends ControllerBase {
             userId: self._id,
             payload: TokenPayload.ChangeEmail
         } as Token;
-        let credentialHash = this.authService.serialize(credentialToken);
+        let credentialHash = TokenUtility.serialize(credentialToken);
         // TODO - Send email.
 
         res.status(200).send(
@@ -240,7 +243,7 @@ export class AuthController extends ControllerBase {
         let {hash, newEmail} = req.body;
 
         let user = await this.userService.getSelf();
-        let token = this.authService.deserialize(TokenType.Verify, hash);
+        let token = TokenUtility.deserialize(TokenType.Verify, hash);
         if (
             token.payload != TokenPayload.ChangeEmail
             || user._id != token.userId
@@ -268,7 +271,7 @@ export class AuthController extends ControllerBase {
             userId: self._id,
             payload: TokenPayload.DeleteAccount
         } as Token;
-        let credentialHash = this.authService.serialize(credentialToken);
+        let credentialHash = TokenUtility.serialize(credentialToken);
         // TODO - Send email.
 
         res.status(200).send(
@@ -288,7 +291,7 @@ export class AuthController extends ControllerBase {
         let {hash} = req.body;
 
         let user = await this.userService.getSelf();
-        let token = this.authService.deserialize(TokenType.Verify, hash);
+        let token = TokenUtility.deserialize(TokenType.Verify, hash);
         if (
             token.payload != TokenPayload.DeleteAccount
             || user._id != token.userId

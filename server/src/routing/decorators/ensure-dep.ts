@@ -1,6 +1,6 @@
 import { container } from "tsyringe";
-import { instancedDependencies } from '../../dependencies.js';
 import { UnsupportedError } from '../../error-handling/errors.js';
+import { dependencyMap } from "src/dependencies/dependency-map.js";
 
 export function EnsureDep(input: string | string[]): ClassDecorator {
     return (target: any) => {
@@ -10,7 +10,7 @@ export function EnsureDep(input: string | string[]): ClassDecorator {
 
         for (let curr of input) {
             // Confirm handler exists.
-            let handler = instancedDependencies[curr];
+            let handler = dependencyMap[curr];
             if (handler == null) {
                 throw new Error(`No registration handler is associated with token "${handler}"`)
             }

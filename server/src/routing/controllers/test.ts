@@ -1,23 +1,23 @@
 import { Request, Response } from "express";
 import { Authorize, Controller, Get, Post } from '../decorators/index.js';
 import { inject, singleton } from "tsyringe";
-import { ControllerBase } from '../../utils/abstract/controller.js';
-import { ScrapeService } from '../../services/scrape.service.js';
+import { ControllerBase } from "../utils/abstract/controller.abstract.js";
 import { Validate } from '../decorators/validate.js';
-import { objectId } from '../../utils/extensions/objectid-validation.js';
+import { objectId } from "../utils/constants/objectid-validation.js";
 import { Collection, ObjectId } from "mongodb";
-import { MongoService } from '../../services/index.js';
-import { Board } from '../../data/collections/index.js';
-import { CollectionId } from '../../utils/enums/collection-id.js';
-import { executeMongoChecks } from '../../utils/extensions/mongo-checks.js';
-import { isValidBoard } from '../../utils/validation/board.js';
-import { RagService } from "src/services/rag.service.js";
+import { MongoService } from "src/services/data/mongo.service.js";
+import { Board } from "src/data/collections/board.collection.js";
+import { CollectionId } from "src/data/utils/constants/collection-id.js";
+import { executeMongoChecks } from "src/shared/utils/helpers/mongo-checks.js";
+import { isValidBoard } from "src/data/validation/boards/is-valid-board.js";
+import { RagService } from "src/services/ai/rag.service.js";
 import Joi from "joi";
-import { BoardHelpers } from "src/utils/extensions/board-helpers.js";
-import { ScrapeResult } from "src/utils/interfaces/scrape-result.js";
-import { InstanceDeps } from "src/utils/enums/instance-deps.js";
+import { BoardUtility } from "src/shared/utils/classes/board.util.js";
+import { DependencyInjectionToken } from "src/dependencies/utils/constants/dependency-injection-token.js";
 import { Logger } from "pino";
-import { ScrapeEntry } from "src/scraping/models/scrape-entry.js";
+import { ScrapeEntry } from "src/scraping/utils/classes/scrape-entry.js";
+import { App } from "src/App.js";
+import { HostScrape } from "src/scraping/host-scrape.js";
 
 @Controller('/test')
 @singleton()
@@ -26,9 +26,7 @@ export class TestController extends ControllerBase {
 
     constructor(
         @inject(MongoService) private mongo: MongoService,
-        @inject(ScrapeService) private scrapeService: ScrapeService,
         @inject(RagService) private rag: RagService,
-        @inject(InstanceDeps.Logger) private logger: Logger
     ) {
         super();
         this.boardCollection = this.mongo.db.collection(CollectionId.Board);
@@ -54,15 +52,16 @@ export class TestController extends ControllerBase {
             isValidBoard
         ]))
 
-        let mostRecentVersion = BoardHelpers.getMostRecentVersion(board);
+        let mostRecentVersion = BoardUtility.getMostRecentVersion(board);
         for(var f of mostRecentVersion.finds) {
-            let scrape = await this.scrapeService.scrape(f);
+            let scrape = new HostScrape(f);
+            let entries = await scrape.scrape();
 
             if (scrape != null) {
-                this.logger.info(
+                App.logger.info(
                     "OUTPUT:\n\n" +
                     JSON.stringify(
-                        scrape.entries.map((e: ScrapeEntry<any>) => e.body), 
+                        entries.map((e: ScrapeEntry<any>) => e.body), 
                         null, 
                         2
                     )

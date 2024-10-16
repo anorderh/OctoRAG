@@ -1,5 +1,5 @@
-import { RouteInput } from '../../utils/interfaces/route-input.js';
-import { Middleware } from '../../utils/types/middleware.js';
+import { RouteInput } from '../utils/interfaces/route-input.js';
+import { Middleware } from '../utils/types/middleware.js';
 
 /*
     Apply middleware onto a controller's routes.

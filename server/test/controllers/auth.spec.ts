@@ -1,7 +1,7 @@
 
 
 import { Agent } from "../agent.js";
-import { env } from "../../src/env.js";
+import { env } from "src/shared/utils/constants/env.js";
 import { expect } from "chai";
 import cookie from 'cookie';
 import async from 'async';

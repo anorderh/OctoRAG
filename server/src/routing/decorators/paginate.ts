@@ -1,4 +1,4 @@
-import { Middleware } from '../../utils/types/middleware.js';
+import { Middleware } from '../utils/types/middleware.js';
 import { authorize } from '../middleware/authorize.js';
 import { paginate } from '../middleware/paginate.js';
 

@@ -1,0 +1,1 @@
+export type MongoCheck<T> = (input: T) => void;

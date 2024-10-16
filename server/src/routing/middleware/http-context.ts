@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from "async_hooks";
 import { NextFunction, Request } from "express";
-import { HttpContext } from '../../utils/interfaces/http-context.js';
+import { HttpContext } from "../utils/interfaces/http-context";
 
 export const storage = new AsyncLocalStorage<HttpContext>();
 export const httpContext = () : HttpContext => storage.getStore()!;

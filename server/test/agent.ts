@@ -1,5 +1,5 @@
 
-import { env } from "../src/env.js";
+import { env } from 'src/shared/utils/constants/env';
 import axios, { Axios, AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosStatic, CreateAxiosDefaults } from 'axios';
 import { expect, assert} from "chai";
 import {wrapper} from 'axios-cookiejar-support';

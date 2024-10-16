@@ -1,20 +1,20 @@
 import { NextFunction, Request, Response } from "express";
-import { Middleware } from '../../utils/types/middleware.js';
-import { AuthService, MongoService } from '../../services/index.js';
 import { container } from "tsyringe";
-import { TokenType } from '../../utils/enums/token-type.js';
 import jwt from 'jsonwebtoken';
-import { UserService } from '../../services/user.service.js';
+import { UserService } from '../../services/data/user.service.js';
 import { httpContext } from './http-context.js';
-import { CollectionId } from '../../utils/enums/collection-id.js';
-import { User } from '../../data/collections/index.js';
-import { InstanceDeps } from '../../utils/enums/instance-deps.js';
 import { Logger } from "pino";
 import { ObjectId } from "mongodb";
+import { Middleware } from "../utils/types/middleware.js";
+import { DependencyInjectionToken } from "src/dependencies/utils/constants/dependency-injection-token.js";
+import { MongoService } from "src/services/data/mongo.service.js";
+import { CollectionId } from "src/data/utils/constants/collection-id.js";
+import { User } from "src/data/collections/user.collection.js";
+import { TokenUtility } from "src/shared/utils/classes/token.util.js";
+import { TokenType } from "src/shared/utils/constants/token-type.js";
+import { App } from "src/App.js";
 
 export const authorize: Middleware = async function (req: Request, res: Response, next: NextFunction) {
-    const authService = container.resolve(AuthService);
-    const logger = container.resolve<Logger>(InstanceDeps.Logger);
     const mongoService = container.resolve(MongoService);
     const userCollection = mongoService.db.collection<User>(CollectionId.User);
     
@@ -26,7 +26,7 @@ export const authorize: Middleware = async function (req: Request, res: Response
             return;
         };
 
-        const token = authService.deserialize(TokenType.Access, hashedToken);
+        const token = TokenUtility.deserialize(TokenType.Access, hashedToken);
         if (!token || token.type != TokenType.Access) {
             res.status(401).send("Invalid access token");
             return;
@@ -51,7 +51,7 @@ export const authorize: Middleware = async function (req: Request, res: Response
             return;
         }
 
-        logger.error({err: error});
+        App.logger.error({err: error});
         res.status(500).send();
     }
 }

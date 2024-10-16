@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 dotenv.config({ path: 'server/test/fixtures.ts' })
 import { App } from "../src/App.js";
 import { Server } from "http";
-import { MongoService } from "../src/services/index.js";
+import { MongoService } from "src/services/data/mongo.service.js";
 import { container } from "tsyringe";
 
 exports.mochaGlobalSetup = async function () {

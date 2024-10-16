@@ -36,7 +36,9 @@
             "runtimeExecutable": "npx",
             "runtimeArgs": [
                 "tsx",
-                "--inspect"
+                "--inspect",
+                "--tsconfig",
+                "${workspaceFolder}/server/tsconfig.json"
             ],
             "args": ["${workspaceFolder}/server/seeding/seed.ts"],
             "sourceMaps": true,

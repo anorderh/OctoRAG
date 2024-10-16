@@ -1,22 +1,24 @@
 import { Request, Response } from "express";
 import { Authorize, Controller, Get, Patch, Post } from '../decorators/index.js';
 import { inject, singleton } from "tsyringe";
-import { ControllerBase } from '../../utils/abstract/controller.js';
-import { UserService } from '../../services/user.service.js';
-import { AuthService, MongoService } from '../../services/index.js';
+import { UserService } from '../../services/data/user.service.js';
 import { Blanket } from '../decorators/blanket.js';
 import morgan from "morgan";
 import { Collection, RemoveUserOptions } from "mongodb";
 import Joi from "joi";
 import { Validate } from '../decorators/validate.js';
-import { Board, EventLog, User } from '../../data/collections/index.js';
-import { CollectionId } from '../../utils/enums/collection-id.js';
-import { UserResponse } from '../../data/models/response/user.js';
-import { BoardResponse } from '../../data/models/response/board.js';
 import { httpContext } from '../middleware/http-context.js';
-import { EditProfileRequest } from '../../data/models/request/edit-profile.js';
-import { filterNulls } from '../../utils/extensions/filter-nulls.js';
 import { Paginate } from "../decorators/paginate.js";
+import { ControllerBase } from "../utils/abstract/controller.abstract.js";
+import { User } from "src/data/collections/user.collection.js";
+import { EventLog } from "src/data/collections/event.collection.js";
+import { Board } from "src/data/collections/board.collection.js";
+import { MongoService } from "src/services/data/mongo.service.js";
+import { CollectionId } from "src/data/utils/constants/collection-id.js";
+import { UserResponse } from "./utils/interfaces/responses/user.response.js";
+import { EditProfileRequest } from "./utils/interfaces/requests/edit-profile.request.js";
+import { filterNulls } from "src/shared/utils/helpers/filter-nulls.js";
+import { BoardResponse } from "./utils/interfaces/responses/board.response.js";
 
 
 @Controller('/user')

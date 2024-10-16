@@ -2,7 +2,7 @@ import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 import { data } from "../../data.js"
 
-export default {
+export const developmentUser = {
     _id: data.users.development.id,
     username: "Development User",
     credentials: {
@@ -11,8 +11,8 @@ export default {
     },
     pfpPath: "fucker",
     desc: "This is the development account for testing.",
-    followers: [],
-    boardsFollowed: [],
-    usersFollowed: [],
-    notifications: []
+    followers: [] as any[],
+    boardsFollowed: [] as any[],
+    usersFollowed: [] as any[],
+    notifications: [] as any[]
 }

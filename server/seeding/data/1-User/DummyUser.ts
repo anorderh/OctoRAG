@@ -1,10 +1,9 @@
 import { ObjectId } from "mongodb";
 import { container } from "tsyringe";
-import { AuthService } from "../../../src/services/index.js";
-import { dummyData } from "../../data.js";
-import { PASSWORD_HASH_CONSTANT } from "../../constants.js";
+import { dummyData } from "seeding/data";
+import { PASSWORD_HASH_CONSTANT } from "seeding/constants.js";
 
-export default [
+export const dummyUsers = [
     {
         _id: dummyData.users.A.id,
         username: "User A",
@@ -16,8 +15,8 @@ export default [
         desc: "User A sample acc.",
         followers: [dummyData.users.B.id],
         usersFollowed: [dummyData.users.C.id],
-        boardsFollowed: [],
-        notifications: []
+        boardsFollowed: [] as any[],
+        notifications: [] as any[]
     },
     {
         _id: dummyData.users.B.id,
@@ -30,8 +29,8 @@ export default [
         desc: "User B sample acc.",
         followers: [dummyData.users.C.id],
         usersFollowed: [dummyData.users.C.id, dummyData.users.A.id],
-        boardsFollowed: [],
-        notifications: []
+        boardsFollowed: [] as any[],
+        notifications: [] as any[]
     },
     {
         _id: dummyData.users.C.id,
@@ -44,7 +43,7 @@ export default [
         desc: "User C sample acc.",
         followers: [dummyData.users.A.id, dummyData.users.B.id],
         usersFollowed: [dummyData.users.B.id],
-        boardsFollowed: [],
-        notifications: []
+        boardsFollowed: [] as any[],
+        notifications: [] as any[]
     }
 ]

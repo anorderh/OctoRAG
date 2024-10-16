@@ -1,6 +1,6 @@
-import { CustomErrorBase } from './error.base.js';
-import { env } from '../env.js';
-import { ErrorParams } from './error-params.js';
+import { CustomErrorBase } from './utils/abstract/error.base.js';
+import { env } from 'src/shared/utils/constants/env.js';
+import { ErrorParams } from './utils/types/error-params.js';
 
 export class InvalidTokenTypeError extends CustomErrorBase {
     constructor(params?: ErrorParams) {

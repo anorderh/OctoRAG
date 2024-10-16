@@ -1,0 +1,33 @@
+To-Do List
+GOAL: Improve `rag-service` pipeline for AI processing
+    * Possibly 3 chunks is too small? Use multiple instead
+    * Look into better ways to improve RAG vector associationtion
+    * Look into options into how diff embedding/LLM models could be specified per request and/or client session
+    * Reranker
+        Explanation: https://www.pinecone.io/learn/series/rag/rerankers/
+        Use Cohere Reranker - https://cohere.com/rerank
+            Voyage AI? voyageai.com/?ref=anthropic
+        Use Cohere Typescript SDK - https://github.com/cohere-ai/cohere-typescript
+        Claude Embeddings explanatiuon: https://docs.anthropic.com/en/docs/build-with-claude/embeddings
+        Claude Contextual retrieval: https://www.anthropic.com/news/contextual-retrieval
+        Claude Contextual retrivel cookbook: https://github.com/anthropics/anthropic-cookbook/blob/main/skills/contextual-embeddings/guide.ipynb
+        Elasticsearch Typescript - https://www.elastic.co/guide/en/elasticsearch/client/javascript-api/current/typescript.html
+        BM25 Algo in node.js - https://github.com/langchain-ai/langchainjs/blob/main/libs/langchain-community/src/utils/%40furkantoprak/bm25/BM25.ts#L56
+        BM25 Encoder in python Pinecone - https://github.com/pinecone-io/pinecone-text/blob/main/pinecone_text/sparse/bm25_encoder.py#L255
+        For node.js encoder, use English stopwords & punctuation token filtering!
+
+FUTURE:
+    1. Copy repo into new project 'raggly', simplified version focusing on managing RAG bots
+    2. Make design document on how...
+        * Accounts will be managed
+        * How clients will be managed
+        * How Mongo, Pinecone, and Azure File Storage will be incorporated
+        * How local file uploads and parsing will be handled
+    3. Reduce server codestack to accommodate simplified design
+    4. Move onto client impl
+    5. Calculate pricing details related to...
+        * How does Pinecone, OpenAI, Azure pricing scale
+        * How large should users' webscrapes be allowed
+        * How large should users local files be allowed
+    5. Stripe integration
+    6. Work on Azure deployment

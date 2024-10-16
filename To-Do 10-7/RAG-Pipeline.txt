@@ -1,0 +1,9 @@
+How to make an efficient RAG pipeline
+
+Notes:
+- RAG Pipeline will be serverless and in Python, to leverage updated processes
+- RAG Pipeline will utilize...
+    - Dense embeddings
+    - Sparse embeddings via BM25
+    - Contextual retrieval (reformulating queries in regards to original doc or doc's metadata)
+    - Reranking via Cohere model

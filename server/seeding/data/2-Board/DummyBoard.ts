@@ -1,10 +1,9 @@
 import { ObjectId } from "mongodb";
 import { container } from "tsyringe";
-import { AuthService } from "../../../src/services/index.js";
-import { dummyData } from "../../data.js";
-import { FindType } from "../../../src/utils/enums/find-type.js";
+import { dummyData } from "seeding/data";
+import { FindType } from "src/data/utils/constants/find-type.js";
 
-export default [
+export const dummyBoards = [
     {
         _id: dummyData.boards.A.id,
         title: "Board A",

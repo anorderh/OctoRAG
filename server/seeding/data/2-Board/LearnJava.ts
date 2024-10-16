@@ -1,7 +1,3 @@
-import { FindType } from "../../../src/utils/enums/find-type.js";
-import { data } from "../../data.js";
-import { getFindEntityProps, getVersionEntityProps } from "../../helpers.js";
-
 /*
 Static HTML content
 https://www.tutorialspoint.com/java/java_quick_guide.htm
@@ -23,12 +19,16 @@ Processing...
 3. Download all resources and vectorize into vector db
 */
 
-export default {
+import { data } from "seeding/data";
+import { getFindEntityProps, getVersionEntityProps } from "seeding/helpers";
+import { FindType } from "src/data/utils/constants/find-type";
+
+export const javaBoard = {
     _id: data.boards.learnJava.id,
     title: "Java 101",
     desc: "Resources for studying the Java programming language.",
     creatorId: data.users.development.id,
-    followers: [],
+    followers: [] as any[],
     versions: [
         {
             _id: data.boards.learnJava.versions[1].id,
@@ -45,7 +45,7 @@ export default {
                         desc: "Learn Java in 14 minutes. Seriously.",
                         link: 'https://www.youtube.com/watch?v=RRubcjpTkks',
                         type: FindType.YoutubeVideo,
-                        relations: [],
+                        relations: [] as any[],
                         grouping: ["video"],
                         rank: 1,
                         ...getFindEntityProps()
@@ -74,7 +74,7 @@ export default {
                         title: 'Java Annotations Reference',
                         desc: "Official Java documentation going over annotations.",
                         link: 'https://dev.java/learn/annotations/',
-                        type: FindType.Webpage,
+                        type: FindType.MediaWebpage,
                         relations: [
                             {
                                 destIdx: 3,
@@ -93,7 +93,7 @@ export default {
                         desc: "Java debugging",
                         link: 'https://www.reddit.com/r/java/comments/1fodrl7/what_are_your_favourite_debugging_patterns_in_java/',
                         type: FindType.RedditPost,
-                        relations: [],
+                        relations: [] as any[],
                         grouping: ["static"],
                         rank: 2,
                         ...getFindEntityProps()
@@ -104,8 +104,8 @@ export default {
                         title: 'Twitter Java post about common tasks',
                         desc: "Sample",
                         link: 'https://x.com/java/status/1831703837687607313',
-                        type: FindType.TwitterPost,
-                        relations: [],
+                        type: FindType.XPost,
+                        relations: [] as any[],
                         grouping: ["static"],
                         rank: 2,
                         ...getFindEntityProps()
@@ -117,7 +117,7 @@ export default {
                         desc: "Sample",
                         link: 'https://www.tiktok.com/@.braintickle/video/7180527400738884907?lang=en',
                         type: FindType.TiktokPost,
-                        relations: [],
+                        relations: [] as any[],
                         grouping: ["static"],
                         rank: 4,
                         ...getFindEntityProps()
@@ -128,8 +128,8 @@ export default {
                         title: 'PDF by Tutorials point about using Java',
                         desc: "Sample",
                         link: 'https://www.tutorialspoint.com/java/java_tutorial.pdf',
-                        type: FindType.PDF,
-                        relations: [],
+                        type: FindType.MediaPDF,
+                        relations: [] as any[],
                         grouping: ["static"],
                         rank: 4,
                         ...getFindEntityProps()
