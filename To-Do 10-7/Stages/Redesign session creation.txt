@@ -1,0 +1,54 @@
+USAGE
+1. User logs into app
+2. User can create 'RAG Knowledge base'
+3. User can provide URLs or upload files
+4. User can scrape and chunk all info into vector db
+5. User can then provision chatbot client to chat w/ resources
+
+RELATIONSHIPS
+Library
+    - ID
+    - Name
+    - UserId, FK
+    - Created
+    - LastScraped
+
+Resource
+    - ID
+    - Path
+    - Type
+    - LibraryId, FK
+    - Created
+
+Online Resource
+    - ID
+    - URL
+    - Type
+    - LibraryId, FK
+    - Created
+
+Scrape
+    - ID
+    - LibraryId
+    - EmbeddingModel
+    - EmbeddingModelDimensions
+    - Created
+
+Session
+    - ID
+    - Namespace
+    - LLMModel
+    - UserId
+    - LibraryId
+    - ScrapeId
+    - Created
+
+Chat
+    - ID
+    - SessionId
+    - Type (Human, AI)
+    - Content
+    - Created
+
+
+

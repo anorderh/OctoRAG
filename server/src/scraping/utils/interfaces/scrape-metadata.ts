@@ -1,5 +1,5 @@
-import { FindType } from "src/data/utils/constants/find-type"
+import { OnlineResourceType } from "src/data/utils/constants/online-resource-type"
 
 export interface ScrapeMetadata {
-    type: FindType
+    type: OnlineResourceType
 }

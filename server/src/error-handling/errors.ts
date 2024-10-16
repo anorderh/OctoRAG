@@ -12,15 +12,6 @@ export class InvalidTokenTypeError extends CustomErrorBase {
     }
 }
 
-export class InvalidBoardError extends CustomErrorBase {
-    constructor(params?: ErrorParams) {
-        super({
-            status: params?.status ?? 409,
-            body: params?.body ?? "Invalid board specified"
-        });
-    }
-}
-
 export class InvalidUserError extends CustomErrorBase {
     constructor(params?: ErrorParams) {
         super({
@@ -48,15 +39,6 @@ export class JoiValidationMiddlewareError extends CustomErrorBase {
     }
 }
 
-export class UnsupportedFindTypeError extends CustomErrorBase {
-    constructor(params?: ErrorParams) {
-        super({
-            status: params?.status ?? 501,
-            body: params?.body ?? 'The identified Find type is not supported for processing.'
-        });
-    }
-}
-
 export class PuppeteerPageNotRecognizedError extends CustomErrorBase {
     constructor(params?: ErrorParams) {
         super({
@@ -66,11 +48,11 @@ export class PuppeteerPageNotRecognizedError extends CustomErrorBase {
     }
 }
 
-export class InvalidFindLinkFormatError extends CustomErrorBase {
+export class InvalidURLFormatError extends CustomErrorBase {
     constructor(params?: ErrorParams) {
         super({
             status: params?.status ?? 406,
-            body: params?.body ?? "The find's associated link did not match its type's required formatting."
+            body: params?.body ?? "The resource's associated URL did not match its type's required formatting."
         });
     }
 }

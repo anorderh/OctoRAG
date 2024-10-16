@@ -7,7 +7,6 @@ import morgan from "morgan";
 import { DependencyInjectionToken } from "./dependencies/utils/constants/dependency-injection-token.js";
 import { MongoService } from './services/data/mongo.service.js';
 import { UserService } from "./services/data/user.service.js";
-import { BoardController } from './routing/controllers/board.js';
 import { errorHandler } from './error-handling/error-handler.js';
 import pino, { Logger } from "pino";
 import { Server } from "http";
@@ -20,7 +19,6 @@ import { ControllerBase } from "./routing/utils/abstract/controller.abstract.js"
 import { Service } from "./services/utils/abstract/service.abstract.js";
 import { StorageService } from "./services/integration/storage.service.js";
 import { exit } from "process";
-import { EventService } from "./services/data/event.service.js";
 import { EmailService } from "./services/integration/email.service.js";
 import { dependencyMap } from "./dependencies/dependency-map.js";
 import { instantiate } from "./dependencies/utils/extensions/instantiate.js";
@@ -48,7 +46,6 @@ export class App {
         services: [
             RagService,
             MongoService,
-            EventService,
             MongoService,
             UserService,
             EmailService,
@@ -58,7 +55,6 @@ export class App {
             AuthController,
             TestController,
             UserController,
-            BoardController
         ] as InjectionToken<ControllerBase>[],
     }
 

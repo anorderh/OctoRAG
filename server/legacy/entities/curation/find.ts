@@ -1,5 +1,5 @@
 import { ObjectId, Schema, Types, model } from "mongoose";
-import { FindType } from "../../../utils/enums/find-type";
+import { OnlineResourceType } from "../../../utils/enums/find-type";
 
 export interface Find {
     id: ObjectId;
@@ -9,7 +9,7 @@ export interface Find {
     link: string;
     desc: string;
     grouping: string[];
-    findType: FindType;
+    OnlineResourceType: OnlineResourceType;
     rank: number;
     views: number;
     clicks: number;
@@ -27,7 +27,7 @@ export const Find = model<Find>(
         link: {type: String, required: true},
         desc: {type: String},
         grouping: [{type: String}],
-        findType: { type: String, enum: Object.values(FindType), required: true },
+        OnlineResourceType: { type: String, enum: Object.values(OnlineResourceType), required: true },
         rank: { type: Number, required: true },
         views: { type: Number, default: 0 },
         clicks: { type: Number, default: 0 },

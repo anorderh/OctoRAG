@@ -1,5 +1,5 @@
 import { singleton, inject, delay, container } from "tsyringe";
-import { FailedGitRepoDownloadError, InvalidFindLinkFormatError, InvalidRagSessionRequest, UnsupportedFindTypeError } from '../../error-handling/errors.js';
+import { FailedGitRepoDownloadError, InvalidURLFormatError, InvalidRagSessionRequest } from '../../error-handling/errors.js';
 import { Logger } from "pino";
 import { Collection, ObjectId, UUID } from "mongodb";
 import { PineconeStore } from "@langchain/pinecone";
@@ -22,21 +22,21 @@ import { BaseChatMessageHistory } from "@langchain/core/chat_history";
 import { ChatMessageHistory } from "langchain/memory";
 import { StringOutputParser } from "@langchain/core/output_parsers";
 import { Service } from "../utils/abstract/service.abstract.js";
-import { Board, Find } from "src/data/collections/board.collection.js";
-import { BoardUtility } from "src/shared/utils/classes/board.util.js";
 import { DependencyInjectionToken } from "src/dependencies/utils/constants/dependency-injection-token.js";
 import { env } from "src/shared/utils/constants/env.js";
 import { CollectionId } from "src/data/utils/constants/collection-id.js";
 import { executeMongoChecks } from "src/shared/utils/helpers/mongo-checks.js";
-import { isValidBoard } from "src/data/validation/boards/is-valid-board.js";
 import { formatRecordAsDocument } from "src/shared/utils/helpers/format-record-as-document.js";
 import { instantiate } from "src/dependencies/utils/extensions/instantiate.js";
 import { App } from "src/App.js";
 import bm25Vectorizer from "wink-nlp";
 import { CohereClient } from "cohere-ai";
 import { query, response } from "express";
-import { HostScrape } from "src/scraping/host-scrape.js";
+import { OnlineResourceScrape } from "src/scraping/online-resource-scrape.js";
 import { formatDocumentsAsContext } from "src/shared/utils/helpers/format-document-as-context.js";
+import { Library } from "src/data/collections/library.collection.js";
+import { Resource } from "src/data/collections/resource.collection.js";
+import { OnlineResource } from "src/data/collections/online-resource.collection.js";
 
 export interface RagSession {
     sessionId: string;
@@ -87,19 +87,14 @@ export class RagService extends Service {
     cohere: CohereClient;
 
     sessionsDict: {[id: string]: RagSession}
-    boardCollection: Collection<Board>;
     llm: ChatOpenAI;
     ragIndex: Index<RecordMetadata>;
     embeddings: OpenAIEmbeddings;
 
     ragIndexName: string;
 
-    private generateNamespaceId(board: Board) {
-        let v = BoardUtility.getMostRecentVersion(board);
-        return JSON.stringify({
-            boardId: board._id.toString(),
-            versionId: v._id.toString()
-        })
+    private generateNamespaceId(library: Library) {
+        return library._id.toString();
     }
     private filterIndexByNamespace(id: string) {
         return this.ragIndex.namespace(id);
@@ -119,7 +114,6 @@ export class RagService extends Service {
             model: env.openai.embeddingModel.name
         });
         this.sessionsDict = {};
-        this.boardCollection = this.mongo.db.collection(CollectionId.Board);
     }
 
     async initialize(): Promise<void> {
@@ -163,17 +157,16 @@ export class RagService extends Service {
 
     public async createSession(req: CreateSessionRequest) {
         // Grab requested board.
-        let board = await this.boardCollection.findOne({
-            _id: req.boardId
-        }).then(executeMongoChecks<Board>(isValidBoard));
+        let library = {} as Library; // TO-DO: CHANGE THIS!
+        // Determine whether to change to scrape, keep library, or something else.
 
         // Instantiate and store session.
-        const namespaceId = this.generateNamespaceId(board);
+        const namespaceId = this.generateNamespaceId(library);
         const index = await this.filterIndexByNamespace(namespaceId);
         const chain = await this.createLangchainPipeline(index);
         let session = {
             sessionId: new UUID().toString(),
-            namespaceId: this.generateNamespaceId(board),
+            namespaceId: this.generateNamespaceId(library),
             boardId: req.boardId,
             userId: req.userId,
             history: [],
@@ -187,7 +180,7 @@ export class RagService extends Service {
             Object.keys(indexStats.namespaces ?? [])
         )
         if (!currNamespaceIds.has(namespaceId)) {
-            await this.createNamespaceForBoard(namespaceId, board);
+            await this.createNamespaceForBoard(namespaceId, library);
         }
         
         return {
@@ -361,15 +354,16 @@ Use three sentences maximum and keep the answer concise. \
         return chain;
     }
 
-    private async createNamespaceForBoard(namespaceId: string, board: Board) {
+    private async createNamespaceForBoard(namespaceId: string, library: Library) {
         // Grab relevant entities & infrastructure.     
-        let mostRecentVersion = BoardUtility.getMostRecentVersion(board);
+        // TO-DO: Change this to relevant resources
+        let resources = [] as OnlineResource[];
         let index = this.filterIndexByNamespace(namespaceId);
         let batchSize = env.defaults.chunking.batchSize;
 
         // Process over finds.
-        for(let f of mostRecentVersion.finds) {
-            let scrape = new HostScrape(f);
+        for(let r of resources) {
+            let scrape = new OnlineResourceScrape(r);
             let entries = await scrape.scrape();
 
             // Insert each entry's chunks into Pinecone db.

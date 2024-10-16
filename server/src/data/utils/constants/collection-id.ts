@@ -1,5 +1,9 @@
 export enum CollectionId {
-    EventLog = 'EventLog',
-    Board = 'Board',
-    User = 'User'
+    User = 'User',
+    Library = 'Library',
+    Resource = 'Resource',
+    OnlineResource = 'OnlineResource',
+    Scrape = 'Scrape',
+    Session = 'Session',
+    Chat = 'Chat'
 }

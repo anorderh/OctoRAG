@@ -9,19 +9,6 @@ export interface User {
     credentials: Credentials;
     pfpPath: string;
     desc: string;
-    followers: ObjectId[];
-    usersFollowed: ObjectId[];
-    boardsFollowed: ObjectId[];
-    notifications: Notification[]
-}
-
-export interface Notification{
-    _id: ObjectId;
-    eventId: ObjectId;
-    msg: string,
-    occurred: Date,
-    acknowledged: boolean,
-    link: string
 }
 
 export const createUserCollection : CollectionSetup = async (db: Db) => {
@@ -44,33 +31,6 @@ export const createUserCollection : CollectionSetup = async (db: Db) => {
                     },
                     pfpPath: {bsonType: "string"},
                     desc: {bsonType: "string"},
-                    followers: {
-                        bsonType: "array",
-                        items: {bsonType: "objectId"}
-                    },
-                    boardsFollowed: {
-                        bsonType: "array",
-                        items: {bsonType: "objectId"}
-                    },
-                    usersFollowed: {
-                        bsonType: "array",
-                        items: {bsonType: "objectId"}
-                    },
-                    notifications: {
-                        bsonType: "array",
-                        items: {
-                            bsonType: "object",
-                            required: ["_id", "eventId", "msg", "occurred"],
-                            properties: {
-                                _id: {bsonType: "objectId"},
-                                eventId: {bsonType: "objectId"},
-                                msg: {bsonType: "string"},
-                                occurred: {bsonType: "date"},
-                                acknowledged: {bsonType: "bool"},
-                                link: {bsonType: "string"}
-                            }
-                        }
-                    }
                 }
             }
         }

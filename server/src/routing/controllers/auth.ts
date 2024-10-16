@@ -64,10 +64,6 @@ export class AuthController extends ControllerBase {
             },
             pfpPath: "",
             desc: "",
-            followers: [],
-            boardsFollowed: [],
-            usersFollowed: [],
-            notifications: []
         })
         let createdUser = (await this.userCollection.findOne({ _id: insertResult.insertedId })) as User;
         res.status(200).send(`Account "${createdUser.username}" registered.`);

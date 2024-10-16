@@ -1,4 +1,4 @@
-import { ScrapeHostedOption } from "./scrape-hosted-option";
-import { ScrapeUploadedOption } from "./scrape-uploaded-option";
+import { OnlineResourceScrapeOption } from "./scrape-hosted-option";
+import { ResourceScrapeOption } from "./scrape-uploaded-option";
 
-export type ScrapeOption = ScrapeHostedOption | ScrapeUploadedOption;
+export type ScrapeOption = OnlineResourceScrapeOption | ResourceScrapeOption;
