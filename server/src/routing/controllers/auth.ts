@@ -18,7 +18,6 @@ import { TokenPayload } from "src/shared/utils/constants/token-payload.js";
 import { Token } from "src/shared/utils/interfaces/token.js";
 import { TokenUtility } from "src/shared/utils/classes/token.util.js";
 import { env } from "src/shared/utils/constants/env.js";
-import { EnsureDep } from "../decorators/ensure-dep.js";
 
 @Controller('/auth')
 @singleton()

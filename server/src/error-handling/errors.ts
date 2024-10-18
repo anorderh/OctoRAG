@@ -102,4 +102,49 @@ export class ScrapeEntryFailedError extends CustomErrorBase {
     }
 }
 
+export class FailedNullAssertionError extends CustomErrorBase {
+    constructor(params?: ErrorParams) {
+        super({
+            status: params?.status ?? 500,
+            body: params?.body ?? "A null value failed non-null assertion."
+        })
+    }
+}
+
+export class MissingRAGPipelineError extends CustomErrorBase {
+    constructor(params?: ErrorParams) {
+        super({
+            status: params?.status ?? 500,
+            body: params?.body ?? "The provided session ID does not have an associated pipeline."
+        })
+    }
+}
+
+export class InvalidLibraryError extends CustomErrorBase {
+    constructor(params?: ErrorParams) {
+        super({
+            status: params?.status ?? 409,
+            body: params?.body ?? "The library specified by the provided ID could not be located."
+        })
+    }
+}
+
+export class InvalidLibraryAuthError extends CustomErrorBase {
+    constructor(params?: ErrorParams) {
+        super({
+            status: params?.status ?? 401,
+            body: params?.body ?? "The user is not authorized to access the requested library."
+        })
+    }
+}
+
+export class InvalidEntityError extends CustomErrorBase {
+    constructor(params?: ErrorParams) {
+        super({
+            status: params?.status ?? 409,
+            body: params?.body ?? "The specified entity was not able to be located."
+        })
+    }
+}
+
 export class UnsupportedError extends CustomErrorBase {}

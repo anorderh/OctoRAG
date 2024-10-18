@@ -11,8 +11,8 @@ export interface Chat {
     created: Date
 }
 
-export const createChatCollection : CollectionSetup = async (db: Db) => {
-    await db.createCollection(CollectionId.Chat, {
+export const createChatCollection : CollectionSetup<Chat> = async (db: Db) => {
+    return await db.createCollection(CollectionId.Chat, {
         validator: {
             $jsonSchema: {
                 bsonType: "object",

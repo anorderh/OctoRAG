@@ -13,8 +13,8 @@ import { ControllerBase } from "../utils/abstract/controller.abstract.js";
 import { User } from "src/data/collections/user.collection.js";
 import { MongoService } from "src/services/data/mongo.service.js";
 import { CollectionId } from "src/data/utils/constants/collection-id.js";
-import { UserResponse } from "./utils/interfaces/responses/user.response.js";
-import { EditProfileRequest } from "./utils/interfaces/requests/edit-profile.request.js";
+import { UserResponse } from "./validation/responses/user.res.js";
+import { EditProfileRequest } from "./validation/requests/edit-profile.req.js";
 import { filterNulls } from "src/shared/utils/helpers/filter-nulls.js";
 
 

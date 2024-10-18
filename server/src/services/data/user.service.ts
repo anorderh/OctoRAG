@@ -8,7 +8,6 @@ import { Collection } from 'mongodb';
 import { Service } from '../utils/abstract/service.abstract.js';
 import { User } from 'src/data/collections/user.collection.js';
 import { CollectionId } from 'src/data/utils/constants/collection-id.js';
-import { dependencyMap } from 'src/dependencies/dependency-map.js';
 import { DependencyInjectionToken } from 'src/dependencies/utils/constants/dependency-injection-token.js';
 import { instantiate } from 'src/dependencies/utils/extensions/instantiate.js';
 

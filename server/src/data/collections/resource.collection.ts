@@ -11,8 +11,8 @@ export interface Resource {
     created: Date;
 }
 
-export const createResourceCollection : CollectionSetup = async (db: Db) => {
-    await db.createCollection(CollectionId.Resource, {
+export const createResourceCollection : CollectionSetup<Resource> = async (db: Db) => {
+    return await db.createCollection(CollectionId.Resource, {
         validator: {
             $jsonSchema: {
                 bsonType: "object",

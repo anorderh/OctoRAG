@@ -8,20 +8,14 @@ import { developmentUser } from "./data/Users/DevelopmentUser";
 const client: MongoClient = new MongoClient(env.mongo.connStr, {});
 await client.connect();
 const db: Db = client.db();
-const collectionSetups: CollectionSetup[] = [
-  createUserCollection
-];
 
 // Prepare collections.
 let collectionsToWipe = (await db.collections());
 for(let c of collectionsToWipe) {
   await c.drop();
 }
-for (let setup of collectionSetups) {
-  await setup(db);
-}
 const collections = {
-  users: db.collection<User>(CollectionId.User),
+  users: await createUserCollection(db),
 }
 
 // Seed helper function.

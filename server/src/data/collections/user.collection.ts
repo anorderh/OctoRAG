@@ -11,8 +11,8 @@ export interface User {
     desc: string;
 }
 
-export const createUserCollection : CollectionSetup = async (db: Db) => {
-    await db.createCollection(CollectionId.User, {
+export const createUserCollection : CollectionSetup<User> = async (db: Db) => {
+    return await db.createCollection(CollectionId.User, {
         validator: {
             $jsonSchema: {
                 bsonType: "object",

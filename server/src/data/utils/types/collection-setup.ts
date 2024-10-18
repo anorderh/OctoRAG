@@ -1,3 +1,3 @@
-import { Db } from "mongodb";
+import { Collection, Db } from "mongodb";
 
-export type CollectionSetup = (db: Db) => Promise<void>;
+export type CollectionSetup<T> = (db: Db) => Promise<Collection<T>>;

@@ -11,8 +11,8 @@ export interface OnlineResource {
     created: Date;
 }
 
-export const createOnlineResourceCollection : CollectionSetup = async (db: Db) => {
-    await db.createCollection(CollectionId.OnlineResource, {
+export const createOnlineResourceCollection : CollectionSetup<OnlineResource> = async (db: Db) => {
+    return await db.createCollection(CollectionId.OnlineResource, {
         validator: {
             $jsonSchema: {
                 bsonType: "object",

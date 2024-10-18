@@ -27,8 +27,23 @@ export class TestController extends ControllerBase {
     }
 
     @Get('/')
-    @Authorize()
     public test(req: Request, res: Response) {
-        res.status(200).send("Auth successfully passed!");
+        res.status(200).send("Test successfully passed!");
     }
+
+    @Get('/database')
+    public async getDatabase(req: Request, res: Response) {
+        let libraries = await this.mongo.collections.library.find().toArray();
+        let resources = await this.mongo.collections.onlineResource.find().toArray();
+        let sessions = await this.mongo.collections.session.find().toArray();
+        let chats = await this.mongo.collections.chat.find().toArray();
+
+        res.status(200).send({
+            libraries,
+            resources,
+            sessions,
+            chats
+        })
+    }
+    
 }

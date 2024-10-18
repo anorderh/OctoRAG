@@ -8,6 +8,9 @@ import { Route } from "../utils/types/route.js";
 export function Controller(prefix: string): ClassDecorator {
     return (target: any) => {
         Reflect.defineMetadata('prefix', prefix, target);
+        if (!Reflect.hasMetadata('middleware', target)) {
+            Reflect.defineMetadata('middleware', {}, target);
+        }
         let routesDict = Reflect.getMetadata('routes', target) as {[key: string]: RouteInput};
 
         if (!!routesDict && Object.keys(routesDict).length > 0) {

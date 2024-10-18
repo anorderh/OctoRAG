@@ -12,8 +12,8 @@ export interface Session {
     created: Date
 }
 
-export const createSessionCollection : CollectionSetup = async (db: Db) => {
-    await db.createCollection(CollectionId.Session, {
+export const createSessionCollection : CollectionSetup<Session> = async (db: Db) => {
+    return await db.createCollection(CollectionId.Session, {
         validator: {
             $jsonSchema: {
                 bsonType: "object",
@@ -22,7 +22,6 @@ export const createSessionCollection : CollectionSetup = async (db: Db) => {
                     "_id",
                     "namespace",
                     "llmModel",
-                    "_userId",
                     "_libraryId",
                     "_scrapeId",
                     "created"

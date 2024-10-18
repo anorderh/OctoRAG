@@ -20,9 +20,13 @@ import { Service } from "./services/utils/abstract/service.abstract.js";
 import { StorageService } from "./services/integration/storage.service.js";
 import { exit } from "process";
 import { EmailService } from "./services/integration/email.service.js";
-import { dependencyMap } from "./dependencies/dependency-map.js";
 import { instantiate } from "./dependencies/utils/extensions/instantiate.js";
 import { AppDependencies } from "./shared/utils/interfaces/app-dependencies.js";
+import { ChatController } from "./routing/controllers/chat.js";
+import { LibraryController } from "./routing/controllers/library.js";
+import { PipelineService } from "./services/ai/pipeline.service.js";
+import path from "path";
+import { __dirname } from "./__dirname.js";
 
 export class App {
     static logger: Logger;
@@ -49,18 +53,24 @@ export class App {
             MongoService,
             UserService,
             EmailService,
-            StorageService
+            StorageService,
+            PipelineService
         ] as InjectionToken<Service>[],
         controllers: [
             AuthController,
             TestController,
             UserController,
+            ChatController,
+            LibraryController
         ] as InjectionToken<ControllerBase>[],
     }
 
     middleware: any[] = [
         cors({
-            origin: env.server.origin
+            origin: [
+                env.server.origin,
+                'http://localhost:8080'
+            ]
         }),
         env.logging.http ? morgan('common') : null,
         express.json(),
@@ -71,19 +81,12 @@ export class App {
 
     constructor() {
         this.port = env.server.port;
+        App.logger = container.resolve(DependencyInjectionToken.Pino);
     }
 
     public async start() {
-        await this.prepare();
         await this.build();
         await this.listen();
-    }
-
-    public async prepare(): Promise<void> {
-        await instantiate(App.injection.dependencies);
-        
-        // Store static dependency references.
-        App.logger = container.resolve(DependencyInjectionToken.Pino);
     }
 
     public async build(): Promise<void> {
@@ -93,11 +96,19 @@ export class App {
         App.logger.info(`Setting up middleware...`);
         this.middleware.forEach((m) => this.express.use(m)); 
 
+        App.logger.info('Setting up assets...');
+        this.express.use(express.static(path.join(__dirname, "../../client/dist")));
+
         App.logger.info(`Setting up controllers...`);
         for (let token of App.injection.controllers) {
             let controller = container.resolve(token);
             this.express.use(env.server.apiPath, controller.router)
         }
+
+        App.logger.info('Setting up frontend routes...')
+        this.express.get('*', (req, res) => {
+            res.sendFile(path.join(__dirname, "../../client/dist/index.html"));
+        });
 
         App.logger.info(`Setting up error handler...`);
         this.express.use(errorHandler);

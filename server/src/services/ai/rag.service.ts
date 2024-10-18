@@ -1,5 +1,5 @@
 import { singleton, inject, delay, container } from "tsyringe";
-import { FailedGitRepoDownloadError, InvalidURLFormatError, InvalidRagSessionRequest } from '../../error-handling/errors.js';
+import { FailedGitRepoDownloadError, InvalidURLFormatError, InvalidRagSessionRequest, FailedNullAssertionError, MissingRAGPipelineError } from '../../error-handling/errors.js';
 import { Logger } from "pino";
 import { Collection, ObjectId, UUID } from "mongodb";
 import { PineconeStore } from "@langchain/pinecone";
@@ -37,96 +37,46 @@ import { formatDocumentsAsContext } from "src/shared/utils/helpers/format-docume
 import { Library } from "src/data/collections/library.collection.js";
 import { Resource } from "src/data/collections/resource.collection.js";
 import { OnlineResource } from "src/data/collections/online-resource.collection.js";
-
-export interface RagSession {
-    sessionId: string;
-    boardId: ObjectId;
-    namespaceId: string;
-    userId: ObjectId;
-    history: BaseMessage[];
-    chain: Runnable;
-}
-
-export interface CreateSessionRequest {
-    boardId: ObjectId;
-    userId?: ObjectId;
-}
-
-export interface ChatRequest {
-    sessionId: string;
-    input: string;
-}
-
-export interface CloseSessionRequest {
-    sessionId: string;
-}
-
-export enum RagSessionProperties {
-    input = 'input',
-    history = 'history',
-    interpretation = 'interpretation',
-    documents = 'documents',
-    context = 'context',
-    output = 'output',
-}
-
-export interface RagSessionParameters {
-    [RagSessionProperties.input]?: string;
-    [RagSessionProperties.history]?: BaseMessage[];
-    [RagSessionProperties.interpretation]?: string;
-    [RagSessionProperties.documents]?: Document[];
-    [RagSessionProperties.context]?: string;
-    [RagSessionProperties.output]?: string;
-}
+import { Scrape } from "src/data/collections/scrape.collection.js";
+import { Session } from "src/data/collections/session.collection.js";
+import { SetupRagIndex } from "src/dependencies/injections/ragIndex.js";
+import { PipelineService } from "./pipeline.service.js";
+import { ScrapeLibraryParams } from "./utils/interfaces/scrape-library-params.js";
+import { CreateSessionParams } from "./utils/interfaces/create-session-params.js";
+import { httpContext } from "src/routing/middleware/http-context.js";
+import { assert } from "src/error-handling/utils/extensions/assert.js";
+import { ChatParams} from "./utils/interfaces/chat-params.js";
+import { RagRunnableParameters } from "./utils/interfaces/rag-runnable-params.js";
+import { RagRunnableProperties } from "./utils/constants/rag-runnable-props.js";
+import { Chat } from "src/data/collections/chat.collection.js";
+import { ChatType } from "src/data/utils/constants/chat-type.js";
+import { PineconeUtility } from "./utils/classes/pinecone-utility.js";
+import { isValidSession } from "src/data/validation/session/is-valid-session.js";
+import { isValidLibrary } from "src/data/validation/library/is-valid-library.js";
+import { isValidScrape } from "src/data/validation/scrape/is-valid-scrape.js";
 
 // FIX: Use HTTP for this service, but it may transition into real-time functionality via Socket.io.
 @singleton()
 export class RagService extends Service {
+    chunkPrefix: string = "webbed-chunk";
+    ragIndexName: string = env.pinecone.ragIndexName;
+    ragIndex: Index<RecordMetadata>;
+
     pinecone: Pinecone;
     openai: OpenAI;
-    cohere: CohereClient;
-
-    sessionsDict: {[id: string]: RagSession}
-    llm: ChatOpenAI;
-    ragIndex: Index<RecordMetadata>;
-    embeddings: OpenAIEmbeddings;
-
-    ragIndexName: string;
-
-    private generateNamespaceId(library: Library) {
-        return library._id.toString();
-    }
-    private filterIndexByNamespace(id: string) {
-        return this.ragIndex.namespace(id);
-    }
+    cohere: CohereClient
 
     constructor(
         @inject(MongoService) private mongo: MongoService,
+        @inject(PipelineService) private pipeline: PipelineService
     ) {
         super();
-        this.ragIndexName = env.pinecone.ragIndexName;
-
-        this.llm = new ChatOpenAI({
-            model: env.openai.llmModel.name,
-            temperature: 0
-        });
-        this.embeddings = new OpenAIEmbeddings({
-            model: env.openai.embeddingModel.name
-        });
-        this.sessionsDict = {};
     }
 
     async initialize(): Promise<void> {
         this.pinecone = container.resolve(DependencyInjectionToken.Pinecone);
         this.openai = container.resolve(DependencyInjectionToken.OpenAI);
         this.cohere = container.resolve(DependencyInjectionToken.Cohere);
-
-        let spec = {
-            serverless: {
-                cloud: env.pinecone.cloud,
-                region: env.pinecone.region
-            } as ServerlessSpec
-        } as CreateIndexSpec;
 
         // Check if Pinecone RAG index already exists.
         let currIndexes = await this.pinecone.listIndexes();
@@ -135,242 +85,81 @@ export class RagService extends Service {
             App.logger.info("Pinecone RAG index does not yet exist. Establishing...")
             await this.pinecone.createIndex({
                 name: env.pinecone.ragIndexName,
-                dimension: env.openai.embeddingModel.dimensions,
+                dimension: 1536,
                 metric: "cosine",
-                spec: spec,
+                spec: {
+                    serverless: {
+                        cloud: env.pinecone.cloud,
+                        region: env.pinecone.region
+                    } as ServerlessSpec
+                } as CreateIndexSpec,
                 waitUntilReady: true,
             });
             App.logger.info("Pinecone RAG index established.")
         } else {
             App.logger.info("Pinecone RAG already exists.")
         }
+
         this.ragIndex = this.pinecone.index(this.ragIndexName);
+        await SetupRagIndex(this.ragIndex); // Inject index into tsyringe container.
     }
 
-    async cleanup(): Promise<void> {
-        for(let id of Object.keys(this.sessionsDict)) {
-            delete this.sessionsDict[id];
-        }
-        await this.pinecone.deleteIndex(this.ragIndexName);
-        App.logger.info("Pinecone RAG index deleted.")
-    }
-
-    public async createSession(req: CreateSessionRequest) {
-        // Grab requested board.
-        let library = {} as Library; // TO-DO: CHANGE THIS!
-        // Determine whether to change to scrape, keep library, or something else.
-
-        // Instantiate and store session.
-        const namespaceId = this.generateNamespaceId(library);
-        const index = await this.filterIndexByNamespace(namespaceId);
-        const chain = await this.createLangchainPipeline(index);
-        let session = {
-            sessionId: new UUID().toString(),
-            namespaceId: this.generateNamespaceId(library),
-            boardId: req.boardId,
-            userId: req.userId,
-            history: [],
-            chain: chain
-        } as RagSession;
-        this.sessionsDict[session.sessionId] = session;
-
-        // Ensure board's associated namespace exists.
-        let indexStats = await this.ragIndex.describeIndexStats();
-        let currNamespaceIds = new Set(
-            Object.keys(indexStats.namespaces ?? [])
-        )
-        if (!currNamespaceIds.has(namespaceId)) {
-            await this.createNamespaceForBoard(namespaceId, library);
-        }
-        
-        return {
-            sessionId: session.sessionId,
-            boardId: session.boardId
-        };
-    }
-
-    public async closeSession(req: CloseSessionRequest) {
-        // Delete namespace and all records held.
-        let currSession = this.sessionsDict[req.sessionId];
-        let index = await this.filterIndexByNamespace(currSession.namespaceId);
-        await index.deleteAll();
-        delete this.sessionsDict[req.sessionId];
-    }
-
-    public async chat(req: ChatRequest) {
-        let currSession = this.sessionsDict[req.sessionId];
-        if (currSession == null) {
-            throw new InvalidRagSessionRequest();
-        };
-
-        let res : RagSessionParameters = await currSession.chain.invoke({
-            [RagSessionProperties.input]: req.input,
-            [RagSessionProperties.history]: currSession.history
-        } as RagSessionParameters);
-        currSession.history.push(new HumanMessage(res[RagSessionProperties.input]));
-        currSession.history.push(new AIMessage(res[RagSessionProperties.output]));
-
-        return res;
-    }
-
-    private async createLangchainPipeline(index: Index) {
-        // Consider session's chat history.
-        const considerHistory = new RunnablePassthrough().assign({
-            [RagSessionProperties.interpretation]: (parameters: RagSessionParameters) => {
-                let history = parameters[RagSessionProperties.history];
-                if (!!history && history.length > 0) {
-                    return RunnableSequence.from([
-                        ChatPromptTemplate.fromMessages([
-                            ["system", `\
-Given a chat history and the latest user question \
-which might reference context in the chat history, formulate a standalone \
-question which can be understood without the chat history. Do NOT answer the \
-question, just reformulate it if needed and otherwise return it as is.
-` ],
-                            new MessagesPlaceholder(RagSessionProperties.history),
-                            ["human", `{${RagSessionProperties.input}}`]
-                        ]),
-                        this.llm,
-                        new StringOutputParser(),
-                    ])
-                } else {
-                    return parameters[RagSessionProperties.input];
-                }
-            },
-        })
-
-        const applyRag = new RunnablePassthrough().assign({
-            [RagSessionProperties.documents]: RunnableSequence.from([
-                async (parameters: RagSessionParameters) => {
-                    const queryDenseEmbeddings = (await this.openai.embeddings.create({
-                        input: parameters[RagSessionProperties.interpretation],
-                        model: env.openai.embeddingModel.name
-                    })).data[0].embedding;
-        
-                    // Apply BM25 sparse embedding search here later.
-                    // Though this will prob shift to Python cloud func, keep it in mind.
-        
-                    let res = await index.query({
-                        vector: queryDenseEmbeddings,
-                        topK: 20,
-                        includeMetadata: true
-                    });
-                    let records: ScoredPineconeRecord[] = res.matches;
-                    return records;
-                },
-                formatRecordAsDocument
-            ])
-        })
-
-        const contextualizeDocuments = new RunnablePassthrough().assign({
-            [RagSessionProperties.documents]: async (parameters: RagSessionParameters) => {
-                let docs = parameters[RagSessionProperties.documents];
-                let tasks = docs.map((d: Document) => {
-                    return new Promise<void>(async (resolve, reject) => {
-                        try {
-                            let runnable = RunnableSequence.from([
-                                ChatPromptTemplate.fromMessages([
-                                    ["system", `\
-<metadata>
-{metadata}
-</metadata>
-Here is the chunk we want to situate within the source, provided its metadata.
-<chunk>
-{pageContent}
-</chunk>
-
-Please give a short succinct context to situate this chunk within the source, using its metadata, for the purposes of improving search retrieval of the chunk.
-Answer only with the succinct context and nothing else.
-`]
-                                ]),
-                                this.llm,
-                                new StringOutputParser()
-                            ]);
-                            let chunkContext = await runnable.invoke(d);
-                            d.pageContent = `${chunkContext}; "${d.pageContent}"`
-                            resolve();
-                        } catch (err) {
-                            reject(err)
-                        }
-                    });
-                })
-                await Promise.all(tasks);
-                return docs;
-            }
-        });
-
-        const rerankDocuments = new RunnablePassthrough().assign({
-            [RagSessionProperties.documents]: async (parameters: RagSessionParameters) => {
-                let query = parameters[RagSessionProperties.interpretation];
-                let docs = parameters[RagSessionProperties.documents];
-
-                let rawDocContent = docs.map(d => d.pageContent);
-                let res = await this.cohere.rerank({
-                    query: query,
-                    model: "rerank-english-v2.0",
-                    documents: rawDocContent,
-                    topN: 20
-                })
-                let rerankedDocs = res.results.map(r => docs[r.index])
-
-                return rerankedDocs
-            }
-        })
-
-        const queryLLM = RunnableSequence.from([
-            new RunnablePassthrough().assign({
-                [RagSessionProperties.context]: (parameters: RagSessionParameters) => {
-                    let docs = parameters[RagSessionProperties.documents];
-                    return formatDocumentsAsContext(docs);
-                },
-            }),
-            new RunnablePassthrough().assign({
-                [RagSessionProperties.output]: RunnableSequence.from([
-                    ChatPromptTemplate.fromMessages([
-                        ["system", `\
-You are an assistant for question-answering tasks. \
-Use the following pieces of retrieved context to answer the question. \
-If you don't know the answer, just say that you don't know. \
-Use three sentences maximum and keep the answer concise. \
-\n\n{context}`],
-                        new MessagesPlaceholder(RagSessionProperties.history),
-                        ["human", `{${RagSessionProperties.interpretation}}`],
-                    ]),
-                    this.llm,
-                    new StringOutputParser(),
-                ])
-            })
-        ]);
-                
-        // Build final chain.
-        const chain = RunnableSequence.from([
-            considerHistory,
-            applyRag,
-            contextualizeDocuments,
-            rerankDocuments,
-            queryLLM
-        ])
-
-        return chain;
-    }
-
-    private async createNamespaceForBoard(namespaceId: string, library: Library) {
-        // Grab relevant entities & infrastructure.     
-        // TO-DO: Change this to relevant resources
-        let resources = [] as OnlineResource[];
-        let index = this.filterIndexByNamespace(namespaceId);
+    public async scrapeLibrary(params: ScrapeLibraryParams): Promise<Scrape> {
         let batchSize = env.defaults.chunking.batchSize;
+        let library = params.library;
 
-        // Process over finds.
-        for(let r of resources) {
+        // Grab library's resources.
+        // TO-DO: Only online resources are implemented so far. Add resource handling later.
+        let onlineResources = await this.mongo.collections.onlineResource.find({
+            _libraryId: library._id
+        }).toArray() as OnlineResource[];
+
+        // Grab namespace within Pinecone. Clear if pre-existing records are present.
+        let namespaceId = library._id.toString();
+        let index = this.ragIndex.namespace(namespaceId);
+        if (await PineconeUtility.namespaceExists(namespaceId)) {
+            await index.deleteAll();
+        }
+
+        // Beging processing resources.
+        for(let r of onlineResources) {
             let scrape = new OnlineResourceScrape(r);
             let entries = await scrape.scrape();
 
-            // Insert each entry's chunks into Pinecone db.
-            for (let entry of entries) {
-                let chunks = await entry.chunk();
-                let records = await this.createPineconeRecords(chunks);
-                await index.upsert(records);
+            // Chunk derived entries.
+            if (!!entries) {
+                for (let entry of entries) {
+                    let chunks = await entry.chunk();
+    
+                    // Generate embeddings per chunk and insert into Pinecone.
+                    let records = await Promise.all(chunks.map(async (c) => {
+                        let denseEmbeddings = (await this.openai.embeddings.create({
+                            input: c.pageContent,
+                            model: params.embeddingModel
+                        })).data[0].embedding;
+    
+                        // TO-DO:
+                        /*
+                        // Add BM25 vectorizer algorithm
+                        // Fit based on `corpus` - doc collection
+                        // Generate sparse embeddings and attach to record
+                        */
+            
+                        // Associate metadata.
+                        return {
+                            id: `${this.chunkPrefix}#${c.id}`,
+                            values: denseEmbeddings,
+                            metadata: {
+                                'text': c.pageContent,
+                                ...c.metadata
+                            }
+                        } as PineconeRecord
+                    }))
+    
+                    if (!!records && records.length > 0) {
+                        await index.upsert(records);
+                    }
+                }
             }
 
             // // Batch load into Pinecone db.
@@ -380,31 +169,167 @@ Use three sentences maximum and keep the answer concise. \
             //     await index.upsert(records);
             // }
         };
+
+        // Track scrape in db.
+        let scrape = {
+            _id: new ObjectId(),
+            _libraryId: library._id,
+            embeddingModel: params.embeddingModel,
+            created: new Date()
+        } as Scrape;
+        await this.mongo.collections.scrape.insertOne(scrape);
+
+        // Update library's scrape status.
+        await this.mongo.collections.library.updateOne({
+            _id: library._id
+        }, {
+            $set: {
+                pendingScrape: false,
+                lastScraped: new Date()
+            }
+        })
+
+        return scrape;
     }
 
-    private async createPineconeRecords(chunks: Document<Record<string, any>>[]) {
-        let chunkPrefix = "webbed-chunk";
-        // Add BM25 vectorizer algorithm
-        // Fit based on `corpus` - doc collection
-        // Generate sparse embeddings and attach to record
+    public async createSession(params: CreateSessionParams): Promise<Session> {
+        const library = params.library;
+        let namespaceId = library._id.toString();
 
-        let records = await Promise.all(chunks.map(async (c) => {
-            // Generate embeddings.
-            let denseEmbeddings = (await this.openai.embeddings.create({
-                input: c.pageContent,
-                model: env.openai.embeddingModel.name
-            })).data[0].embedding;
+        // Ensure scrape exists and locate.
+        let scrape: Scrape = (await this.mongo.collections.scrape.find({
+            _libraryId: library._id
+        }).sort({
+            lastScraped: -1
+        }).limit(1).toArray())[0] || null;
+        if (scrape == null || params.forceNewScrape) {
+            // No scrape present OR new scrape requested, create a new one.
+            scrape = await this.scrapeLibrary({
+                library,
+                embeddingModel: assert(
+                    params.embeddingModel,
+                    (val: string) => {
+                        if (val == null) {
+                            throw new FailedNullAssertionError({
+                                body: "Embedding model cannot be null"
+                            })
+                        }
+                    }
+                )
+            });
+        }
+        
+        // Create session and store in db.
+        let session = {
+            _id: new ObjectId(),
+            namespace: namespaceId,
+            llmModel: params.llmModel,
+            _libraryId: library._id,
+            _scrapeId: scrape._id,
+            created: new Date()
+        } as Session;
+        await this.mongo.collections.session.insertOne(session);
 
-            // Associate metadata.
-            return {
-                id: `${chunkPrefix}#${c.id}`,
-                values: denseEmbeddings,
-                metadata: {
-                    'text': c.pageContent, // You NEED to define 'text' to perform RAG.
-                    ...c.metadata
-                }
-            } as PineconeRecord
-        }))
-        return records;
+        return session;
+    }
+
+    public async chat(params: ChatParams) : Promise<RagRunnableParameters> {
+        // Confirm dependencies' existence.
+        let session = await this.mongo.collections.session.findOne({
+            _id: params._sessionId
+        }).then(executeMongoChecks<Session>([
+            isValidSession
+        ]));
+        let library = await this.mongo.collections.library.findOne({
+            _id: session._libraryId
+        }).then(executeMongoChecks<Library>([
+            isValidLibrary
+        ]));
+        let scrape = await this.getLatestScrape(library._id)
+            .then(executeMongoChecks<Scrape>([
+                isValidScrape
+            ]))
+        const namespaceId = library._id.toString();
+        const index = await this.ragIndex.namespace(namespaceId);
+        let pipeline = await this.pipeline.buildRAGPipeline({
+            index,
+            library,
+            scrape,
+            session,
+        });
+
+        // Grab history from db.
+        function convertChatsToLangchainMsgs(chats: Chat[]) : BaseMessage[] {
+            let validChatTypes = [ChatType.Human, ChatType.AI];
+            return chats
+                .filter(c => validChatTypes.includes(c.type))
+                .map(c => {
+                    switch (c.type) {
+                        case ChatType.Human:
+                            return new HumanMessage(c.content)
+                        case ChatType.AI:
+                            return new AIMessage(c.content)
+                    }
+                })
+        }
+        let history = await this.mongo.collections.chat.find({
+            _sessionId: session._id
+        }).toArray();
+        let langchainHistory = convertChatsToLangchainMsgs(history);
+
+        // Invoke pipeline.
+        let res : RagRunnableParameters = await pipeline.invoke({
+            [RagRunnableProperties.input]: params.input,
+            [RagRunnableProperties.history]: langchainHistory
+        } as RagRunnableParameters);
+
+        // Save new chat messages into db.
+        let chats = {
+            input: {
+                _id: new ObjectId(),
+                _sessionId: session._id,
+                type: ChatType.Human,
+                content: res[RagRunnableProperties.input],
+                created: new Date()
+            } as Chat,
+            output: {
+                _id: new ObjectId(),
+                _sessionId: session._id,
+                type: ChatType.AI,
+                content: res[RagRunnableProperties.output],
+                created: new Date()
+            } as Chat
+        }
+        await this.mongo.collections.chat.insertMany([
+            chats.input,
+            chats.output
+        ])
+
+        return res;
+    }
+
+    public async closeSession(_sessionId: ObjectId) : Promise<void> {
+        // Confirm session's existence.
+        let session = await this.mongo.collections.session.findOne({
+            _id: _sessionId
+        }).then(executeMongoChecks<Session>([
+            isValidSession
+        ]));
+
+        // Delete associated impl.
+        await this.mongo.collections.session.deleteOne({ // Session entity.
+            _id: session._id
+        });
+        // await this.mongo.collections.chat.deleteMany({ // Chat entities.
+        //     _sessionId: session._id
+        // })
+    }
+
+    private async getLatestScrape(_libraryId: ObjectId) : Promise<Scrape | null> {
+        return (await this.mongo.collections.scrape.find({
+                _libraryId: _libraryId
+            }).sort({
+                lastScraped: -1
+            }).limit(1).toArray())[0] || null
     }
 }
