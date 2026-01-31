@@ -1,12 +1,15 @@
-
-import { env } from 'src/shared/utils/constants/env';
-import axios, { Axios, AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosStatic, CreateAxiosDefaults } from 'axios';
-import { expect, assert} from "chai";
-import {wrapper} from 'axios-cookiejar-support';
-import { Cookie, CookieJar } from "tough-cookie";
+import axios, {
+    AxiosInstance,
+    AxiosRequestConfig,
+    AxiosStatic,
+    CreateAxiosDefaults,
+} from 'axios';
+import { wrapper } from 'axios-cookiejar-support';
+import { env } from 'src/shared/constants/env';
+import { Cookie, CookieJar } from 'tough-cookie';
 export class Agent {
     jar: CookieJar;
-    axiosInstance: AxiosInstance | AxiosStatic
+    axiosInstance: AxiosInstance | AxiosStatic;
 
     constructor(config?: CreateAxiosDefaults) {
         this.jar = new CookieJar();
@@ -17,24 +20,23 @@ export class Agent {
                 jar: this.jar,
                 validateStatus: () => true, // Don't throw errors on failed requests.
                 ...(config ?? {}),
-            })
-    )}
+            }),
+        );
+    }
 
     public async register(username: string, email: string, password: string) {
-        return await this.http.post(
-            '/api/auth/register', {
-                username: username,
-                email: email,
-                password: password
-            }
-        );
+        return await this.http.post('/api/auth/register', {
+            username: username,
+            email: email,
+            password: password,
+        });
     }
 
     public async login(username: string, password: string) {
         let res = await this.http.post('/api/auth/login', {
             username: username,
-            password: password
-        })
+            password: password,
+        });
 
         // Save authorization.
         let body = res.data;
@@ -54,24 +56,25 @@ export class Agent {
 
     public getCookies = () => this.jar.getCookiesSync(env.server.origin);
 
-    public getCookie(name: string) : string | null {
+    public getCookie(name: string): string | null {
         let cookies = this.jar.getCookiesSync(env.server.origin);
-        let cookie = cookies.find(c => c.key == name);
+        let cookie = cookies.find((c) => c.key == name);
         return cookie?.value ?? null;
     }
 
     public addCookie(name: string, value: string) {
         this.jar.setCookieSync(
             new Cookie({
-                key: name, value: value
+                key: name,
+                value: value,
             }),
-            env.server.origin
+            env.server.origin,
         );
     }
 
     public expireCookie(name: string) {
         let cookies = this.jar.getCookiesSync(env.server.origin);
-        let cookie = cookies.find(c => c.key == name);
+        let cookie = cookies.find((c) => c.key == name);
         if (cookie != undefined) {
             cookie.expires = new Date(Date.now());
         }
@@ -91,16 +94,16 @@ export class Agent {
             return res;
         },
         patch: async (url: string, body?: any, config?: AxiosRequestConfig) => {
-            let res = await  this.axiosInstance.patch(url, body, config);
+            let res = await this.axiosInstance.patch(url, body, config);
             // console.log(`\nRESPONSE:\n${this.formatResponse(res.data)}\n`);;
             return res;
         },
-        delete: async (url: string,  config?: AxiosRequestConfig) => {
+        delete: async (url: string, config?: AxiosRequestConfig) => {
             let res = await this.axiosInstance.delete(url, config);
             // console.log(`\nRESPONSE:\n${this.formatResponse(res.data)}\n`);
             return res;
         },
-    }
+    };
 
     private formatResponse = (data: any) => JSON.stringify(data, null, 2);
 }
