@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import { describe, it } from 'node:test';
 import { env } from 'src/shared/constants/env.js';
 import { Agent } from '../agent.js';
 

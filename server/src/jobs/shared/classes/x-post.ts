@@ -4,9 +4,9 @@ import {
     TextSplitter,
 } from 'langchain/text_splitter';
 import { UUID } from 'mongodb';
-import { XPostMetadata } from 'src/scraping/options/online-resource/x/utils/interfaces/x-post-metadata';
-import { ScrapeEntry } from 'src/scraping/utils/classes/scrape-entry';
 import { env } from 'src/shared/constants/env';
+import { ScrapeEntry } from '../abstract/scrape-entry';
+import { XPostMetadata } from '../interfaces/x-post-metadata';
 
 export class XPostScrapeEntry extends ScrapeEntry<XPostMetadata> {
     static splitter: TextSplitter = new RecursiveCharacterTextSplitter({

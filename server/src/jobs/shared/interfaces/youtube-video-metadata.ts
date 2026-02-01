@@ -1,4 +1,4 @@
-import { ScrapeMetadata } from "src/scraping/utils/interfaces/scrape-metadata";
+import { ScrapeMetadata } from '../classes/scrape-metadata';
 
 export interface YoutubeVideoMetadata extends ScrapeMetadata {
     title: string;

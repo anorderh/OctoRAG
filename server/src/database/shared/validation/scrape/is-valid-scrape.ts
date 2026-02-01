@@ -1,6 +1,6 @@
-import { Scrape } from 'src/data/collections/scrape.collection';
-import { MongoCheck } from 'src/data/utils/types/mongo-check';
+import { Scrape } from 'src/database/collections/scrape.collection';
 import { InvalidEntityError } from 'src/shared/classes/errors';
+import { MongoCheck } from '../../types/mongo-check';
 
 export const isValidScrape: MongoCheck<Scrape | null> = (scrape) => {
     if (scrape == null) {

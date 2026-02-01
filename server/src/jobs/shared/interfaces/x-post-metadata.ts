@@ -1,6 +1,6 @@
-import { ScrapeMetadata } from "src/scraping/utils/interfaces/scrape-metadata";
+import { ScrapeMetadata } from '../classes/scrape-metadata';
 
 export interface XPostMetadata extends ScrapeMetadata {
-    link: string,
-    author: string
+    link: string;
+    author: string;
 }

@@ -1,5 +1,5 @@
-import { OnlineResourceType } from "src/data/utils/constants/online-resource-type"
+import { OnlineResourceType } from 'src/database/shared/constants/online-resource-type.js';
 
 export interface ScrapeMetadata {
-    type: OnlineResourceType
+    type: OnlineResourceType;
 }

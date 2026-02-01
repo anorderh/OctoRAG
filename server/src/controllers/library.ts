@@ -1,26 +1,28 @@
 import { Request, Response } from 'express';
 import Joi from 'joi';
 import { ObjectId } from 'mongodb';
-import { Library } from 'src/data/collections/library.collection.js';
-import { OnlineResource } from 'src/data/collections/online-resource.collection.js';
-import { Resource } from 'src/data/collections/resource.collection.js';
-import { OnlineResourceType } from 'src/data/utils/constants/online-resource-type.js';
-import { ResourceType } from 'src/data/utils/constants/resource-type.js';
-import { isValidLibrary } from 'src/data/validation/library/is-valid-library.js';
+import { Library } from 'src/database/collections/library.collection.js';
+
+import { OnlineResource } from 'src/database/collections/online-resource.collection.js';
+import { Resource } from 'src/database/collections/resource.collection.js';
+import { OnlineResourceType } from 'src/database/shared/constants/online-resource-type.js';
+import { ResourceType } from 'src/database/shared/constants/resource-type.js';
+import { isValidLibrary } from 'src/database/shared/validation/library/is-valid-library.js';
 import { MongoService } from 'src/services/mongo.service.js';
 import { RagService } from 'src/services/rag.service.js';
 import { StorageService } from 'src/services/storage.service.js';
 import { executeMongoChecks } from 'src/shared/utils/mongo-checks.js';
 import { inject, singleton } from 'tsyringe';
-import { Controller, Post } from '../decorators/index.js';
-import { Validate } from '../decorators/validate.js';
-import { httpContext } from '../middleware/http-context.js';
-import { ControllerBase } from '../utils/abstract/controller.abstract.js';
-import { objectId } from '../utils/constants/objectid-validation.js';
-import { ConfirmOnlineResourceRequest } from '../validation/requests/confirm-online-resource.req.js';
-import { ConfirmResourceRequest } from '../validation/requests/confirm-resource.req.js';
-import { CreateLibraryRequest } from '../validation/requests/create-library.req.js';
-import { ScrapeLibraryRequest } from '../validation/requests/scrape-library.req.js';
+import { Controller } from './decorators/controller.js';
+import { Post } from './decorators/http.js';
+import { Validate } from './decorators/validate.js';
+import { httpContext } from './middleware/http-context.js';
+import { ControllerBase } from './shared/abstract/controller.abstract.js';
+import { objectId } from './shared/constants/objectid-validation.js';
+import { ConfirmOnlineResourceRequest } from './shared/validation/requests/confirm-online-resource.req.js';
+import { ConfirmResourceRequest } from './shared/validation/requests/confirm-resource.req.js';
+import { CreateLibraryRequest } from './shared/validation/requests/create-library.req.js';
+import { ScrapeLibraryRequest } from './shared/validation/requests/scrape-library.req.js';
 
 @Controller('/library')
 @singleton()

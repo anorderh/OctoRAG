@@ -1,5 +1,5 @@
-import { User } from 'src/data/collections/user.collection.js';
-import { CollectionId } from 'src/data/utils/constants/collection-id.js';
+import { User } from 'src/database/collections/user.collection';
+import { CollectionId } from 'src/database/shared/constants/collection-id';
 import { MongoService } from 'src/services/mongo.service.js';
 import { container } from 'tsyringe';
 

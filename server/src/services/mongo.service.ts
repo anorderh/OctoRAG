@@ -3,31 +3,31 @@ import { App } from 'src/App.js';
 import {
     Chat,
     createChatCollection,
-} from 'src/data/collections/chat.collection.js';
+} from 'src/database/collections/chat.collection.js';
 import {
     createLibraryCollection,
     Library,
-} from 'src/data/collections/library.collection.js';
+} from 'src/database/collections/library.collection.js';
 import {
     createOnlineResourceCollection,
     OnlineResource,
-} from 'src/data/collections/online-resource.collection.js';
+} from 'src/database/collections/online-resource.collection.js';
 import {
     createResourceCollection,
     Resource,
-} from 'src/data/collections/resource.collection.js';
+} from 'src/database/collections/resource.collection.js';
 import {
     createScrapeCollection,
     Scrape,
-} from 'src/data/collections/scrape.collection.js';
+} from 'src/database/collections/scrape.collection.js';
 import {
     createSessionCollection,
     Session,
-} from 'src/data/collections/session.collection.js';
+} from 'src/database/collections/session.collection.js';
 import {
     createUserCollection,
     User,
-} from 'src/data/collections/user.collection.js';
+} from 'src/database/collections/user.collection.js';
 import { env } from 'src/shared/constants/env.js';
 import { singleton } from 'tsyringe';
 import { Service } from './shared/abstract/service.abstract.js';

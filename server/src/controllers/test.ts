@@ -2,8 +2,9 @@ import { Request, Response } from 'express';
 import { MongoService } from 'src/services/mongo.service.js';
 import { RagService } from 'src/services/rag.service.js';
 import { inject, singleton } from 'tsyringe';
-import { Controller, Get } from '../decorators/index.js';
-import { ControllerBase } from '../utils/abstract/controller.abstract.js';
+import { Controller } from './decorators/controller.js';
+import { Get } from './decorators/http.js';
+import { ControllerBase } from './shared/abstract/controller.abstract.js';
 
 @Controller('/test')
 @singleton()

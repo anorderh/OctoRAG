@@ -1,5 +1,4 @@
-import { ObjectId } from "mongodb";
-import { ResourceType } from "src/data/utils/constants/resource-type";
+import { ResourceType } from 'src/database/shared/constants/resource-type';
 
 export interface ConfirmResourceRequest {
     _libraryId: string;

@@ -1,4 +1,4 @@
-import { Library } from "src/data/collections/library.collection";
+import { Library } from 'src/database/collections/library.collection';
 
 export interface ScrapeLibraryParams {
     library: Library;

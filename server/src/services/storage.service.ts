@@ -10,8 +10,8 @@ import { env } from 'src/shared/constants/env';
 import { Readable } from 'stream';
 import { singleton } from 'tsyringe';
 import { Service } from './shared/abstract/service.abstract';
-import { BlobActionResult } from './utils/constants/blob-action-result.enum';
-import { BlobActionResponse } from './utils/interfaces/blob-action-response';
+import { BlobActionResult } from './shared/constants/blob-action-result.enum';
+import { BlobActionResponse } from './shared/interfaces/blob-action-response';
 
 @singleton()
 export class StorageService extends Service {

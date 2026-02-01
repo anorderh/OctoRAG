@@ -1,18 +1,20 @@
 import { Request, Response } from 'express';
 import Joi from 'joi';
 import { Collection } from 'mongodb';
-import { User } from 'src/data/collections/user.collection.js';
-import { CollectionId } from 'src/data/utils/constants/collection-id.js';
+import { User } from 'src/database/collections/user.collection.js';
+import { CollectionId } from 'src/database/shared/constants/collection-id.js';
 import { MongoService } from 'src/services/mongo.service.js';
+import { UserService } from 'src/services/user.service.js';
 import { filterNulls } from 'src/shared/utils/filter-nulls.js';
 import { inject, singleton } from 'tsyringe';
-import { UserService } from '../../services/data/user.service.js';
-import { Authorize, Controller, Get, Patch } from '../decorators/index.js';
-import { Validate } from '../decorators/validate.js';
-import { httpContext } from '../middleware/http-context.js';
-import { ControllerBase } from '../utils/abstract/controller.abstract.js';
-import { EditProfileRequest } from '../validation/requests/edit-profile.req.js';
-import { UserResponse } from '../validation/responses/user.res.js';
+import { Authorize } from './decorators/authorize.js';
+import { Get, Patch } from './decorators/http.js';
+import { Controller } from './decorators/index.js';
+import { Validate } from './decorators/validate.js';
+import { httpContext } from './middleware/http-context.js';
+import { ControllerBase } from './shared/abstract/controller.abstract.js';
+import { EditProfileRequest } from './shared/validation/requests/edit-profile.req.js';
+import { UserResponse } from './shared/validation/responses/user.res.js';
 
 @Controller('/user')
 @singleton()

@@ -4,9 +4,10 @@ import {
     TextSplitter,
 } from 'langchain/text_splitter';
 import { UUID } from 'mongodb';
-import { TiktokPostMetadata } from 'src/scraping/options/online-resource/tiktok/utils/interfaces/tiktok-post-metadata';
-import { ScrapeEntry } from 'src/scraping/utils/classes/scrape-entry';
+
 import { env } from 'src/shared/constants/env';
+import { ScrapeEntry } from '../abstract/scrape-entry';
+import { TiktokPostMetadata } from '../interfaces/tiktok-post-metadata';
 
 export class TiktokPostScrapeEntry extends ScrapeEntry<TiktokPostMetadata> {
     static splitter: TextSplitter = new RecursiveCharacterTextSplitter({

@@ -3,18 +3,23 @@ import { inject, singleton } from 'tsyringe';
 import { Request, Response } from 'express';
 import Joi from 'joi';
 import { Collection, ObjectId } from 'mongodb';
-import { User } from 'src/data/collections/user.collection.js';
-import { CollectionId } from 'src/data/utils/constants/collection-id.js';
+import { User } from 'src/database/collections/user.collection.js';
+import { CollectionId } from 'src/database/shared/constants/collection-id.js';
 import { MongoService } from 'src/services/mongo.service.js';
 import { UserService } from 'src/services/user.service.js';
+import { TokenUtility } from 'src/shared/classes/token.util.js';
 import { env } from 'src/shared/constants/env.js';
 import { TokenPayload } from 'src/shared/constants/token-payload.js';
 import { TokenType } from 'src/shared/constants/token-type.js';
-import { TokenUtility } from 'src/shared/utils/classes/token.util.js';
-import { Token } from 'src/shared/utils/interfaces/token.js';
-import { Authorize, Controller, Get, Post } from '../decorators/index.js';
-import { Validate } from '../decorators/validate.js';
-import { ControllerBase } from '../utils/abstract/controller.abstract.js';
+import { Token } from 'src/shared/interfaces/token.js';
+import {
+    Authorize,
+    Controller,
+    Get,
+    Post,
+} from '../controllers/decorators/index.js';
+import { Validate } from './decorators/validate.js';
+import { ControllerBase } from './shared/abstract/controller.abstract.js';
 
 @Controller('/auth')
 @singleton()

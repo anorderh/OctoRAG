@@ -4,9 +4,9 @@ import {
     TextSplitter,
 } from 'langchain/text_splitter';
 import { UUID } from 'mongodb';
-import { YoutubeVideoMetadata } from 'src/scraping/options/online-resource/youtube/utils/interfaces/youtube-video-metadata';
-import { ScrapeEntry } from 'src/scraping/utils/classes/scrape-entry';
 import { env } from 'src/shared/constants/env';
+import { ScrapeEntry } from '../abstract/scrape-entry';
+import { YoutubeVideoMetadata } from '../interfaces/youtube-video-metadata';
 
 export class YoutubeVideoScrapeEntry extends ScrapeEntry<YoutubeVideoMetadata> {
     static splitter: TextSplitter = new RecursiveCharacterTextSplitter({

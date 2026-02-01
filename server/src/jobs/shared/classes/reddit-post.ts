@@ -4,9 +4,9 @@ import {
     TextSplitter,
 } from 'langchain/text_splitter';
 import { UUID } from 'mongodb';
-import { RedditPostMetadata } from 'src/scraping/options/online-resource/reddit/utils/interfaces/reddit-post-metadata';
-import { ScrapeEntry } from 'src/scraping/utils/classes/scrape-entry';
 import { env } from 'src/shared/constants/env';
+import { ScrapeEntry } from '../abstract/scrape-entry.js';
+import { RedditPostMetadata } from '../interfaces/reddit-post-metadata.js';
 
 export class RedditPostScrapeEntry extends ScrapeEntry<RedditPostMetadata> {
     static splitter: TextSplitter = new RecursiveCharacterTextSplitter({

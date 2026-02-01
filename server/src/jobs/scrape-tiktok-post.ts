@@ -1,11 +1,8 @@
 import { UUID } from 'mongodb';
-import { OnlineResourceType } from 'src/data/utils/constants/online-resource-type';
-import { TiktokPostScrapeEntry } from 'src/scraping/entries/online-resource/tiktok/tiktok-post';
+import { OnlineResourceType } from 'src/database/shared/constants/online-resource-type';
 import { ScrapeEntryFailedError } from 'src/shared/classes/errors.js';
-import {
-    TokScript,
-    TokScriptResponse,
-} from 'src/shared/utils/classes/tokscript';
+import { TokScript, TokScriptResponse } from 'src/shared/classes/tokscript';
+import { TiktokPostScrapeEntry } from './shared/classes/tiktok-post';
 
 export async function scrapeTiktokPost(
     url: URL,

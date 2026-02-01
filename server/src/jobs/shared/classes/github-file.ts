@@ -4,11 +4,11 @@ import {
     RecursiveCharacterTextSplitterParams,
 } from 'langchain/text_splitter';
 import { UUID } from 'mongodb';
-import { GithubRepoMetadata } from 'src/scraping/options/online-resource/github/utils/interfaces/github-repo-metadata';
-import { ScrapeEntry } from 'src/scraping/utils/classes/scrape-entry';
-import { ScrapeEntryParams } from 'src/scraping/utils/interfaces/scrape-entry-params';
 import { fileExtToTextSplitterLang } from 'src/services/shared/constants/file-ext-to-text-splitter-lang';
 import { env } from 'src/shared/constants/env';
+import { ScrapeEntry } from '../abstract/scrape-entry';
+import { GithubRepoMetadata } from '../interfaces/github-repo-metadata';
+import { ScrapeEntryParams } from '../interfaces/scrape-entry-params';
 
 export interface GithubFileMetadata extends GithubRepoMetadata {
     filename: string;

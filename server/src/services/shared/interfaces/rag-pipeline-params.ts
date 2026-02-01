@@ -1,7 +1,7 @@
-import { Index, RecordMetadata } from "@pinecone-database/pinecone";
-import { Library } from "src/data/collections/library.collection";
-import { Scrape } from "src/data/collections/scrape.collection";
-import { Session } from "src/data/collections/session.collection";
+import { Index, RecordMetadata } from '@pinecone-database/pinecone';
+import { Library } from 'src/database/collections/library.collection';
+import { Scrape } from 'src/database/collections/scrape.collection';
+import { Session } from 'src/database/collections/session.collection';
 
 export interface RagPipelineParameters {
     index: Index<RecordMetadata>;

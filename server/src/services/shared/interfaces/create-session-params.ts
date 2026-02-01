@@ -1,5 +1,4 @@
-import { Library } from "src/data/collections/library.collection";
-import { Scrape } from "src/data/collections/scrape.collection";
+import { Library } from 'src/database/collections/library.collection';
 
 export interface CreateSessionParams {
     library: Library;

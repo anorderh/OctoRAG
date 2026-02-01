@@ -1,13 +1,13 @@
 import fs from 'fs';
 import { UUID } from 'mongodb';
 import { parseOfficeAsync } from 'officeparser';
-import { OnlineResourceType } from 'src/data/utils/constants/online-resource-type';
-import { MediaPDFScrapeEntry } from 'src/scraping/entries/online-resource/media/media-pdf';
+import { OnlineResourceType } from 'src/database/shared/constants/online-resource-type';
 import { ScrapeEntryFailedError } from 'src/shared/classes/errors.js';
 import { env } from 'src/shared/constants/env';
 import { downloadFile } from 'src/shared/utils/download-file';
 import { parseRegex } from 'src/shared/utils/parse-regex';
-import { MediaType } from '../shared/constants/media-type';
+import { MediaPDFScrapeEntry } from './shared/classes/media-pdf';
+import { MediaType } from './shared/constants/media-type';
 
 export async function scrapeMediaPDF(url: URL) {
     let filename = parseRegex(url.toString(), /\/([^\/?#]+\.pdf)(?:[?#]|$)/i);

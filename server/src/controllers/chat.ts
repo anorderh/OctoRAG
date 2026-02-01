@@ -1,18 +1,18 @@
 import { Request, Response } from 'express';
 import Joi from 'joi';
 import { ObjectId } from 'mongodb';
-import { Library } from 'src/data/collections/library.collection.js';
-import { isValidLibrary } from 'src/data/validation/library/is-valid-library.js';
+import { Library } from 'src/database/collections/library.collection.js';
+import { isValidLibrary } from 'src/database/shared/validation/library/is-valid-library.js';
 import { MongoService } from 'src/services/mongo.service.js';
 import { RagService } from 'src/services/rag.service.js';
 import { executeMongoChecks } from 'src/shared/utils/mongo-checks.js';
 import { inject, singleton } from 'tsyringe';
-import { Controller, Delete, Post } from '../decorators/index.js';
-import { Validate } from '../decorators/validate.js';
-import { ControllerBase } from '../utils/abstract/controller.abstract.js';
-import { objectId } from '../utils/constants/objectid-validation.js';
-import { ChatRequest } from '../validation/requests/chat.req.js';
-import { CreateSessionRequest } from '../validation/requests/create-session.req.js';
+import { Controller, Delete, Post } from '../controllers/decorators/index.js';
+import { Validate } from '../controllers/decorators/validate.js';
+import { ControllerBase } from './shared/abstract/controller.abstract.js';
+import { objectId } from './shared/constants/objectid-validation.js';
+import { ChatRequest } from './shared/validation/requests/chat.req.js';
+import { CreateSessionRequest } from './shared/validation/requests/create-session.req.js';
 
 @Controller('/chat')
 @singleton()

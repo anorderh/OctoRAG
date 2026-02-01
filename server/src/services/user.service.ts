@@ -1,6 +1,6 @@
 import { Collection } from 'mongodb';
-import { User } from 'src/data/collections/user.collection.js';
-import { CollectionId } from 'src/data/utils/constants/collection-id.js';
+import { User } from 'src/database/collections/user.collection.js';
+import { CollectionId } from 'src/database/shared/constants/collection-id.js';
 import { inject, injectable } from 'tsyringe';
 import { httpContext } from '../controllers/middleware/http-context.js';
 import { InvalidUserError } from '../shared/classes/errors.js';

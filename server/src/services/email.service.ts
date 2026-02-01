@@ -4,7 +4,7 @@ import { App } from 'src/App';
 import { env } from 'src/shared/constants/env';
 import { singleton } from 'tsyringe';
 import { Service } from './shared/abstract/service.abstract';
-import { Email } from './utils/interfaces/email';
+import { Email } from './shared/interfaces/email';
 
 @singleton()
 export class EmailService extends Service {

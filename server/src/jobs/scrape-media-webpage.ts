@@ -1,12 +1,12 @@
 import { UUID } from 'mongodb';
 import { By, WebDriver } from 'selenium-webdriver';
-import { OnlineResourceType } from 'src/data/utils/constants/online-resource-type';
+import { OnlineResourceType } from 'src/database/shared/constants/online-resource-type';
 import { DependencyInjectionToken } from 'src/integrations/shared/constants/dependency-injection-token';
-import { MediaWebpageScrapeEntry } from 'src/scraping/entries/online-resource/media/media-webpage';
 import { ScrapeEntryFailedError } from 'src/shared/classes/errors.js';
 import { tryFindElement } from 'src/shared/utils/webdriver-attempt';
 import { container } from 'tsyringe';
-import { MediaType } from '../shared/constants/media-type';
+import { MediaWebpageScrapeEntry } from './shared/classes/media-webpage';
+import { MediaType } from './shared/constants/media-type';
 
 export async function scrapeMediaWebpage(url: URL) {
     const driver = container.resolve<WebDriver>(

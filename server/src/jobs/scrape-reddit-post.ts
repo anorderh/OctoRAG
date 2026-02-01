@@ -1,11 +1,11 @@
 import { UUID } from 'mongodb';
 import Snoowrap from 'snoowrap';
-import { OnlineResourceType } from 'src/data/utils/constants/online-resource-type';
+import { OnlineResourceType } from 'src/database/shared/constants/online-resource-type';
 import { DependencyInjectionToken } from 'src/integrations/shared/constants/dependency-injection-token';
-import { RedditPostScrapeEntry } from 'src/scraping/entries/online-resource/reddit/reddit-post';
 import { ScrapeEntryFailedError } from 'src/shared/classes/errors.js';
 import { parseRegex } from 'src/shared/utils/parse-regex';
 import { container } from 'tsyringe';
+import { RedditPostScrapeEntry } from './shared/classes/reddit-post';
 
 export async function scrapeRedditPost(
     url: URL,

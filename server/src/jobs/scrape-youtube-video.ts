@@ -1,8 +1,7 @@
 import { decode } from 'html-entities';
 import { UUID } from 'mongodb';
-import { OnlineResourceType } from 'src/data/utils/constants/online-resource-type';
+import { OnlineResourceType } from 'src/database/shared/constants/online-resource-type';
 import { DependencyInjectionToken } from 'src/integrations/shared/constants/dependency-injection-token';
-import { YoutubeVideoScrapeEntry } from 'src/scraping/entries/online-resource/youtube/youtube-video';
 import {
     InvalidURLFormatError,
     ScrapeEntryFailedError,
@@ -10,6 +9,7 @@ import {
 import { container } from 'tsyringe';
 import { YoutubeTranscript } from 'youtube-transcript';
 import Innertube from 'youtubei.js/agnostic';
+import { YoutubeVideoScrapeEntry } from './shared/classes/youtube-video';
 
 export async function scrapeYoutubeVideo(url: URL) {
     let maxDurationLimit = 60 * 60; // 1 hour transcript limit.

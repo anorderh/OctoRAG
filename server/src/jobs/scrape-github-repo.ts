@@ -3,9 +3,8 @@ import AdmZip from 'adm-zip';
 import * as fs from 'fs';
 import { UUID } from 'mongodb';
 import path from 'path';
-import { OnlineResourceType } from 'src/data/utils/constants/online-resource-type';
+import { OnlineResourceType } from 'src/database/shared/constants/online-resource-type';
 import { DependencyInjectionToken } from 'src/integrations/shared/constants/dependency-injection-token';
-import { GithubFileScrapeEntry } from 'src/scraping/entries/online-resource/github/github-file';
 import {
     InvalidURLFormatError,
     ScrapeEntryFailedError,
@@ -13,6 +12,7 @@ import {
 import { env } from 'src/shared/constants/env';
 import { downloadFile } from 'src/shared/utils/download-file';
 import { container } from 'tsyringe';
+import { GithubFileScrapeEntry } from './shared/classes/github-file';
 
 export async function scrapeGithubRepo(
     url: URL,

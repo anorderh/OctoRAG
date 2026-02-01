@@ -7,14 +7,13 @@ import path from 'path';
 import { Logger } from 'pino';
 import { InjectionToken, container } from 'tsyringe';
 import { __dirname } from './__dirname.js';
-import { AuthController } from './controllers/controllers/auth.js';
-import { ChatController } from './controllers/controllers/chat.js';
-import { LibraryController } from './controllers/controllers/library.js';
-import { TestController } from './controllers/controllers/test.js';
-import { UserController } from './controllers/controllers/user.js';
+import { AuthController } from './controllers/auth.js';
+import { ChatController } from './controllers/chat.js';
+import { LibraryController } from './controllers/library.js';
 import { useHttpContext } from './controllers/middleware/http-context.js';
 import { ControllerBase } from './controllers/shared/abstract/controller.abstract.js';
-import { Middleware } from './controllers/shared/types/middleware.js';
+import { TestController } from './controllers/test.js';
+import { UserController } from './controllers/user.js';
 import { DependencyInjectionToken } from './integrations/shared/constants/dependency-injection-token.js';
 import { EmailService } from './services/email.service.js';
 import { MongoService } from './services/mongo.service.js';
@@ -50,13 +49,13 @@ export class App {
         LibraryController,
     ];
 
-    middleware: Middleware[] = [
+    middleware: any[] = [
         cors({
             origin: [env.server.origin, 'http://localhost:8080'],
         }),
         env.logging.http ? morgan('common') : null,
-        this.express.json(),
-        this.express.urlencoded(),
+        express.json(),
+        express.urlencoded(),
         cookieParser(),
         useHttpContext,
     ].filter((m) => !!m);

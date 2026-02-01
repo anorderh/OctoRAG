@@ -1,11 +1,11 @@
 import { UUID } from 'mongodb';
 import { By, WebDriver } from 'selenium-webdriver';
-import { OnlineResourceType } from 'src/data/utils/constants/online-resource-type';
+import { OnlineResourceType } from 'src/database/shared/constants/online-resource-type';
 import { DependencyInjectionToken } from 'src/integrations/shared/constants/dependency-injection-token';
-import { XPostScrapeEntry } from 'src/scraping/entries/online-resource/x/x-post';
 import { ScrapeEntryFailedError } from 'src/shared/classes/errors.js';
 import { tryFindElement } from 'src/shared/utils/webdriver-attempt';
 import { container } from 'tsyringe';
+import { XPostScrapeEntry } from './shared/classes/x-post';
 
 export async function scrapeXPost(url: URL): Promise<XPostScrapeEntry[]> {
     const driver = container.resolve<WebDriver>(

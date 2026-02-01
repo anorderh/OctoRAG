@@ -4,9 +4,9 @@ import {
     TextSplitter,
 } from 'langchain/text_splitter';
 import { UUID } from 'mongodb';
-import { MediaScrapeMetadata } from 'src/scraping/options/online-resource/media/utils/interfaces/media-scrape-metadata';
-import { ScrapeEntry } from 'src/scraping/utils/classes/scrape-entry';
 import { env } from 'src/shared/constants/env';
+import { ScrapeEntry } from '../abstract/scrape-entry';
+import { MediaScrapeMetadata } from '../interfaces/media-scrape-metadata';
 
 export interface MediaWebpageMetadata extends MediaScrapeMetadata {
     seo: string;

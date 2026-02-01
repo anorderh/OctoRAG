@@ -1,6 +1,6 @@
 import { App } from 'src/App.js';
-import { ScrapeEntry } from './utils/classes/scrape-entry.js';
-import { ResourceScrapeOption } from './utils/types/scrape-uploaded-option.js';
+import { ScrapeEntry } from '../abstract/scrape-entry.js';
+import { ResourceScrapeOption } from '../types/scrape-uploaded-option.js';
 
 export class ResourceScrape {
     static options: { [key: string]: ResourceScrapeOption } = {
