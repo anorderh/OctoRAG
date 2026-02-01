@@ -1,0 +1,11 @@
+\
+<metadata>
+{metadata}
+</metadata>
+Here is the chunk we want to situate within the source, provided its metadata.
+<chunk>
+{pageContent}
+</chunk>
+
+Please give a short succinct context to situate this chunk within the source, using its metadata, for the purposes of improving search retrieval of the chunk.
+Answer only with the succinct context and nothing else.

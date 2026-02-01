@@ -18,8 +18,10 @@ import {
 import { CohereClient } from 'cohere-ai';
 import OpenAI from 'openai';
 import { DependencyInjectionToken } from 'src/integrations/shared/constants/dependency-injection-token.js';
+import { pathes } from 'src/shared/constants/pathes.js';
 import { formatDocumentsAsContext } from 'src/shared/utils/format-document-as-context.js';
 import { formatRecordAsDocument } from 'src/shared/utils/format-record-as-document.js';
+import { readLocalFile } from 'src/shared/utils/read-local-file.js';
 import { container, inject, singleton } from 'tsyringe';
 import { MongoService } from './mongo.service.js';
 import { Service } from './shared/abstract/service.abstract.js';
@@ -35,6 +37,12 @@ export class PipelineService extends Service {
     openai: OpenAI;
     cohere: CohereClient;
 
+    prompts: {
+        assistant: string;
+        considerHistory: string;
+        contextualizeEmbedding: string;
+    };
+
     constructor(@inject(MongoService) private mongo: MongoService) {
         super();
     }
@@ -44,6 +52,16 @@ export class PipelineService extends Service {
         this.openai = container.resolve(DependencyInjectionToken.OpenAI);
         this.cohere = container.resolve(DependencyInjectionToken.Cohere);
         this.ragIndex = container.resolve(DependencyInjectionToken.RagIndex);
+
+        this.prompts = {
+            assistant: await readLocalFile(`${pathes.prompts}/assistant.txt`),
+            considerHistory: await readLocalFile(
+                `${pathes.prompts}/considerHistory.txt`,
+            ),
+            contextualizeEmbedding: await readLocalFile(
+                `${pathes.prompts}/contextualizeEmbeddings.txt`,
+            ),
+        };
     }
 
     async buildRAGPipeline({
@@ -66,15 +84,7 @@ export class PipelineService extends Service {
                 if (!!history && history.length > 0) {
                     return RunnableSequence.from([
                         ChatPromptTemplate.fromMessages([
-                            [
-                                'system',
-                                `\
-    Given a chat history and the latest user question \
-    which might reference context in the chat history, formulate a standalone \
-    question which can be understood without the chat history. Do NOT answer the \
-    question, just reformulate it if needed and otherwise return it as is.
-    `,
-                            ],
+                            ['system', this.prompts.considerHistory],
                             new MessagesPlaceholder(
                                 RagRunnableProperties.history,
                             ),
@@ -103,7 +113,6 @@ export class PipelineService extends Service {
 
                     // Apply BM25 sparse embedding search here later.
                     // Though this will prob shift to Python cloud func, keep it in mind.
-
                     let res = await index.query({
                         vector: queryDenseEmbeddings,
                         topK: 20,
@@ -128,18 +137,7 @@ export class PipelineService extends Service {
                                 ChatPromptTemplate.fromMessages([
                                     [
                                         'system',
-                                        `\
-    <metadata>
-    {metadata}
-    </metadata>
-    Here is the chunk we want to situate within the source, provided its metadata.
-    <chunk>
-    {pageContent}
-    </chunk>
-    
-    Please give a short succinct context to situate this chunk within the source, using its metadata, for the purposes of improving search retrieval of the chunk.
-    Answer only with the succinct context and nothing else.
-    `,
+                                        this.prompts.contextualizeEmbedding,
                                     ],
                                 ]),
                                 llm,
@@ -190,15 +188,7 @@ export class PipelineService extends Service {
             new RunnablePassthrough().assign({
                 [RagRunnableProperties.output]: RunnableSequence.from([
                     ChatPromptTemplate.fromMessages([
-                        [
-                            'system',
-                            `\
-You are an assistant for question-answering tasks. \
-Use the following pieces of retrieved context to answer the question. \
-If you don't know the answer, just say that you don't know. \
-Use three to five sentences maximum and keep the answer concise. \
-\n\n{context}`,
-                        ],
+                        ['system', this.prompts.assistant],
                         new MessagesPlaceholder(RagRunnableProperties.history),
                         ['human', `{${RagRunnableProperties.interpretation}}`],
                     ]),
