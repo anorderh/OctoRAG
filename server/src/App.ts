@@ -20,7 +20,6 @@ import { MongoService } from './services/mongo.service.js';
 import { PipelineService } from './services/pipeline.service.js';
 import { RagService } from './services/rag.service.js';
 import { Service } from './services/shared/abstract/service.abstract.js';
-import { StorageService } from './services/storage.service.js';
 import { UserService } from './services/user.service.js';
 import { env } from './shared/constants/env.js';
 import { errorHandler } from './shared/utils/error-handler.js';
@@ -35,10 +34,8 @@ export class App {
     services: InjectionToken<Service>[] = [
         RagService,
         MongoService,
-        MongoService,
         UserService,
         EmailService,
-        StorageService,
         PipelineService,
     ];
     controllers: InjectionToken<ControllerBase>[] = [

@@ -59,7 +59,7 @@ export class PipelineService extends Service {
                 `${pathes.prompts}/considerHistory.txt`,
             ),
             contextualizeEmbedding: await readLocalFile(
-                `${pathes.prompts}/contextualizeEmbeddings.txt`,
+                `${pathes.prompts}/contextualizeEmbedding.txt`,
             ),
         };
     }

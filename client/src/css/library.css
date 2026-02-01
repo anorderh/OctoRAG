@@ -1,8 +1,0 @@
-.library-card {
-    transition: background-color 0.3s ease;
-}
-  
-.library-card:hover {
-    background-color: #f0f0f0; /* Change to your desired hover color */
-    cursor: pointer;
-}
