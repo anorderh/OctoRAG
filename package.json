@@ -11,5 +11,8 @@
         "build:server": "npm --workspace server run build",
         "start:server": "npm --workspace server run start",
         "deploy": "npm run build:client & npm run start:server"
+    },
+    "dependencies": {
+        "zustand": "^5.0.11"
     }
 }
