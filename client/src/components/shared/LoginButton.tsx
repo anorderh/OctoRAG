@@ -1,5 +1,5 @@
-import type { ComponentProps } from '../shared/interfaces/ComponentProps';
-import { useModalStore } from '../store/modal';
+import type { ComponentProps } from '../../shared/interfaces/ComponentProps';
+import { useModalStore } from '../../store/modal';
 import { Modal } from './Modal';
 
 export function LoginButton({}: ComponentProps) {

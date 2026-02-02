@@ -1,0 +1,15 @@
+.idle-text {
+    animation: idleBob 2s ease-in-out infinite;
+}
+
+@keyframes idleBob {
+    0%,
+    100% {
+        transform: translateY(0);
+        opacity: 0.4;
+    }
+    50% {
+        transform: translateY(-6px);
+        opacity: 0.9;
+    }
+}

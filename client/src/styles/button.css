@@ -1,0 +1,77 @@
+button {
+    all: unset; /* remove all default browser styles */
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 500;
+    line-height: 1;
+
+    padding: 0.6em 1.1em;
+    border-radius: 10px;
+
+    background-color: rgba(255, 255, 255, 0.08);
+    color: inherit;
+
+    cursor: pointer;
+    user-select: none;
+
+    transition:
+        transform 120ms ease,
+        opacity 120ms ease,
+        background-color 160ms ease,
+        box-shadow 160ms ease;
+
+    will-change: transform;
+    backface-visibility: hidden;
+}
+
+button:hover {
+    background-color: rgba(255, 255, 255, 0.14);
+}
+
+.icon-button {
+    all: unset; /* remove all default button styles */
+    box-sizing: border-box;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 36px;
+    height: 36px;
+
+    color: inherit;
+    opacity: 0.65;
+
+    cursor: pointer;
+    user-select: none;
+
+    border-radius: 50%;
+
+    transition:
+        opacity 120ms ease,
+        transform 120ms ease,
+        background-color 160ms ease;
+
+    will-change: transform;
+}
+
+.icon-button:hover {
+    opacity: 1;
+    transform: scale(1.04);
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.icon-button:active {
+    transform: scale(0.96);
+}
+
+.icon-button:focus-visible {
+    outline: none;
+    opacity: 1;
+    background-color: rgba(100, 108, 255, 0.25);
+}

@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
-import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import '../styles/modal.css';
+import '../../styles/modal.css';
 
 type ModalProps = {
     open: boolean;
@@ -11,15 +10,12 @@ type ModalProps = {
 
 export function Modal({ open, onClose, children }: ModalProps) {
     const overlayRoot = document.getElementById('overlay-root');
-    if (!overlayRoot || !open) return null;
-
-    // Lock background scroll.
-    useEffect(() => {
+    if (open) {
         document.body.style.overflow = 'hidden';
-        return () => {
-            document.body.style.overflow = '';
-        };
-    }, []);
+    } else {
+        document.body.style.overflow = '';
+    }
+    if (!overlayRoot || !open) return null;
 
     return createPortal(
         <div className="modal-overlay" onClick={onClose}>
