@@ -24,7 +24,7 @@ export function Modal({ open, onClose, children }: ModalProps) {
                 style={{
                     minHeight: 40,
                     minWidth: 40,
-                    backgroundColor: 'var(--color-paper)',
+                    backgroundColor: 'var(--color-card)',
                 }}
                 onClick={(e) => e.stopPropagation()}>
                 {children}

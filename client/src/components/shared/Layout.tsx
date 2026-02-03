@@ -5,11 +5,12 @@ import { Navbar } from './Navbar';
 
 export function Layout({ children }: ComponentProps) {
     return (
-        <div className="w-100 d-flex flex-column justify-content-start align-items-center">
+        <div className="w-100 h-100 d-flex flex-column justify-content-start align-items-center">
             <Navbar />
             <div
                 id="content"
-                className="d-flex flex-column gap-2 justify-content-start align-items-center w-75">
+                // style={{ height: '100%' }}
+                className="d-flex flex-column flex-grow-1 gap-2 justify-content-start align-items-center">
                 <Outlet></Outlet>
             </div>
             <Footer />

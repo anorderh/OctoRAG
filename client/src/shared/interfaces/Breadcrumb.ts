@@ -1,7 +1,11 @@
-import type { BreadcrumbId } from '../constants/breadcrumb-id';
+import type { Params } from 'react-router';
 
 export interface Breadcrumb {
     icon?: string;
-    id: BreadcrumbId;
     display: string;
+    to?: string;
 }
+
+export type RouteHandle =
+    | (() => Breadcrumb)
+    | ((params: Params<string>) => Breadcrumb);

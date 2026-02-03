@@ -4,7 +4,7 @@ export function Footer() {
     return (
         <div
             id="navbar"
-            className="d-flex flex-row justify-content-end align-items-center my-2 px-4 mt-4 gap-4"
+            className="d-flex flex-row justify-content-end align-items-center pb-4 px-4 mt-4 gap-4 text-white"
             style={{
                 height: 60,
                 width: '98%',
@@ -12,7 +12,7 @@ export function Footer() {
             <a
                 type="btn"
                 href="https://www.linkedin.com/in/anthony-norderhaug/"
-                className="icon-button">
+                className="btn text-muted">
                 <FontAwesomeIcon
                     style={{ width: 30, height: 30 }}
                     icon="fa-brands fa-linkedin"></FontAwesomeIcon>
@@ -20,7 +20,7 @@ export function Footer() {
             <a
                 type="btn"
                 href="https://github.com/anorderh"
-                className="icon-button">
+                className="btn text-muted">
                 <FontAwesomeIcon
                     style={{ width: 30, height: 30 }}
                     icon="fa-brands fa-github"></FontAwesomeIcon>
