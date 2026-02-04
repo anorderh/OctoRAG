@@ -9,8 +9,8 @@ export function Layout({ children }: ComponentProps) {
             <Navbar />
             <div
                 id="content"
-                // style={{ height: '100%' }}
-                className="d-flex flex-column flex-grow-1 gap-2 justify-content-start align-items-center">
+                style={{ minHeight: '100%' }}
+                className="d-flex flex-column flex-grow-1 w-100 gap-2 justify-content-start align-items-center">
                 <Outlet></Outlet>
             </div>
             <Footer />

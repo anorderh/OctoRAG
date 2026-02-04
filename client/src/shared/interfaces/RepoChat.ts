@@ -3,7 +3,6 @@ export interface RepoChat {
     repoName: string;
     repoUrl: string;
     creationDate: string;
-
     lastMessageDate?: string;
     messageCount: number;
 }

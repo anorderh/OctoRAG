@@ -20,12 +20,12 @@ export const router = createBrowserRouter([
                         element: <Home />,
                     },
                     {
-                        path: 'chat/:id',
+                        path: 'chat/:chatId',
                         element: <ChatPage />,
-                        handle: (params: Params<'id'>) => ({
+                        handle: (params: Params<'chatId'>) => ({
                             icon: 'fa-solid fa-message',
-                            display: `Chat ${params.id}`,
-                            to: `/chat/${params.id}`,
+                            display: `Chat ${params.chatId}`,
+                            // to: `/chat/${params.chatId}`,
                         }),
                     },
                 ],

@@ -1,8 +1,17 @@
 .info-card {
     background-color: var(--color-card);
-    min-height: 200px;
+    height: 200px;
 }
 
 .chat-container {
-    
+    border: 1px solid var(--color-outline);
+}
+
+.chat-tab {
+    border-top: 1px solid var(--color-outline);
+    background: var(--color-card);
+}
+
+.chat-header {
+    border-bottom: 1px solid var(--color-outline);
 }

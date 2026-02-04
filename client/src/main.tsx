@@ -2,6 +2,7 @@ import { createRoot } from 'react-dom/client';
 import './styles/breadcrumb.css';
 import './styles/button.css';
 import './styles/card.css';
+import './styles/chatPage.css';
 import './styles/colors.css';
 import './styles/root.css';
 import './styles/text-animation.css';

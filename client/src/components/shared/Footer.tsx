@@ -4,7 +4,7 @@ export function Footer() {
     return (
         <div
             id="navbar"
-            className="d-flex flex-row justify-content-end align-items-center pb-4 px-4 mt-4 gap-4 text-white"
+            className="d-flex mt-5 flex-row justify-content-end align-items-center pb-4 px-4 mt-4 gap-4 text-white"
             style={{
                 height: 60,
                 width: '98%',

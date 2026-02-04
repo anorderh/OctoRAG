@@ -1,12 +1,12 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useMemo, useState } from 'react';
-import { useChatState } from '../../store/chat';
+import { useChatStore } from '../../store/chat';
 import { ChatCard } from './ChatCard';
 
 export function ChatGrid() {
     const pageSize = 6;
     const [page, setPage] = useState(1);
-    const { chats } = useChatState();
+    const { chats } = useChatStore();
 
     const lower = useMemo(() => (page - 1) * pageSize, [page]);
     const upper = useMemo(() => page * pageSize, [page]);

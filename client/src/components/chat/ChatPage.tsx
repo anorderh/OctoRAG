@@ -1,14 +1,18 @@
-import { useParams } from 'react-router';
+import { useSelectChat } from '../../hooks/effects/useSelectChat';
+import { ChatActionPanel } from './ChatActionPanel';
+import { ChatConversationPanel } from './ChatConversationPanel';
 
 export function ChatPage() {
-    const { chatId } = useParams<{ chatId: string }>();
-
+    useSelectChat();
     return (
-        <div className="w-100 p-2 d-flex flex-row gap-2">
-            <div id="repoInfo" className="info-card rounded p-2"></div>
-            <div
-                id="repoChats"
-                className="chat-container h-100 rounded border-1 border-grey bg-transparent"></div>
+        <div
+            style={{
+                width: '95%',
+                minWidth: '800px',
+            }}
+            className="h-100 d-flex flex-row justify-content-center align-items-center gap-4">
+            <ChatActionPanel />
+            <ChatConversationPanel />
         </div>
     );
 }
