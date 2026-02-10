@@ -1,5 +1,6 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useNavigate } from 'react-router';
+import { ChatStatus } from '../../shared/constants/chat-status.enums';
 import type { ComponentProps } from '../../shared/interfaces/ComponentProps';
 import type { RepoChat } from '../../shared/interfaces/RepoChat';
 
@@ -9,6 +10,7 @@ type ChatCardProps = ComponentProps & {
 
 export function ChatCard({ chat }: ChatCardProps) {
     const navigate = useNavigate();
+    const isLoading = () => chat.status == ChatStatus.LOADING;
 
     function navToPage() {
         navigate(`chat/${chat.id}`);
@@ -17,7 +19,7 @@ export function ChatCard({ chat }: ChatCardProps) {
     return (
         <button
             onClick={() => navToPage()}
-            className="chat-card card-select flex-grow-1 flex-wrap rounded shadow p-3 d-flex flex-column">
+            className="chat-card card-select flex-grow-1 rounded shadow p-3 d-flex flex-column">
             <div className="d-flex flex-row justify-content-between align-items-start">
                 <h6 className="repo-name fw-bold">{chat.repoName}</h6>
                 <div
@@ -26,19 +28,43 @@ export function ChatCard({ chat }: ChatCardProps) {
                     <span className="text-white">{chat.messageCount}</span>
                 </div>
             </div>
-            <div>
+            <span>
                 <a
+                    style={{
+                        overflowWrap: 'anywhere',
+                        wordBreak: 'break-word',
+                    }}
                     href={chat.repoUrl}
                     target="_blank"
-                    className="text-wrap"
+                    className="d-flex flex-row align-items-center text-wrap flex-wrap"
                     rel="noopener noreferrer">
                     <FontAwesomeIcon
                         style={{ width: 16, height: 16 }}
                         className="me-2"
                         icon="fa-brands fa-github"></FontAwesomeIcon>
-                    {chat.repoUrl}
+                    <span
+                        style={{
+                            overflowWrap: 'anywhere',
+                            wordBreak: 'break-word',
+                        }}
+                        className="pt-0 mb-0 fs-6">
+                        {chat.repoUrl}
+                    </span>
                 </a>
-            </div>
+            </span>
+            {isLoading() ? (
+                <div className="mt-3">
+                    <div className="badge p-2 bg-secondary rounded-2">
+                        <span>LOADING</span>
+                    </div>
+                </div>
+            ) : (
+                <div className="mt-3">
+                    <div className="badge p-2 bg-primary rounded-2">
+                        <span>READY</span>
+                    </div>
+                </div>
+            )}
             <div
                 style={{
                     fontSize: 14,

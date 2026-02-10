@@ -1,14 +1,14 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Link, useMatches } from 'react-router';
+import { Link, useMatches, type UIMatch } from 'react-router';
 import type { RouteHandle } from '../../shared/interfaces/Breadcrumb';
 import type { ComponentProps } from '../../shared/interfaces/ComponentProps';
 
 export function Breadcrumb({}: ComponentProps) {
     const matches = useMatches();
     const crumbs = matches
-        .map((m) => {
+        .map((m: UIMatch) => {
             let handle = m.handle as RouteHandle;
-            return handle ? handle(m.params) : null;
+            return handle ? handle(m) : null;
         })
         .filter((c) => c != null);
 

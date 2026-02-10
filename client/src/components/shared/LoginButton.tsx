@@ -1,16 +1,16 @@
+import { useModalState } from '../../hooks/useModalState';
 import type { ComponentProps } from '../../shared/interfaces/ComponentProps';
-import { useModalStore } from '../../store/modal';
 import { Modal } from './Modal';
 
 export function LoginButton({}: ComponentProps) {
-    const { opened, open, close } = useModalStore();
+    const { open, close, opened } = useModalState();
 
     return (
         <>
             <button onClick={open} id="loginButton" className="solid-button">
                 <span>Sign In</span>
             </button>
-            <Modal open={opened} onClose={close}>
+            <Modal opened={opened} close={close}>
                 <div className="d-flex flex-column justify-content-start align-items-center">
                     <h2>Dialog Title</h2>
                     <p>This is a modal dialog.</p>

@@ -1,24 +1,31 @@
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import '../../styles/modal.css';
 
-type ModalProps = {
-    open: boolean;
-    onClose: () => void;
+export type ModalComponentProps = {
+    opened: boolean;
+    close: () => void;
     children?: ReactNode;
 };
 
-export function Modal({ open, onClose, children }: ModalProps) {
-    const overlayRoot = document.getElementById('overlay-root');
-    if (open) {
-        document.body.style.overflow = 'hidden';
-    } else {
-        document.body.style.overflow = '';
-    }
-    if (!overlayRoot || !open) return null;
+export function Modal({ opened, close, children }: ModalComponentProps) {
+    // Disable scrolling outside modal.
+    useEffect(() => {
+        if (opened) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
 
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [opened]);
+
+    const overlayRoot = document.getElementById('overlay-root');
+    if (!overlayRoot || !opened) return null;
     return createPortal(
-        <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-overlay" onClick={close}>
             <div
                 className="modal-custom shadow rounded w-auto h-auto p-2"
                 style={{

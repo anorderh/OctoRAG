@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 import 'reflect-metadata';
 import { MongoService } from 'src/services/mongo.service.js';
 import { container } from 'tsyringe';
-import { App } from '../src/App.js';
+import { App } from '../src/core/App.js';
 dotenv.config({ path: 'server/test/fixtures.ts' });
 
 exports.mochaGlobalSetup = async function () {

@@ -8,37 +8,27 @@ import {
 } from '@pinecone-database/pinecone';
 import { CreateIndexSpec } from '@pinecone-database/pinecone/dist/control';
 import { CohereClient } from 'cohere-ai';
-import { ObjectId } from 'mongodb';
 import OpenAI from 'openai';
-import { App } from 'src/App.js';
-import { Chat } from 'src/database/collections/chat.collection.js';
-import { Library } from 'src/database/collections/library.collection.js';
-import { OnlineResource } from 'src/database/collections/online-resource.collection.js';
-import { Scrape } from 'src/database/collections/scrape.collection.js';
-import { Session } from 'src/database/collections/session.collection.js';
-import { ChatType } from 'src/database/shared/constants/chat-type.js';
-import { isValidLibrary } from 'src/database/shared/validation/library/is-valid-library.js';
-import { isValidScrape } from 'src/database/shared/validation/scrape/is-valid-scrape.js';
-import { isValidSession } from 'src/database/shared/validation/session/is-valid-session.js';
+import { EmbeddingModel } from 'src/controllers/util/model.enum.js';
+import { App } from 'src/core/App.js';
+import { RepoChat } from 'src/database/entities/repo-chat/repo-chat.js';
+import {
+    RepoMessage,
+    RepoMessageInsert,
+} from 'src/database/entities/repo-message/repo-message.js';
+import { ChatStatus } from 'src/database/shared/constants/chat-status.enum.js';
 import { SetupRagIndex } from 'src/integrations/ragIndex.js';
-import { DependencyInjectionToken } from 'src/integrations/shared/constants/dependency-injection-token.js';
-import { OnlineResourceScrape } from 'src/jobs/shared/classes/online-resource-scrape.js';
-import { assert } from 'src/services/shared/utils/assert.js';
+import { DependencyInjectionToken } from 'src/shared/constants/dependency-injection-token.js';
 import { env } from 'src/shared/constants/env.js';
-import { executeMongoChecks } from 'src/shared/utils/mongo-checks.js';
+import { RAGPipeline } from 'src/shared/utils/build-rag-pipeline.js';
 import { container, inject, singleton } from 'tsyringe';
-import { FailedNullAssertionError } from '../shared/classes/errors.js';
 import { MongoService } from './mongo.service.js';
-import { PipelineService } from './pipeline.service.js';
 import { Service } from './shared/abstract/service.abstract.js';
+import { GithubFileScrapeEntry } from './shared/classes/github-scrape-entry.js';
 import { RagRunnableProperties } from './shared/constants/rag-runnable-props.js';
-import { ChatParams } from './shared/interfaces/chat-params.js';
-import { CreateSessionParams } from './shared/interfaces/create-session-params.js';
 import { RagRunnableParameters } from './shared/interfaces/rag-runnable-params.js';
-import { ScrapeLibraryParams } from './shared/interfaces/scrape-library-params.js';
 import { PineconeUtility } from './shared/utils/pinecone-utility.js';
-
-// FIX: Use HTTP for this service, but it may transition into real-time functionality via Socket.io.
+import { scrapeGithubRepo } from './shared/utils/scrape-github-repo.js';
 @singleton()
 export class RagService extends Service {
     chunkPrefix: string = 'webbed-chunk';
@@ -49,10 +39,7 @@ export class RagService extends Service {
     openai: OpenAI;
     cohere: CohereClient;
 
-    constructor(
-        @inject(MongoService) private mongo: MongoService,
-        @inject(PipelineService) private pipeline: PipelineService,
-    ) {
+    constructor(@inject(MongoService) private mongo: MongoService) {
         super();
     }
 
@@ -89,257 +76,117 @@ export class RagService extends Service {
         await SetupRagIndex(this.ragIndex); // Inject index into tsyringe container.
     }
 
-    public async scrapeLibrary(params: ScrapeLibraryParams): Promise<Scrape> {
-        let batchSize = env.defaults.chunking.batchSize;
-        let library = params.library;
-
-        // Grab library's resources.
-        // TO-DO: Only online resources are implemented so far. Add resource handling later.
-        let onlineResources = (await this.mongo.collections.onlineResource
-            .find({
-                _libraryId: library._id,
-            })
-            .toArray()) as OnlineResource[];
-
-        // Grab namespace within Pinecone. Clear if pre-existing records are present.
-        let namespaceId = library._id.toString();
+    public async prepareGithubRepoChat(chat: RepoChat): Promise<void> {
+        // Create namespace for chat.
+        // If it already exists, clear.
+        let namespaceId = chat._id.toString();
         let index = this.ragIndex.namespace(namespaceId);
         if (await PineconeUtility.namespaceExists(namespaceId)) {
             await index.deleteAll();
         }
 
-        // Beging processing resources.
-        for (let r of onlineResources) {
-            let scrape = new OnlineResourceScrape(r);
-            let entries = await scrape.scrape();
+        // Begin processing Github repo.
+        const entries: GithubFileScrapeEntry[] = await scrapeGithubRepo(
+            new URL(chat.repoUrl),
+        );
+        if (!!entries) {
+            for (let entry of entries) {
+                let chunks = await entry.chunk();
 
-            // Chunk derived entries.
-            if (!!entries) {
-                for (let entry of entries) {
-                    let chunks = await entry.chunk();
+                // Generate embeddings per chunk and insert into Pinecone.
+                let records = await Promise.all(
+                    chunks.map(async (c) => {
+                        let denseEmbeddings = (
+                            await this.openai.embeddings.create({
+                                input: c.pageContent,
+                                model: EmbeddingModel.openai,
+                            })
+                        ).data[0].embedding;
 
-                    // Generate embeddings per chunk and insert into Pinecone.
-                    let records = await Promise.all(
-                        chunks.map(async (c) => {
-                            let denseEmbeddings = (
-                                await this.openai.embeddings.create({
-                                    input: c.pageContent,
-                                    model: params.embeddingModel,
-                                })
-                            ).data[0].embedding;
-
-                            // TO-DO:
-                            /*
+                        // TO-DO:
+                        /*
                         // Add BM25 vectorizer algorithm
                         // Fit based on `corpus` - doc collection
                         // Generate sparse embeddings and attach to record
                         */
 
-                            // Associate metadata.
-                            return {
-                                id: `${this.chunkPrefix}#${c.id}`,
-                                values: denseEmbeddings,
-                                metadata: {
-                                    text: c.pageContent,
-                                    ...c.metadata,
-                                },
-                            } as PineconeRecord;
-                        }),
-                    );
+                        // Associate metadata.
+                        return {
+                            id: `${this.chunkPrefix}#${c.id}`,
+                            values: denseEmbeddings,
+                            metadata: {
+                                text: c.pageContent,
+                                ...c.metadata,
+                            },
+                        } as PineconeRecord;
+                    }),
+                );
 
-                    if (!!records && records.length > 0) {
-                        await index.upsert(records);
-                    }
+                if (!!records && records.length > 0) {
+                    await index.upsert(records);
                 }
             }
-
-            // // Batch load into Pinecone db.
-            // for (let i = 0; i < scrape.chunks.length; i += batchSize) {
-            //     let batch = scrape.chunks.slice(i, i + batchSize);
-            //     let records = await this.createPineconeRecords(batch);
-            //     await index.upsert(records);
-            // }
         }
 
-        // Track scrape in db.
-        let scrape = {
-            _id: new ObjectId(),
-            _libraryId: library._id,
-            embeddingModel: params.embeddingModel,
-            created: new Date(),
-        } as Scrape;
-        await this.mongo.collections.scrape.insertOne(scrape);
-
         // Update library's scrape status.
-        await this.mongo.collections.library.updateOne(
+        await this.mongo.collections.repoChat.updateOne(
             {
-                _id: library._id,
+                _id: chat._id,
             },
             {
                 $set: {
-                    pendingScrape: false,
-                    lastScraped: new Date(),
+                    status: ChatStatus.READY,
                 },
             },
         );
-
-        return scrape;
     }
 
-    public async createSession(params: CreateSessionParams): Promise<Session> {
-        const library = params.library;
-        let namespaceId = library._id.toString();
-
-        // Ensure scrape exists and locate.
-        let scrape: Scrape =
-            (
-                await this.mongo.collections.scrape
-                    .find({
-                        _libraryId: library._id,
-                    })
-                    .sort({
-                        lastScraped: -1,
-                    })
-                    .limit(1)
-                    .toArray()
-            )[0] || null;
-        if (scrape == null || params.forceNewScrape) {
-            // No scrape present OR new scrape requested, create a new one.
-            scrape = await this.scrapeLibrary({
-                library,
-                embeddingModel: assert(params.embeddingModel, (val: string) => {
-                    if (val == null) {
-                        throw new FailedNullAssertionError({
-                            body: 'Embedding model cannot be null',
-                        });
-                    }
-                }),
-            });
-        }
-
-        // Create session and store in db.
-        let session = {
-            _id: new ObjectId(),
-            namespace: namespaceId,
-            llmModel: params.llmModel,
-            _libraryId: library._id,
-            _scrapeId: scrape._id,
-            created: new Date(),
-        } as Session;
-        await this.mongo.collections.session.insertOne(session);
-
-        return session;
-    }
-
-    public async chat(params: ChatParams): Promise<RagRunnableParameters> {
-        // Confirm dependencies' existence.
-        let session = await this.mongo.collections.session
-            .findOne({
-                _id: params._sessionId,
-            })
-            .then(executeMongoChecks<Session>([isValidSession]));
-        let library = await this.mongo.collections.library
-            .findOne({
-                _id: session._libraryId,
-            })
-            .then(executeMongoChecks<Library>([isValidLibrary]));
-        let scrape = await this.getLatestScrape(library._id).then(
-            executeMongoChecks<Scrape>([isValidScrape]),
-        );
-        const namespaceId = library._id.toString();
-        const index = await this.ragIndex.namespace(namespaceId);
-        let pipeline = await this.pipeline.buildRAGPipeline({
-            index,
-            library,
-            scrape,
-            session,
+    public async sendMessageToGithubRepoChat(
+        message: RepoMessage,
+    ): Promise<void> {
+        // Retrieve chat and build its RAG pipeline.
+        let chat = await this.mongo.collections.repoChat.findOne({
+            _id: message.chatId,
         });
+        const namespaceId = chat._id.toString();
+        const index = await this.ragIndex.namespace(namespaceId);
+        let pipeline = await RAGPipeline.build(this.openai, this.cohere, index);
 
         // Grab history from db.
-        function convertChatsToLangchainMsgs(chats: Chat[]): BaseMessage[] {
-            let validChatTypes = [ChatType.Human, ChatType.AI];
-            return chats
-                .filter((c) => validChatTypes.includes(c.type))
-                .map((c) => {
-                    switch (c.type) {
-                        case ChatType.Human:
-                            return new HumanMessage(c.content);
-                        case ChatType.AI:
-                            return new AIMessage(c.content);
-                    }
-                });
+        function convertChatsToLangchainMsgs(
+            messages: RepoMessage[],
+        ): BaseMessage[] {
+            return messages.map((m) => {
+                switch (m.source) {
+                    case 'user':
+                        return new HumanMessage(m.content);
+                    case 'ai':
+                        return new AIMessage(m.content);
+                }
+            });
         }
-        let history = await this.mongo.collections.chat
+        const history = await this.mongo.collections.repoMessage
             .find({
-                _sessionId: session._id,
+                chatId: chat._id,
             })
+            .sort({ date: 1 }) // ASC (oldest → newest)
             .toArray();
         let langchainHistory = convertChatsToLangchainMsgs(history);
 
         // Invoke pipeline.
         let res: RagRunnableParameters = await pipeline.invoke({
-            [RagRunnableProperties.input]: params.input,
+            [RagRunnableProperties.input]: message.content,
             [RagRunnableProperties.history]: langchainHistory,
         } as RagRunnableParameters);
 
-        // Save new chat messages into db.
-        let chats = {
-            input: {
-                _id: new ObjectId(),
-                _sessionId: session._id,
-                type: ChatType.Human,
-                content: res[RagRunnableProperties.input],
-                created: new Date(),
-            } as Chat,
-            output: {
-                _id: new ObjectId(),
-                _sessionId: session._id,
-                type: ChatType.AI,
-                content: res[RagRunnableProperties.output],
-                created: new Date(),
-            } as Chat,
+        // Save response into DB.
+        const aiResponse: RepoMessageInsert = {
+            chatId: chat._id,
+            source: 'ai',
+            content: res[RagRunnableProperties.output],
+            loading: false,
+            date: new Date(),
         };
-        await this.mongo.collections.chat.insertMany([
-            chats.input,
-            chats.output,
-        ]);
-
-        return res;
-    }
-
-    public async closeSession(_sessionId: ObjectId): Promise<void> {
-        // Confirm session's existence.
-        let session = await this.mongo.collections.session
-            .findOne({
-                _id: _sessionId,
-            })
-            .then(executeMongoChecks<Session>([isValidSession]));
-
-        // Delete associated impl.
-        await this.mongo.collections.session.deleteOne({
-            // Session entity.
-            _id: session._id,
-        });
-        // await this.mongo.collections.chat.deleteMany({ // Chat entities.
-        //     _sessionId: session._id
-        // })
-    }
-
-    private async getLatestScrape(
-        _libraryId: ObjectId,
-    ): Promise<Scrape | null> {
-        return (
-            (
-                await this.mongo.collections.scrape
-                    .find({
-                        _libraryId: _libraryId,
-                    })
-                    .sort({
-                        lastScraped: -1,
-                    })
-                    .limit(1)
-                    .toArray()
-            )[0] || null
-        );
+        await this.mongo.collections.repoMessage.insertOne(aiResponse);
     }
 }

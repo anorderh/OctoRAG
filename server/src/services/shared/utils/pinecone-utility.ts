@@ -1,5 +1,5 @@
 import { Index } from '@pinecone-database/pinecone';
-import { DependencyInjectionToken } from 'src/integrations/shared/constants/dependency-injection-token';
+import { DependencyInjectionToken } from 'src/shared/constants/dependency-injection-token';
 import { container } from 'tsyringe';
 
 export class PineconeUtility {

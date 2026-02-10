@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { ObjectId } from 'mongodb';
-import { App } from 'src/App.js';
+import { App } from 'src/core/App.js';
 import { User } from 'src/database/collections/user.collection.js';
 import { CollectionId } from 'src/database/shared/constants/collection-id.js';
 import { MongoService } from 'src/services/mongo.service.js';
@@ -41,6 +41,7 @@ export const authorize: Middleware = async function (
             return;
         }
 
+        // Updates userId in http context.
         httpContext().userId = user._id;
         next();
     } catch (error: any) {

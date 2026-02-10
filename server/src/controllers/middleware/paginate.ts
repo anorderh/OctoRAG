@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { App } from 'src/App.js';
+import { App } from 'src/core/App.js';
 import { PaginationLimitExceededError } from 'src/shared/classes/errors.js';
 import { env } from 'src/shared/constants/env.js';
 import { Pagination } from '../shared/interfaces/pagination.js';

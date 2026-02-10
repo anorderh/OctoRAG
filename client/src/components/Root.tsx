@@ -1,7 +1,12 @@
-import { createBrowserRouter, RouterProvider, type Params } from 'react-router';
+import {
+    createBrowserRouter,
+    RouterProvider,
+    type UIMatch,
+} from 'react-router';
+import { useChat } from '../hooks/useChat';
 import App from './App';
 import { ChatPage } from './chat/ChatPage';
-import { Home } from './home/Home';
+import { Home, type RepoChat } from './home/Home';
 
 export const router = createBrowserRouter([
     {
@@ -9,7 +14,7 @@ export const router = createBrowserRouter([
         element: <App />,
         children: [
             {
-                handle: () => ({
+                handle: (m: UIMatch) => ({
                     icon: 'fa-solid fa-house',
                     display: 'Home',
                     to: '/',
@@ -22,23 +27,23 @@ export const router = createBrowserRouter([
                     {
                         path: 'chat/:chatId',
                         element: <ChatPage />,
-                        handle: (params: Params<'chatId'>) => ({
-                            icon: 'fa-solid fa-message',
-                            display: `Chat ${params.chatId}`,
-                            // to: `/chat/${params.chatId}`,
-                        }),
+                        loader: async ({ params }) => {
+                            const chat = await useChat(params.chatId!);
+                            return { chat };
+                        },
+                        handle: (m: UIMatch) => {
+                            const { chat } = m.loaderData as { chat: RepoChat };
+                            return {
+                                icon: 'fa-solid fa-message',
+                                display: `Chat with "${chat.repoName}"`,
+                            };
+                        },
                     },
                 ],
             },
         ],
     },
 ]);
-
-export interface Breadcrumb {
-    icon?: string;
-    display: string;
-    to?: string;
-}
 
 export function Root() {
     return <RouterProvider router={router}></RouterProvider>;

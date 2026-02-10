@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { App } from 'src/App.js';
+import { App } from 'src/core/App.js';
 import { CustomErrorBase } from '../../services/shared/abstract/error.base.js';
 import { ErrorHandler } from '../../services/shared/types/error-handler.js';
 

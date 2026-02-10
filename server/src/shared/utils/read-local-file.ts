@@ -1,8 +1,8 @@
-import fs from 'fs/promises';
+import fs from 'fs';
 
-export async function readLocalFile(
+export function readLocalFile(
     filePath: string,
     encoding: BufferEncoding = 'utf8',
-): Promise<string> {
-    return fs.readFile(filePath, { encoding });
+): string {
+    return fs.readFileSync(filePath, { encoding });
 }

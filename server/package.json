@@ -68,6 +68,7 @@
     "save-dev": "^0.0.1-security",
     "selenium-webdriver": "^4.25.0",
     "snoowrap": "^1.23.0",
+    "socket.io": "^4.8.3",
     "tsyringe": "^4.8.0",
     "youtube-transcript": "^1.2.1",
     "youtubei.js": "^10.5.0"

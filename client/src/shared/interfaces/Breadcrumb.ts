@@ -1,4 +1,4 @@
-import type { Params } from 'react-router';
+import type { UIMatch } from 'react-router';
 
 export interface Breadcrumb {
     icon?: string;
@@ -6,6 +6,4 @@ export interface Breadcrumb {
     to?: string;
 }
 
-export type RouteHandle =
-    | (() => Breadcrumb)
-    | ((params: Params<string>) => Breadcrumb);
+export type RouteHandle = (m: UIMatch) => Breadcrumb;

@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import Joi from 'joi';
 import { Collection } from 'mongodb';
-import { User } from 'src/database/collections/user.collection.js';
+import { User } from 'src/database/entities/user/user.js';
 import { CollectionId } from 'src/database/shared/constants/collection-id.js';
 import { MongoService } from 'src/services/mongo.service.js';
 import { UserService } from 'src/services/user.service.js';
@@ -61,28 +61,5 @@ export class UserController extends ControllerBase {
         );
 
         res.status(200).send('Profile edited.');
-    }
-
-    @Get('/:username')
-    @Validate('params', {
-        username: Joi.string().required(),
-    })
-    public async getUser(req: Request, res: Response) {
-        let { username } = req.params;
-        let user = await this.userCollection.findOne({
-            username: username,
-        });
-        if (user == null) {
-            res.status(409).send('User not found.');
-            return;
-        }
-
-        let userRes = {
-            _id: user._id,
-            username: user.username,
-            pfpPath: user.pfpPath,
-            desc: user.desc,
-        } as UserResponse;
-        res.status(200).send(userRes);
     }
 }

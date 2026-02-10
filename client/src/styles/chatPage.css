@@ -15,3 +15,8 @@
 .chat-header {
     border-bottom: 1px solid var(--color-outline);
 }
+
+.loading {
+    opacity: 0.5;
+    pointer-events: none;
+}

@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useMessage } from '../../hooks/selectors/useMessage';
+import { useMessage } from '../../hooks/useMessage';
 import type { ComponentProps } from '../../shared/interfaces/ComponentProps';
 
 type RobotMessageProps = ComponentProps & {

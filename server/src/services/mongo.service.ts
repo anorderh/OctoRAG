@@ -1,33 +1,13 @@
 import { Collection, Db, MongoClient } from 'mongodb';
-import { App } from 'src/App.js';
-import {
-    Chat,
-    createChatCollection,
-} from 'src/database/collections/chat.collection.js';
-import {
-    createLibraryCollection,
-    Library,
-} from 'src/database/collections/library.collection.js';
-import {
-    createOnlineResourceCollection,
-    OnlineResource,
-} from 'src/database/collections/online-resource.collection.js';
-import {
-    createResourceCollection,
-    Resource,
-} from 'src/database/collections/resource.collection.js';
-import {
-    createScrapeCollection,
-    Scrape,
-} from 'src/database/collections/scrape.collection.js';
-import {
-    createSessionCollection,
-    Session,
-} from 'src/database/collections/session.collection.js';
-import {
-    createUserCollection,
-    User,
-} from 'src/database/collections/user.collection.js';
+import { App } from 'src/core/App.js';
+import { createRepoChatCollection } from 'src/database/collections/repo-chat.collection.js';
+import { createRepoLogCollection } from 'src/database/collections/repo-log.collection.js';
+import { createRepoMessageCollection } from 'src/database/collections/repo-message.collection.js';
+import { createUserCollection } from 'src/database/collections/user-collection.js';
+import { RepoChatEntity } from 'src/database/entities/repo-chat/repo-chat.js';
+import { RepoLogEntity } from 'src/database/entities/repo-log/repo-log.js';
+import { RepoMessageEntity } from 'src/database/entities/repo-message/repo-message.js';
+import { UserEntity } from 'src/database/entities/user/user.js';
 import { env } from 'src/shared/constants/env.js';
 import { singleton } from 'tsyringe';
 import { Service } from './shared/abstract/service.abstract.js';
@@ -37,13 +17,10 @@ export class MongoService extends Service {
     client: MongoClient = new MongoClient(env.mongo.connStr, {});
     db: Db = this.client.db();
     collections: {
-        users: Collection<User>;
-        library: Collection<Library>;
-        resource: Collection<Resource>;
-        onlineResource: Collection<OnlineResource>;
-        scrape: Collection<Scrape>;
-        session: Collection<Session>;
-        chat: Collection<Chat>;
+        repoChat: Collection<RepoChatEntity>;
+        repoMessage: Collection<RepoMessageEntity>;
+        repoLog: Collection<RepoLogEntity>;
+        user: Collection<UserEntity>;
     };
 
     async initialize(): Promise<void> {
@@ -52,13 +29,10 @@ export class MongoService extends Service {
 
         // Create collections.
         this.collections = {
-            users: await createUserCollection(this.db),
-            library: await createLibraryCollection(this.db),
-            resource: await createResourceCollection(this.db),
-            onlineResource: await createOnlineResourceCollection(this.db),
-            scrape: await createScrapeCollection(this.db),
-            session: await createSessionCollection(this.db),
-            chat: await createChatCollection(this.db),
+            repoChat: await createRepoChatCollection(this.db),
+            repoMessage: await createRepoMessageCollection(this.db),
+            repoLog: await createRepoLogCollection(this.db),
+            user: await createUserCollection(this.db),
         };
         App.logger.info('MongoDB collections instantiated.');
     }

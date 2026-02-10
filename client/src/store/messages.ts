@@ -51,7 +51,7 @@ export const useMessageStore = create<MessageState>((set, get) => ({
                     id: robotMsg.id,
                     chatId: msg.chatId,
                     source: 'ai',
-                    content: 'AI Response',
+                    content: 'I agree!',
                     loading: false,
                     date: new Date(),
                 },

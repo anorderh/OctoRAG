@@ -1,6 +1,6 @@
 import * as nodemailer from 'nodemailer';
 import { Transporter } from 'nodemailer';
-import { App } from 'src/App';
+import { App } from 'src/core/App';
 import { env } from 'src/shared/constants/env';
 import { singleton } from 'tsyringe';
 import { Service } from './shared/abstract/service.abstract';
