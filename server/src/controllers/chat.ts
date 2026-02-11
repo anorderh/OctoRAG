@@ -16,10 +16,11 @@ import { CollectionId } from 'src/database/shared/constants/collection-id.js';
 import { MongoService } from 'src/services/mongo.service.js';
 import { RagService } from 'src/services/rag.service.js';
 import { inject, singleton } from 'tsyringe';
-import { Controller, Post } from '../controllers/decorators/index.js';
+import { Controller, Delete, Post } from '../controllers/decorators/index.js';
 import { Validate } from '../controllers/decorators/validate.js';
 import { ControllerBase } from './shared/abstract/controller.abstract.js';
 import { objectId } from './shared/constants/objectid-validation.js';
+import { ControllerResponse } from './shared/interfaces/controller-response.js';
 import { githubRepoUrl } from './util/githubRepo.validator.js';
 
 @Controller('/chat')
@@ -58,7 +59,12 @@ export class ChatController extends ControllerBase {
         Tasks.run(async () => {
             await this.rag.prepareGithubRepoChat(insertedChat);
         });
-        res.status(200).send(insertedChat);
+        res.status(200).send({
+            message: `Chat ${insertedChat._id} created successfully`,
+            data: {
+                insertedChat,
+            },
+        } satisfies ControllerResponse);
     }
 
     @Post('/:chatId')
@@ -89,6 +95,45 @@ export class ChatController extends ControllerBase {
         Tasks.run(async () => {
             await this.rag.sendMessageToGithubRepoChat(insertedMessage);
         });
-        res.status(200).send(insertedMessage);
+        res.status(200).send({
+            message: `Message ${insertedMessage._id} submitted successfully`,
+            data: insertedMessage,
+        } satisfies ControllerResponse);
+    }
+
+    @Delete('/:chatId/clear')
+    @Validate('params', {
+        chatId: objectId.required(),
+    })
+    public async clearChat(req: Request, res: Response) {
+        const chatId = new ObjectId(req.params.chatId);
+        const result = await this.mongo.collections.repoMessage.deleteMany({
+            chatId: chatId,
+        });
+        res.status(200).send({
+            message: `Scrape for chat ${chatId.toHexString()} was re-run.`,
+            data: {
+                deletedCount: result.deletedCount,
+            },
+        } satisfies ControllerResponse);
+    }
+
+    @Post('/:chatId/rerun')
+    @Validate('params', {
+        chatId: objectId.required(),
+    })
+    public async rerunChatScrape(req: Request, res: Response) {
+        const chatId = new ObjectId(req.params.chatId);
+        const chat = await this.mongo.collections.repoChat.findOne({
+            _id: chatId,
+        });
+
+        // Re-run scrape for existing Github repo chat.
+        Tasks.run(async () => {
+            await this.rag.prepareGithubRepoChat(chat);
+        });
+        res.status(200).send({
+            message: `Scrape for chat ${chat._id.toHexString()} was re-run.`,
+        } satisfies ControllerResponse);
     }
 }

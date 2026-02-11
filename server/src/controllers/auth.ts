@@ -13,6 +13,7 @@ import { TokenType } from 'src/shared/constants/token-type.js';
 import { Controller, Get, Post } from '../controllers/decorators/index.js';
 import { Validate } from './decorators/validate.js';
 import { ControllerBase } from './shared/abstract/controller.abstract.js';
+import { ControllerResponse } from './shared/interfaces/controller-response.js';
 
 @Controller('/auth')
 @singleton()
@@ -55,7 +56,9 @@ export class AuthController extends ControllerBase {
         let createdUser = (await this.userCollection.findOne({
             _id: insertResult.insertedId,
         })) as User;
-        res.status(200).send(`Account "${createdUser.username}" registered.`);
+        res.status(200).send({
+            message: `User registered successfully`,
+        } satisfies ControllerResponse);
     }
 
     @Post('/login')
@@ -94,9 +97,11 @@ export class AuthController extends ControllerBase {
             userId: user._id,
         });
         res.status(200).send({
-            msg: `Account "${user.username}" logged in.`,
-            token: `Bearer ${accessToken}`,
-        });
+            message: `Account "${user.username}" logged in.`,
+            data: {
+                token: `Bearer ${accessToken}`,
+            },
+        } satisfies ControllerResponse);
     }
 
     @Get('/refresh')
@@ -134,8 +139,10 @@ export class AuthController extends ControllerBase {
             userId: user._id,
         });
         res.status(200).send({
-            msg: `Account \"${user.username}\" authentication refreshed.`,
-            token: `Bearer ${newAccessToken}`,
-        });
+            message: `Account \"${user.username}\" authentication refreshed.`,
+            data: {
+                token: `Bearer ${newAccessToken}`,
+            },
+        } satisfies ControllerResponse);
     }
 }

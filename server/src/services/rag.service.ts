@@ -14,7 +14,7 @@ import { App } from 'src/core/App.js';
 import { RepoChat } from 'src/database/entities/repo-chat/repo-chat.js';
 import {
     RepoMessage,
-    RepoMessageInsert,
+    RepoMessageEntity,
 } from 'src/database/entities/repo-message/repo-message.js';
 import { ChatStatus } from 'src/database/shared/constants/chat-status.enum.js';
 import { SetupRagIndex } from 'src/integrations/ragIndex.js';
@@ -31,7 +31,7 @@ import { PineconeUtility } from './shared/utils/pinecone-utility.js';
 import { scrapeGithubRepo } from './shared/utils/scrape-github-repo.js';
 @singleton()
 export class RagService extends Service {
-    chunkPrefix: string = 'webbed-chunk';
+    chunkPrefix: string = 'octoRAG';
     ragIndexName: string = env.pinecone.ragIndexName;
     ragIndex: Index<RecordMetadata>;
 
@@ -77,31 +77,100 @@ export class RagService extends Service {
     }
 
     public async prepareGithubRepoChat(chat: RepoChat): Promise<void> {
+        // Updating Chat's status to LOADING.
+        await this.mongo.submitLog(
+            `Updating Chat ${chat._id.toHexString()} status...`,
+            chat._id,
+        );
+        // Update chat's status.
+        await this.mongo.collections.repoChat.updateOne(
+            {
+                _id: chat._id,
+            },
+            {
+                $set: {
+                    status: ChatStatus.LOADING,
+                },
+            },
+        );
+        await this.mongo.submitLog(
+            `Chat ${chat._id.toHexString()}'s status has been set to loading and is unable to receive messages.`,
+            chat._id,
+        );
+
         // Create namespace for chat.
         // If it already exists, clear.
+        await this.mongo.submitLog('Retrieving namespace ID...', chat._id);
         let namespaceId = chat._id.toString();
         let index = this.ragIndex.namespace(namespaceId);
+        await this.mongo.submitLog(
+            `Retrieved Pinecome namespace with ID ${namespaceId}`,
+            chat._id,
+        );
         if (await PineconeUtility.namespaceExists(namespaceId)) {
+            await this.mongo.submitLog(
+                `Namespace already exists, wiping existing records...`,
+                chat._id,
+            );
             await index.deleteAll();
+            await this.mongo.submitLog(`Existing records wiped.`, chat._id);
         }
 
         // Begin processing Github repo.
+        await this.mongo.submitLog(
+            `Scraping Github repo at ${chat.repoUrl}...`,
+            chat._id,
+        );
         const entries: GithubFileScrapeEntry[] = await scrapeGithubRepo(
             new URL(chat.repoUrl),
+            this.mongo,
+            chat,
+        );
+        await this.mongo.submitLog(
+            `Github repository at ${chat.repoUrl} scraped.`,
+            chat._id,
+        );
+        await this.mongo.submitLog(
+            `Starting chunking process for Pinecone vector db...`,
+            chat._id,
         );
         if (!!entries) {
             for (let entry of entries) {
+                await this.mongo.submitLog(
+                    `Chunking file "${entry.metadata.filename}"...`,
+                    chat._id,
+                );
                 let chunks = await entry.chunk();
+                await this.mongo.submitLog(
+                    `${chunks.length} chunks generated for "${entry.metadata.filename}".`,
+                    chat._id,
+                );
 
+                await this.mongo.submitLog(
+                    `Vectorizing ${chunks.length} chunks into embeddings for "${entry.metadata.filename}"...`,
+                    chat._id,
+                );
+                await this.mongo.submitLog(
+                    `Model Details:\nEmbedding Model: ${EmbeddingModel.openai}\nBM25 Vectorizer Algorithm: SKIPPED`,
+                    chat._id,
+                );
                 // Generate embeddings per chunk and insert into Pinecone.
                 let records = await Promise.all(
-                    chunks.map(async (c) => {
+                    chunks.map(async (c, idx) => {
                         let denseEmbeddings = (
                             await this.openai.embeddings.create({
                                 input: c.pageContent,
                                 model: EmbeddingModel.openai,
                             })
                         ).data[0].embedding;
+                        await this.mongo.submitLog(
+                            `Embedding generated for chunk ${idx + 1}"...\n`,
+                            chat._id,
+                        );
+                        await this.mongo.submitLog(
+                            `Embedding preview: ${denseEmbeddings.toString().slice(0, 50)}`,
+                            chat._id,
+                        );
 
                         // TO-DO:
                         /*
@@ -122,13 +191,26 @@ export class RagService extends Service {
                     }),
                 );
 
+                await this.mongo.submitLog(`Checking records...`, chat._id);
                 if (!!records && records.length > 0) {
+                    await this.mongo.submitLog(
+                        `${records.length} valid Pinecone records produced, insert into Pinecone index...`,
+                        chat._id,
+                    );
                     await index.upsert(records);
+                    await this.mongo.submitLog(
+                        `${records.length} records inserted into Pinecone index!`,
+                        chat._id,
+                    );
                 }
             }
         }
 
-        // Update library's scrape status.
+        await this.mongo.submitLog(
+            `Updating Chat ${chat._id.toHexString()} status...`,
+            chat._id,
+        );
+        // Update chat's status.
         await this.mongo.collections.repoChat.updateOne(
             {
                 _id: chat._id,
@@ -139,18 +221,72 @@ export class RagService extends Service {
                 },
             },
         );
+        await this.mongo.submitLog(
+            `Chat ${chat._id.toHexString()} is ready to receive messages.`,
+            chat._id,
+        );
     }
 
     public async sendMessageToGithubRepoChat(
         message: RepoMessage,
     ): Promise<void> {
-        // Retrieve chat and build its RAG pipeline.
-        let chat = await this.mongo.collections.repoChat.findOne({
+        // Update Chat's status and retrieve entity.
+        await this.mongo.collections.repoChat.updateOne(
+            { _id: message.chatId },
+            {
+                $set: {
+                    status: ChatStatus.RESPONDING,
+                },
+            },
+        );
+        const chat = await this.mongo.collections.repoChat.findOne({
             _id: message.chatId,
         });
+        await this.mongo.submitLog(
+            `Message received for Chat ${chat._id.toHexString()}.`,
+            chat._id,
+        );
+        await this.mongo.submitLog(`Content: ${message.content}`, chat._id);
+
+        // Save response to DB while processing.
+        await this.mongo.submitLog(
+            `Saving placeholder AI response...`,
+            chat._id,
+        );
+        const aiResponse: RepoMessageEntity = {
+            chatId: message.chatId,
+            source: 'ai',
+            loading: true,
+            date: new Date(),
+        };
+        const result =
+            await this.mongo.collections.repoMessage.insertOne(aiResponse);
+        const aiResponseId = result.insertedId;
+        await this.mongo.submitLog(
+            `AI response saved with Message ID ${aiResponseId.toHexString()}`,
+            chat._id,
+        );
+
+        // Build RAG pipeline.
+        await this.mongo.submitLog(
+            `Building RAG runnable pipeline...`,
+            chat._id,
+        );
+        await this.mongo.submitLog(`Retrieving namespace ID...`, chat._id);
         const namespaceId = chat._id.toString();
+        await this.mongo.submitLog(
+            `Pinecone namespace retrieved: ${namespaceId}.`,
+            chat._id,
+        );
         const index = await this.ragIndex.namespace(namespaceId);
-        let pipeline = await RAGPipeline.build(this.openai, this.cohere, index);
+        let pipeline = await RAGPipeline.build(
+            this.openai,
+            this.cohere,
+            index,
+            this.mongo,
+            chat,
+        );
+        await this.mongo.submitLog(`Built RAG Pipeline.`, chat._id);
 
         // Grab history from db.
         function convertChatsToLangchainMsgs(
@@ -165,28 +301,58 @@ export class RagService extends Service {
                 }
             });
         }
+        await this.mongo.submitLog(
+            `Fetching chat history from Mongo database...`,
+            chat._id,
+        );
         const history = await this.mongo.collections.repoMessage
             .find({
                 chatId: chat._id,
             })
             .sort({ date: 1 }) // ASC (oldest → newest)
             .toArray();
+        await this.mongo.submitLog(`Fetched chat history.`, chat._id);
         let langchainHistory = convertChatsToLangchainMsgs(history);
 
         // Invoke pipeline.
+        await this.mongo.submitLog(
+            `Invoking RAG pipeline with fetched history and input message...`,
+            chat._id,
+        );
         let res: RagRunnableParameters = await pipeline.invoke({
             [RagRunnableProperties.input]: message.content,
             [RagRunnableProperties.history]: langchainHistory,
         } as RagRunnableParameters);
+        const aiResponseContent = res[RagRunnableProperties.output];
+        await this.mongo.submitLog(
+            `RAG Pipeline generated a response: "${aiResponseContent}"`,
+            chat._id,
+        );
 
-        // Save response into DB.
-        const aiResponse: RepoMessageInsert = {
-            chatId: chat._id,
-            source: 'ai',
-            content: res[RagRunnableProperties.output],
-            loading: false,
-            date: new Date(),
-        };
-        await this.mongo.collections.repoMessage.insertOne(aiResponse);
+        // Update response with content and change status.
+        await this.mongo.submitLog(`Saving AI response to MongoDB..`, chat._id);
+        await this.mongo.collections.repoMessage.updateOne(
+            { _id: aiResponseId },
+            {
+                $set: {
+                    content: aiResponseContent,
+                    loading: false,
+                    date: new Date(),
+                },
+            },
+        );
+        await this.mongo.submitLog(`AI response saved to MongoDB..`, chat._id);
+
+        // Update chat's status.
+        await this.mongo.submitLog(`Updating Chat's status to READY`, chat._id);
+        await this.mongo.collections.repoChat.updateOne(
+            { _id: message.chatId },
+            {
+                $set: {
+                    status: ChatStatus.READY,
+                },
+            },
+        );
+        await this.mongo.submitLog(`Updated Chat's status.`, chat._id);
     }
 }

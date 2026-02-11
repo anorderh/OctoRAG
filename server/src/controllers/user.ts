@@ -1,19 +1,15 @@
 import { Request, Response } from 'express';
-import Joi from 'joi';
 import { Collection } from 'mongodb';
 import { User } from 'src/database/entities/user/user.js';
 import { CollectionId } from 'src/database/shared/constants/collection-id.js';
 import { MongoService } from 'src/services/mongo.service.js';
 import { UserService } from 'src/services/user.service.js';
-import { filterNulls } from 'src/shared/utils/filter-nulls.js';
 import { inject, singleton } from 'tsyringe';
 import { Authorize } from './decorators/authorize.js';
-import { Get, Patch } from './decorators/http.js';
+import { Get } from './decorators/http.js';
 import { Controller } from './decorators/index.js';
-import { Validate } from './decorators/validate.js';
-import { httpContext } from './middleware/http-context.js';
 import { ControllerBase } from './shared/abstract/controller.abstract.js';
-import { EditProfileRequest } from './shared/validation/requests/edit-profile.req.js';
+import { ControllerResponse } from './shared/interfaces/controller-response.js';
 import { UserResponse } from './shared/validation/responses/user.res.js';
 
 @Controller('/user')
@@ -36,30 +32,13 @@ export class UserController extends ControllerBase {
         let userRes = {
             _id: self._id,
             username: self.username,
-            pfpPath: self.pfpPath,
         } as UserResponse;
 
-        return res.status(200).send(userRes);
-    }
-
-    @Patch('/edit')
-    @Authorize()
-    @Validate('body', {
-        pfpPath: Joi.string(),
-        desc: Joi.string(),
-    })
-    public async editSelf(req: Request, res: Response) {
-        let input = req.body as EditProfileRequest;
-        let selfId = httpContext().userId;
-        await this.userCollection.updateOne(
-            {
-                _id: selfId,
+        return res.status(200).send({
+            message: 'User fetched',
+            data: {
+                userRes,
             },
-            {
-                $set: filterNulls(input),
-            },
-        );
-
-        res.status(200).send('Profile edited.');
+        } satisfies ControllerResponse);
     }
 }

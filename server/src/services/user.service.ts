@@ -1,5 +1,5 @@
 import { Collection } from 'mongodb';
-import { User } from 'src/database/collections/user.collection.js';
+import { User } from 'src/database/entities/user/user.js';
 import { CollectionId } from 'src/database/shared/constants/collection-id.js';
 import { inject, injectable } from 'tsyringe';
 import { httpContext } from '../controllers/middleware/http-context.js';

@@ -1,4 +1,4 @@
-import { Collection, Db, MongoClient } from 'mongodb';
+import { Collection, Db, MongoClient, ObjectId } from 'mongodb';
 import { App } from 'src/core/App.js';
 import { createRepoChatCollection } from 'src/database/collections/repo-chat.collection.js';
 import { createRepoLogCollection } from 'src/database/collections/repo-log.collection.js';
@@ -35,6 +35,15 @@ export class MongoService extends Service {
             user: await createUserCollection(this.db),
         };
         App.logger.info('MongoDB collections instantiated.');
+    }
+
+    public async submitLog(content: string, chatId: ObjectId): Promise<void> {
+        const newLog: RepoLogEntity = {
+            chatId,
+            date: new Date(),
+            content,
+        };
+        await this.collections.repoLog.insertOne(newLog);
     }
 
     async cleanup(): Promise<void> {
