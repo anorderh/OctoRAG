@@ -1,4 +1,3 @@
-import { Request, Response } from 'express';
 import Joi from 'joi';
 import { ObjectId } from 'mongodb';
 import { Tasks } from 'src/core/Tasks.js';
@@ -18,9 +17,20 @@ import { RagService } from 'src/services/rag.service.js';
 import { inject, singleton } from 'tsyringe';
 import { Controller, Delete, Post } from '../controllers/decorators/index.js';
 import { Validate } from '../controllers/decorators/validate.js';
+import {
+    ChatClearChatRequest,
+    ChatClearChatResponse,
+    ChatCreateChatRequest,
+    ChatCreateChatResponse,
+    ChatDeleteChatRequest,
+    ChatDeleteChatResponse,
+    ChatRerunScrapeRequest,
+    ChatRerunScrapeResponse,
+    ChatSendMessageRequest,
+    ChatSendMessageResponse,
+} from './dto/chat.js';
 import { ControllerBase } from './shared/abstract/controller.abstract.js';
 import { objectId } from './shared/constants/objectid-validation.js';
-import { ControllerResponse } from './shared/interfaces/controller-response.js';
 import { githubRepoUrl } from './util/githubRepo.validator.js';
 
 @Controller('/chat')
@@ -38,7 +48,10 @@ export class ChatController extends ControllerBase {
         repoName: Joi.string().required(),
         repoUrl: githubRepoUrl,
     })
-    public async createChat(req: Request, res: Response) {
+    public async createChat(
+        req: ChatCreateChatRequest,
+        res: ChatCreateChatResponse,
+    ) {
         let repoChatPost: RepoChatPost = req.body;
         let repoChatInsert: RepoChatEntity = {
             ...repoChatPost,
@@ -62,9 +75,9 @@ export class ChatController extends ControllerBase {
         res.status(200).send({
             message: `Chat ${insertedChat._id} created successfully`,
             data: {
-                insertedChat,
+                chat: insertedChat,
             },
-        } satisfies ControllerResponse);
+        });
     }
 
     @Post('/:chatId')
@@ -74,7 +87,10 @@ export class ChatController extends ControllerBase {
     @Validate('body', {
         input: Joi.string().required(),
     })
-    public async message(req: Request, res: Response) {
+    public async message(
+        req: ChatSendMessageRequest,
+        res: ChatSendMessageResponse,
+    ) {
         let chatId: string = req.params.chatId;
         let repoMessagePost: RepoMessagePost = req.body;
         let repoMessageInsert: RepoMessageInsert = {
@@ -97,15 +113,40 @@ export class ChatController extends ControllerBase {
         });
         res.status(200).send({
             message: `Message ${insertedMessage._id} submitted successfully`,
-            data: insertedMessage,
-        } satisfies ControllerResponse);
+            data: {
+                message: insertedMessage,
+            },
+        });
+    }
+
+    @Delete('/:chatId')
+    @Validate('params', {
+        chatId: objectId.required(),
+    })
+    public async deleteChat(
+        req: ChatDeleteChatRequest,
+        res: ChatDeleteChatResponse,
+    ) {
+        const chatId = new ObjectId(req.params.chatId);
+        const result = await this.mongo.collections.repoChat.deleteOne({
+            chatId: chatId,
+        });
+        res.status(200).send({
+            message: `Chat ${chatId.toHexString()} was deleted.`,
+            data: {
+                deletedCount: result.deletedCount,
+            },
+        });
     }
 
     @Delete('/:chatId/clear')
     @Validate('params', {
         chatId: objectId.required(),
     })
-    public async clearChat(req: Request, res: Response) {
+    public async clearChat(
+        req: ChatClearChatRequest,
+        res: ChatClearChatResponse,
+    ) {
         const chatId = new ObjectId(req.params.chatId);
         const result = await this.mongo.collections.repoMessage.deleteMany({
             chatId: chatId,
@@ -115,14 +156,17 @@ export class ChatController extends ControllerBase {
             data: {
                 deletedCount: result.deletedCount,
             },
-        } satisfies ControllerResponse);
+        });
     }
 
     @Post('/:chatId/rerun')
     @Validate('params', {
         chatId: objectId.required(),
     })
-    public async rerunChatScrape(req: Request, res: Response) {
+    public async rerunChatScrape(
+        req: ChatRerunScrapeRequest,
+        res: ChatRerunScrapeResponse,
+    ) {
         const chatId = new ObjectId(req.params.chatId);
         const chat = await this.mongo.collections.repoChat.findOne({
             _id: chatId,
@@ -134,6 +178,6 @@ export class ChatController extends ControllerBase {
         });
         res.status(200).send({
             message: `Scrape for chat ${chat._id.toHexString()} was re-run.`,
-        } satisfies ControllerResponse);
+        });
     }
 }

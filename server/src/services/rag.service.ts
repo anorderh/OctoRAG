@@ -289,7 +289,7 @@ export class RagService extends Service {
         await this.mongo.submitLog(`Built RAG Pipeline.`, chat._id);
 
         // Grab history from db.
-        function convertChatsToLangchainMsgs(
+        function convertMessagesToLangchainMsgs(
             messages: RepoMessage[],
         ): BaseMessage[] {
             return messages.map((m) => {
@@ -312,7 +312,7 @@ export class RagService extends Service {
             .sort({ date: 1 }) // ASC (oldest → newest)
             .toArray();
         await this.mongo.submitLog(`Fetched chat history.`, chat._id);
-        let langchainHistory = convertChatsToLangchainMsgs(history);
+        let langchainHistory = convertMessagesToLangchainMsgs(history);
 
         // Invoke pipeline.
         await this.mongo.submitLog(

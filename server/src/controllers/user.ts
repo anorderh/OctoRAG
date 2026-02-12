@@ -1,4 +1,3 @@
-import { Request, Response } from 'express';
 import { Collection } from 'mongodb';
 import { User } from 'src/database/entities/user/user.js';
 import { CollectionId } from 'src/database/shared/constants/collection-id.js';
@@ -8,9 +7,9 @@ import { inject, singleton } from 'tsyringe';
 import { Authorize } from './decorators/authorize.js';
 import { Get } from './decorators/http.js';
 import { Controller } from './decorators/index.js';
+import { UserGetSelfRequest, UserGetSelfResponse } from './dto/user.js';
 import { ControllerBase } from './shared/abstract/controller.abstract.js';
-import { ControllerResponse } from './shared/interfaces/controller-response.js';
-import { UserResponse } from './shared/validation/responses/user.res.js';
+import { UserReadModel } from './shared/interfaces/user.models.js';
 
 @Controller('/user')
 @singleton()
@@ -27,18 +26,18 @@ export class UserController extends ControllerBase {
 
     @Get('/')
     @Authorize()
-    public async getSelf(req: Request, res: Response) {
+    public async getSelf(req: UserGetSelfRequest, res: UserGetSelfResponse) {
         let self = await this.userService.getSelf();
-        let userRes = {
+        let userRes: UserReadModel = {
             _id: self._id,
             username: self.username,
-        } as UserResponse;
+        };
 
         return res.status(200).send({
             message: 'User fetched',
             data: {
-                userRes,
+                user: userRes,
             },
-        } satisfies ControllerResponse);
+        });
     }
 }

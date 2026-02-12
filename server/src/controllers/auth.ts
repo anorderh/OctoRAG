@@ -1,6 +1,5 @@
 import { inject, singleton } from 'tsyringe';
 
-import { Request, Response } from 'express';
 import Joi from 'joi';
 import { Collection, ObjectId } from 'mongodb';
 import { User, UserEntity } from 'src/database/entities/user/user.js';
@@ -12,8 +11,15 @@ import { env } from 'src/shared/constants/env.js';
 import { TokenType } from 'src/shared/constants/token-type.js';
 import { Controller, Get, Post } from '../controllers/decorators/index.js';
 import { Validate } from './decorators/validate.js';
+import {
+    AuthLoginRequest,
+    AuthLoginResponse,
+    AuthRefreshRequest,
+    AuthRefreshResponse,
+    AuthRegisterRequest,
+    AuthRegisterResponse,
+} from './dto/auth.js';
 import { ControllerBase } from './shared/abstract/controller.abstract.js';
-import { ControllerResponse } from './shared/interfaces/controller-response.js';
 
 @Controller('/auth')
 @singleton()
@@ -36,13 +42,16 @@ export class AuthController extends ControllerBase {
         email: Joi.string().email().required(),
         password: Joi.string().required(),
     })
-    async register(req: Request, res: Response) {
+    async register(req: AuthRegisterRequest, res: AuthRegisterResponse) {
         // Check if user is already registered.
+        req.body;
         let user = await this.userCollection.findOne({
             $or: [{ email: req.body.email }, { username: req.body.username }],
         });
         if (!!user) {
-            res.status(409).send('Username and/or email is already in use.');
+            res.status(409).send({
+                message: 'Username and/or email is already in use.',
+            });
             return;
         }
 
@@ -58,7 +67,7 @@ export class AuthController extends ControllerBase {
         })) as User;
         res.status(200).send({
             message: `User registered successfully`,
-        } satisfies ControllerResponse);
+        });
     }
 
     @Post('/login')
@@ -66,18 +75,22 @@ export class AuthController extends ControllerBase {
         username: Joi.string().required(),
         password: Joi.string().required(),
     })
-    async login(req: Request, res: Response) {
+    async login(req: AuthLoginRequest, res: AuthLoginResponse) {
         // Validate credentials.
         let user = await this.userCollection.findOne({
             username: req.body.username,
         });
         if (user == null) {
-            res.status(409).send('Invalid username.');
+            res.status(409).send({
+                message: 'Invalid username',
+            });
             return;
         } else if (
             !(await TokenUtility.validate(req.body.password, user.password))
         ) {
-            res.status(409).send('Invalid password.');
+            res.status(409).send({
+                message: 'Invalid password',
+            });
             return;
         }
 
@@ -99,13 +112,13 @@ export class AuthController extends ControllerBase {
         res.status(200).send({
             message: `Account "${user.username}" logged in.`,
             data: {
-                token: `Bearer ${accessToken}`,
+                accessToken: `Bearer ${accessToken}`,
             },
-        } satisfies ControllerResponse);
+        });
     }
 
     @Get('/refresh')
-    async refresh(req: Request, res: Response) {
+    async refresh(req: AuthRefreshRequest, res: AuthRefreshResponse) {
         // Validate refresh token & associated account.
         if (!req.cookies) {
             res.status(400).send();
@@ -114,7 +127,9 @@ export class AuthController extends ControllerBase {
         let currRefreshToken: string | undefined =
             req.cookies[env.tokens.refresh.name];
         if (currRefreshToken == undefined) {
-            res.status(401).send('Missing refresh token.');
+            res.status(401).send({
+                message: 'Missing refresh token.',
+            });
             return;
         }
         let token = TokenUtility.deserialize(
@@ -122,14 +137,18 @@ export class AuthController extends ControllerBase {
             currRefreshToken,
         );
         if (!token) {
-            res.status(401).send('Invalid refresh token');
+            res.status(401).send({
+                message: 'Invalid refresh token',
+            });
             return;
         }
         const user = await this.userCollection.findOne({
             _id: new ObjectId(token.userId),
         });
         if (user == null) {
-            res.status(409).send('Account does not exist');
+            res.status(409).send({
+                message: 'Account does not exist',
+            });
             return;
         }
 
@@ -141,8 +160,8 @@ export class AuthController extends ControllerBase {
         res.status(200).send({
             message: `Account \"${user.username}\" authentication refreshed.`,
             data: {
-                token: `Bearer ${newAccessToken}`,
+                accessToken: `Bearer ${newAccessToken}`,
             },
-        } satisfies ControllerResponse);
+        });
     }
 }
