@@ -49,6 +49,7 @@ export class App {
     middleware: any[] = [
         cors({
             origin: [env.server.origin, 'http://localhost:5173'],
+            credentials: true,
         }),
         env.logging.http ? morgan('common') : null,
         express.json(),

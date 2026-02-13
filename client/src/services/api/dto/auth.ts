@@ -13,6 +13,8 @@ export interface AuthRegisterRequestDto {
 
 export type AuthRefreshRequestDto = void;
 
+export type AuthLogoutRequestDto = void;
+
 export type AuthLoginResponse = ClientResponse<{
     accessToken: string;
 }>;
@@ -22,3 +24,5 @@ export type AuthRegisterResponse = ClientResponse<null>;
 export type AuthRefreshResponse = ClientResponse<{
     accessToken: string;
 }>;
+
+export type AuthLogoutResponse = ClientResponse<null>;

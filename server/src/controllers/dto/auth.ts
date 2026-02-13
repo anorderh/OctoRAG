@@ -21,3 +21,6 @@ export type AuthLoginResponse = ControllerResponse<{
 
 export type AuthRefreshRequest = ControllerRequest;
 export type AuthRefreshResponse = AuthLoginResponse;
+
+export type AuthLogoutRequest = ControllerRequest;
+export type AuthLogoutResponse = ControllerResponse;

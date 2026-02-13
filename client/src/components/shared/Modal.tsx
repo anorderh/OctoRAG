@@ -4,7 +4,7 @@ import '../../styles/modal.css';
 
 export type ModalComponentProps = {
     opened: boolean;
-    close: () => void;
+    close?: () => void;
     children?: ReactNode;
 };
 

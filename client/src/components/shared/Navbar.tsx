@@ -1,7 +1,9 @@
+import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { Breadcrumb } from './Breadcrumb';
 import { UserButton } from './UserButton';
 
 export function Navbar() {
+    const user = useCurrentUser();
     return (
         <div
             id="navbar"
@@ -11,9 +13,7 @@ export function Navbar() {
                 width: '98%',
             }}>
             <Breadcrumb></Breadcrumb>
-            <div className="me-2">
-                <UserButton />
-            </div>
+            <div className="me-2">{user != null && <UserButton />}</div>
         </div>
     );
 }

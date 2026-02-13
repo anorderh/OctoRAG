@@ -22,9 +22,11 @@ export function ChatCard({ chat }: ChatCardProps) {
             className="chat-card card-select flex-grow-1 rounded shadow p-3 d-flex flex-column">
             <div className="d-flex flex-row justify-content-between align-items-start">
                 <h6 className="repo-name fw-bold">{chat.repoName}</h6>
-                <div
-                    className="rounded-3 p-2 py-0"
-                    style={{ backgroundColor: 'var(--color-badge)' }}>
+                <div className="rounded-3 p-2 badge" title="Message Count">
+                    <FontAwesomeIcon
+                        icon="fa-solid fa-message"
+                        className="me-2"
+                    />
                     <span className="text-white">{chat.messageCount}</span>
                 </div>
             </div>

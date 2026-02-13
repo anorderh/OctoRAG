@@ -1,10 +1,13 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useEffect, useRef, useState } from 'react';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
+import { api } from '../../services/api/api';
 import type { ComponentProps } from '../../shared/interfaces/ComponentProps';
+import { useAuthStore } from '../../store/auth';
 
 export function UserButton({}: ComponentProps) {
     const user = useCurrentUser();
+    const logout = useAuthStore((state) => state.logout);
     const [open, setOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -23,6 +26,11 @@ export function UserButton({}: ComponentProps) {
         return () =>
             document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+
+    async function confirmLogout() {
+        await api.logout();
+        logout();
+    }
 
     const disabled = () => user == null;
 
@@ -46,15 +54,23 @@ export function UserButton({}: ComponentProps) {
                                 icon="fa-solid fa-user"
                                 className="me-2"
                             />
-                            <span>Username</span>
+                            <span>{user?.username}</span>
                         </>
                     )}
                 </button>
                 {open && (
                     <div
                         style={{ position: 'absolute' }}
-                        className="rounded shadow-md bg-card p-2 w-100">
-                        <button className="w-100">Logout</button>
+                        className="align-items-center rounded shadow-md bg-card p-2 w-100">
+                        <button
+                            onClick={confirmLogout}
+                            className="w-100 d-flex flex-row justify-content-center align-items-center ">
+                            <FontAwesomeIcon
+                                icon="fa-solid fa-arrow-right-from-bracket"
+                                className="me-2"
+                            />
+                            <span>Logout</span>
+                        </button>
                     </div>
                 )}
             </div>

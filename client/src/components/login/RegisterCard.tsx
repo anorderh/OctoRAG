@@ -1,59 +1,55 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { AxiosError } from 'axios';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router';
 import { api } from '../../services/api/api';
 import type { ComponentProps } from '../../shared/interfaces/ComponentProps';
-import { useAuthStore } from '../../store/auth';
+import type { BadgeComponentProps } from '../shared/Badge';
+import { LoginPageOption } from './Login';
 
-export interface LoginForm {
+export interface RegisterForm {
     username: string;
+    email: string;
     password: string;
 }
 
-export type LoginCardProps = ComponentProps & {
+export type RegisterCardProps = ComponentProps & {
     submitting: boolean;
     setSubmitting: (input: boolean) => void;
+    setPage: (input: LoginPageOption) => void;
+    setBadgeProps: (input: BadgeComponentProps) => void;
 };
 
-export function LoginCard({ submitting, setSubmitting }: LoginCardProps) {
+export function RegisterCard({
+    submitting,
+    setSubmitting,
+    setPage,
+    setBadgeProps,
+}: RegisterCardProps) {
     const {
         register,
         handleSubmit,
         formState: { errors },
         setError,
-    } = useForm<LoginForm>();
-    const navigate = useNavigate();
-    const authStore = useAuthStore();
+    } = useForm<RegisterForm>();
 
-    async function attemptLogin(data: LoginForm) {
+    async function attemptRegister(data: RegisterForm) {
         try {
             setSubmitting(true);
 
-            // Login.
-            const accessToken = await api.login(data);
-            authStore.setAccessToken(accessToken);
-
-            // Get current user.
-            const user = await api.getSelf();
-            authStore.setUser(user);
-
-            // Navigate to home.
-            navigate('/');
+            // Register.
+            await api.register(data);
+            setBadgeProps({
+                bsColor: 'success',
+                text: `Account has been created.`,
+            });
+            setPage(LoginPageOption.Login);
         } catch (error) {
             console.log(error);
             if (error instanceof AxiosError) {
-                if (error.response?.status === 409) {
-                    setError('root', {
-                        type: 'server',
-                        message: 'Invalid username or password',
-                    });
-                } else {
-                    setError('root', {
-                        type: 'server',
-                        message: 'Something went wrong. Try again.',
-                    });
-                }
+                setError('root', {
+                    type: 'server',
+                    message: error.message,
+                });
             }
         } finally {
             setSubmitting(false);
@@ -62,7 +58,7 @@ export function LoginCard({ submitting, setSubmitting }: LoginCardProps) {
 
     return (
         <div className="d-flex flex-column p-2 py-3">
-            <form onSubmit={handleSubmit(attemptLogin)}>
+            <form onSubmit={handleSubmit(attemptRegister)}>
                 <div className="d-flex flex-column w-100 gap-4">
                     <div className="d-flex flex-column gap-1">
                         <label>
@@ -81,6 +77,26 @@ export function LoginCard({ submitting, setSubmitting }: LoginCardProps) {
                         {errors.username && (
                             <span className="text-danger fs-6">
                                 {errors.username.message}
+                            </span>
+                        )}
+                    </div>
+                    <div className="d-flex flex-column gap-1">
+                        <label>
+                            <FontAwesomeIcon
+                                icon="fa-solid fa-envelope"
+                                className="me-2"></FontAwesomeIcon>
+                            Email
+                        </label>
+                        <input
+                            className="p-2"
+                            disabled={submitting}
+                            placeholder="Enter an email"
+                            {...register('email', {
+                                required: 'An email is required',
+                            })}></input>
+                        {errors.email && (
+                            <span className="text-danger fs-6">
+                                {errors.email.message}
                             </span>
                         )}
                     </div>
@@ -115,14 +131,14 @@ export function LoginCard({ submitting, setSubmitting }: LoginCardProps) {
                                     <FontAwesomeIcon
                                         icon="fa-solid fa-spinner"
                                         className="me-2 fa-spin"></FontAwesomeIcon>
-                                    <span>Logging in...</span>
+                                    <span>Submitting...</span>
                                 </>
                             ) : (
                                 <>
                                     <FontAwesomeIcon
                                         icon="fa-solid fa-right-to-bracket"
                                         className="me-2"></FontAwesomeIcon>
-                                    <span>Login</span>
+                                    <span>Register</span>
                                 </>
                             )}
                         </button>

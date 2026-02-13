@@ -9,11 +9,18 @@ import { UserService } from 'src/services/user.service.js';
 import { TokenUtility } from 'src/shared/classes/token.util.js';
 import { env } from 'src/shared/constants/env.js';
 import { TokenType } from 'src/shared/constants/token-type.js';
-import { Controller, Get, Post } from '../controllers/decorators/index.js';
+import {
+    Authorize,
+    Controller,
+    Get,
+    Post,
+} from '../controllers/decorators/index.js';
 import { Validate } from './decorators/validate.js';
 import {
     AuthLoginRequest,
     AuthLoginResponse,
+    AuthLogoutRequest,
+    AuthLogoutResponse,
     AuthRefreshRequest,
     AuthRefreshResponse,
     AuthRegisterRequest,
@@ -162,6 +169,18 @@ export class AuthController extends ControllerBase {
             data: {
                 accessToken: `Bearer ${newAccessToken}`,
             },
+        });
+    }
+
+    @Get('/logout')
+    @Authorize()
+    async logout(req: AuthLogoutRequest, res: AuthLogoutResponse) {
+        res.clearCookie(env.tokens.refresh.name, {
+            httpOnly: true,
+            secure: env.server.secure,
+        });
+        res.status(200).send({
+            message: 'Logout was successful.',
         });
     }
 }

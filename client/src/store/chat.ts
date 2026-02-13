@@ -39,7 +39,7 @@ export const useChatStore = create<ChatState>((set) => ({
     create: async (chat: RepoChatPost) => {
         await sleep(500);
         const createdChat: RepoChat = {
-            id: crypto.randomUUID(),
+            id: crypto.randomUUID().toString(),
             repoName: chat.repoName,
             repoUrl: chat.repoUrl,
             creationDate: new Date().toLocaleDateString('en-US'),

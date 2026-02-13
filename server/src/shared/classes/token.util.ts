@@ -1,5 +1,5 @@
-import * as bcrypt from 'bcrypt';
-import * as jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 import { InvalidTokenTypeError } from 'src/shared/classes/errors.js';
 import { env } from '../constants/env.js';
 import { TokenType } from '../constants/token-type.js';

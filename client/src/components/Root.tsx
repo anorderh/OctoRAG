@@ -3,7 +3,7 @@ import {
     RouterProvider,
     type UIMatch,
 } from 'react-router';
-import { AuthenticatedGuard } from '../guards/Authenticated.guard';
+import { AuthGuard } from '../guards/AuthGuard';
 import { useChat } from '../hooks/useChat';
 import App from './App';
 import { ChatPage } from './chat/ChatPage';
@@ -24,7 +24,7 @@ export const router = createBrowserRouter([
                 }),
             },
             {
-                element: <AuthenticatedGuard />,
+                element: <AuthGuard />,
                 children: [
                     {
                         handle: (m: UIMatch) => ({

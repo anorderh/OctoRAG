@@ -11,16 +11,25 @@ export const createUserCollection: CollectionSetup<OptionalId<User>> = async (
             $jsonSchema: {
                 bsonType: 'object',
                 title: 'User Validation',
-                required: ['_id', 'name'],
+                required: ['username', 'email', 'password'],
                 properties: {
                     _id: {
                         bsonType: 'objectId',
                         description: 'Primary identifier',
                     },
-                    name: {
+                    username: {
                         bsonType: 'string',
                         minLength: 1,
                         description: 'User display name',
+                    },
+                    email: {
+                        bsonType: 'string',
+                        pattern: '^.+@.+\\..+$',
+                        description: 'User email address',
+                    },
+                    password: {
+                        bsonType: 'string',
+                        description: 'Hashed user password',
                     },
                 },
             },
