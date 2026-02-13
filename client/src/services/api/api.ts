@@ -20,8 +20,8 @@ import type {
     ChatCreateChatResponse,
     ChatDeleteChatRequestDto,
     ChatDeleteChatResponse,
-    ChatRerunScrapeRequestDto,
-    ChatRerunScrapeResponse,
+    ChatRunScrapeRequestDto,
+    ChatRunScrapeResponse,
     ChatSendMessageRequestDto,
     ChatSendMessageResponse,
 } from './dto/chat';
@@ -38,7 +38,7 @@ export class Api {
 
     private setupInterceptors() {
         // Ensure all requests have access token, if available.
-        axios.interceptors.request.use(function (config) {
+        this.axiosClient.interceptors.request.use(function (config) {
             const authState = useAuthStore.getState();
             if (authState.accessToken != null) {
                 config.headers.Authorization = `Bearer ${authState.accessToken}`;
@@ -47,7 +47,7 @@ export class Api {
         });
 
         // Add a response interceptor to retry unauthenticated requests.
-        axios.interceptors.response.use(
+        this.axiosClient.interceptors.response.use(
             (response: AxiosResponse) => response,
             async (error: AxiosError) => {
                 const failedRequest =
@@ -80,7 +80,7 @@ export class Api {
 
     // Auth Controller methods.
     public async register(request: AuthRegisterRequestDto): Promise<void> {
-        let res = await axios.post<AuthRegisterResponse>(
+        let res = await this.axiosClient.post<AuthRegisterResponse>(
             '/auth/register',
             request,
         );
@@ -90,14 +90,18 @@ export class Api {
         throw new Error('Register action failed.');
     }
     public async login(request: AuthLoginRequestDto): Promise<string> {
-        let res = await axios.post<AuthLoginResponse>('/auth/login', request);
+        let res = await this.axiosClient.post<AuthLoginResponse>(
+            '/auth/login',
+            request,
+        );
         if (res.data.success) {
             return res.data.data!.accessToken;
         }
         throw new Error('Login action failed.');
     }
     public async refresh(): Promise<string> {
-        let res = await axios.get<AuthRefreshResponse>('/auth/refresh');
+        let res =
+            await this.axiosClient.get<AuthRefreshResponse>('/auth/refresh');
         if (res.data.success) {
             return res.data.data!.accessToken;
         }
@@ -108,7 +112,7 @@ export class Api {
     public async createChat(
         request: ChatCreateChatRequestDto,
     ): Promise<RepoChat> {
-        let res = await axios.post<ChatCreateChatResponse>(
+        let res = await this.axiosClient.post<ChatCreateChatResponse>(
             '/chat/new',
             request,
         );
@@ -120,7 +124,7 @@ export class Api {
     public async messageChat(
         request: ChatSendMessageRequestDto,
     ): Promise<void> {
-        let res = await axios.post<ChatSendMessageResponse>(
+        let res = await this.axiosClient.post<ChatSendMessageResponse>(
             `/chat/${request.chatId}`,
             request,
         );
@@ -130,7 +134,7 @@ export class Api {
         throw new Error('Message Chat action failed.');
     }
     public async deleteChat(request: ChatDeleteChatRequestDto) {
-        let res = await axios.delete<ChatDeleteChatResponse>(
+        let res = await this.axiosClient.delete<ChatDeleteChatResponse>(
             `/chat/${request.chatId}`,
         );
         if (res.data.success) {
@@ -139,7 +143,7 @@ export class Api {
         throw new Error('Delete Chat action failed.');
     }
     public async clearChat(request: ChatClearChatRequestDto) {
-        let res = await axios.delete<ChatClearChatResponse>(
+        let res = await this.axiosClient.delete<ChatClearChatResponse>(
             `/chat/${request.chatId}/clear`,
         );
         if (res.data.success) {
@@ -147,9 +151,9 @@ export class Api {
         }
         throw new Error('Clear Chat action failed.');
     }
-    public async rerunChatScrape(request: ChatRerunScrapeRequestDto) {
-        let res = await axios.delete<ChatRerunScrapeResponse>(
-            `/chat/${request.chatId}/rerun`,
+    public async rerunChatScrape(request: ChatRunScrapeRequestDto) {
+        let res = await this.axiosClient.delete<ChatRunScrapeResponse>(
+            `/chat/${request.chatId}/run`,
         );
         if (res.data.success) {
             return;
@@ -159,10 +163,12 @@ export class Api {
 
     // User Controller methods.
     public async getSelf(request: UserGetSelfRequestDto) {
-        let res = await axios.get<UserGetSelfResponse>(`/user`);
+        let res = await this.axiosClient.get<UserGetSelfResponse>(`/user`);
         if (res.data.success) {
             return res.data.data!.user;
         }
         throw new Error('Get User Self action failed.');
     }
 }
+
+export const api = new Api();

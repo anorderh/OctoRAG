@@ -6,3 +6,7 @@
     --color-user: #3b82f6;
     --color-badge: #52525b;
 }
+
+.bg-card {
+    background-color: var(--color-card);
+}

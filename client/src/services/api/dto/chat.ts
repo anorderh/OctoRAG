@@ -20,7 +20,7 @@ export interface ChatClearChatRequestDto {
     chatId: string;
 }
 
-export interface ChatRerunScrapeRequestDto {
+export interface ChatRunScrapeRequestDto {
     chatId: string;
 }
 
@@ -39,4 +39,4 @@ export type ChatClearChatResponse = ClientResponse<{
 export type ChatDeleteChatResponse = ClientResponse<{
     deletedCount: number;
 }>;
-export type ChatRerunScrapeResponse = ClientResponse;
+export type ChatRunScrapeResponse = ClientResponse;

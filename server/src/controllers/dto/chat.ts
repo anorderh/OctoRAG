@@ -41,7 +41,7 @@ export type ChatClearChatResponse = ControllerResponse<{
     deletedCount: number;
 }>;
 
-export type ChatRerunScrapeRequest = ControllerParamsRequest<{
+export type ChatRunScrapeRequest = ControllerParamsRequest<{
     chatId: string;
 }>;
-export type ChatRerunScrapeResponse = ControllerResponse;
+export type ChatRunScrapeResponse = ControllerResponse;

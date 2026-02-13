@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { ObjectId } from 'mongodb';
 import { App } from 'src/core/App.js';
-import { User } from 'src/database/collections/user.collection.js';
+import { User } from 'src/database/entities/user/user.js';
 import { CollectionId } from 'src/database/shared/constants/collection-id.js';
 import { MongoService } from 'src/services/mongo.service.js';
 import { TokenUtility } from 'src/shared/classes/token.util.js';

@@ -48,7 +48,7 @@ export class App {
     ];
     middleware: any[] = [
         cors({
-            origin: [env.server.origin, 'http://localhost:8080'],
+            origin: [env.server.origin, 'http://localhost:5173'],
         }),
         env.logging.http ? morgan('common') : null,
         express.json(),
@@ -66,7 +66,9 @@ export class App {
         this.express = express();
 
         App.logger.info(`Setting up middleware...`);
-        this.middleware.forEach((m) => this.express.use(m));
+        this.middleware.forEach((m) => {
+            this.express.use(m);
+        });
 
         App.logger.info('Setting up assets...');
         this.express.use(
@@ -95,7 +97,7 @@ export class App {
         }
 
         App.logger.info('Setting up websockets...');
-        this.server = createServer(express);
+        this.server = createServer(this.express);
         const io = new Server(this.server);
         const mongo = container.resolve(MongoService);
         this.websocket = new WebSocket(io, mongo);

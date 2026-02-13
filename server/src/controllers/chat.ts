@@ -24,8 +24,8 @@ import {
     ChatCreateChatResponse,
     ChatDeleteChatRequest,
     ChatDeleteChatResponse,
-    ChatRerunScrapeRequest,
-    ChatRerunScrapeResponse,
+    ChatRunScrapeRequest,
+    ChatRunScrapeResponse,
     ChatSendMessageRequest,
     ChatSendMessageResponse,
 } from './dto/chat.js';
@@ -68,15 +68,33 @@ export class ChatController extends ControllerBase {
             _id: result.insertedId,
         });
 
-        //Schedule chat getting created.
-        Tasks.run(async () => {
-            await this.rag.prepareGithubRepoChat(insertedChat);
-        });
         res.status(200).send({
             message: `Chat ${insertedChat._id} created successfully`,
             data: {
                 chat: insertedChat,
             },
+        });
+    }
+
+    @Post('/:chatId/run')
+    @Validate('params', {
+        chatId: objectId.required(),
+    })
+    public async runChatScrape(
+        req: ChatRunScrapeRequest,
+        res: ChatRunScrapeResponse,
+    ) {
+        const chatId = new ObjectId(req.params.chatId);
+        const chat = await this.mongo.collections.repoChat.findOne({
+            _id: chatId,
+        });
+
+        // Re-run scrape for existing Github repo chat.
+        Tasks.run(async () => {
+            await this.rag.prepareGithubRepoChat(chat);
+        });
+        res.status(200).send({
+            message: `Scrape for chat ${chat._id.toHexString()} was started.`,
         });
     }
 
@@ -156,28 +174,6 @@ export class ChatController extends ControllerBase {
             data: {
                 deletedCount: result.deletedCount,
             },
-        });
-    }
-
-    @Post('/:chatId/rerun')
-    @Validate('params', {
-        chatId: objectId.required(),
-    })
-    public async rerunChatScrape(
-        req: ChatRerunScrapeRequest,
-        res: ChatRerunScrapeResponse,
-    ) {
-        const chatId = new ObjectId(req.params.chatId);
-        const chat = await this.mongo.collections.repoChat.findOne({
-            _id: chatId,
-        });
-
-        // Re-run scrape for existing Github repo chat.
-        Tasks.run(async () => {
-            await this.rag.prepareGithubRepoChat(chat);
-        });
-        res.status(200).send({
-            message: `Scrape for chat ${chat._id.toHexString()} was re-run.`,
         });
     }
 }

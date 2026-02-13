@@ -1,5 +1,5 @@
 import { Breadcrumb } from './Breadcrumb';
-import { LoginButton } from './LoginButton';
+import { UserButton } from './UserButton';
 
 export function Navbar() {
     return (
@@ -12,7 +12,7 @@ export function Navbar() {
             }}>
             <Breadcrumb></Breadcrumb>
             <div className="me-2">
-                <LoginButton />
+                <UserButton />
             </div>
         </div>
     );
