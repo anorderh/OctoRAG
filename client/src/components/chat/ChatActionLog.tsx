@@ -9,7 +9,7 @@ export function ChatActionLog() {
     // Render logs.
     const currentLogs = useLogStore(
         useShallow((state) =>
-            state.logs.filter((l) => l.chatId == currentChat?.id),
+            state.logs.filter((l) => l.chatId == currentChat?._id),
         ),
     );
     const outputLogs = useMemo(() => {
@@ -40,24 +40,26 @@ export function ChatActionLog() {
             }}
             id="repoLogs"
             className="overflow-auto w-100 d-flex flex-column info-card rounded-3 p-3 shadow-ld bg-black gap-4">
-            {outputLogs.length == 0 ? (
-                <span className="text-muted text-wrap fst-italic">
-                    No logs yet
-                </span>
+            {outputLogs.length === 0 ? (
+                <span className="text-muted fst-italic">No logs yet</span>
             ) : (
-                <>
-                    {outputLogs.map((log) => (
-                        <span
-                            key={log.id}
-                            className="text-white text-wrap d-flex flex-row gap-2">
-                            <span className="text-muted small mb-1 text-nowrap">
-                                {log.date}
-                            </span>
-
-                            <span>{log.content}</span>
+                outputLogs.map((log) => (
+                    <div
+                        key={log._id}
+                        className="d-flex flex-column gap-1 text-white">
+                        <span className="text-muted small">
+                            {new Date(log.date).toLocaleTimeString()}
                         </span>
-                    ))}
-                </>
+
+                        <span
+                            style={{
+                                fontFamily: 'monospace',
+                                lineHeight: 1.4,
+                            }}>
+                            {log.content}
+                        </span>
+                    </div>
+                ))
             )}
         </div>
     );

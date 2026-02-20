@@ -14,8 +14,15 @@ import { ChatStatus } from 'src/database/shared/constants/chat-status.enum.js';
 import { CollectionId } from 'src/database/shared/constants/collection-id.js';
 import { MongoService } from 'src/services/mongo.service.js';
 import { RagService } from 'src/services/rag.service.js';
+import { UserService } from 'src/services/user.service.js';
 import { inject, singleton } from 'tsyringe';
-import { Controller, Delete, Post } from '../controllers/decorators/index.js';
+import {
+    Authorize,
+    Controller,
+    Delete,
+    Get,
+    Post,
+} from '../controllers/decorators/index.js';
 import { Validate } from '../controllers/decorators/validate.js';
 import {
     ChatClearChatRequest,
@@ -29,6 +36,7 @@ import {
     ChatSendMessageRequest,
     ChatSendMessageResponse,
 } from './dto/chat.js';
+import { httpContext } from './middleware/http-context.js';
 import { ControllerBase } from './shared/abstract/controller.abstract.js';
 import { objectId } from './shared/constants/objectid-validation.js';
 import { githubRepoUrl } from './util/githubRepo.validator.js';
@@ -39,8 +47,21 @@ export class ChatController extends ControllerBase {
     constructor(
         @inject(MongoService) private mongo: MongoService,
         @inject(RagService) private rag: RagService,
+        @inject(UserService) private userService: UserService,
     ) {
         super();
+    }
+
+    @Get('/')
+    @Authorize()
+    public async getChats(req, res) {
+        const user = await this.userService.getSelf();
+        const chats = await this.mongo.getChats((await user)._id);
+        res.status(200).send({
+            data: {
+                chats,
+            },
+        });
     }
 
     @Post('/new')
@@ -48,6 +69,7 @@ export class ChatController extends ControllerBase {
         repoName: Joi.string().required(),
         repoUrl: githubRepoUrl,
     })
+    @Authorize()
     public async createChat(
         req: ChatCreateChatRequest,
         res: ChatCreateChatResponse,
@@ -55,10 +77,11 @@ export class ChatController extends ControllerBase {
         let repoChatPost: RepoChatPost = req.body;
         let repoChatInsert: RepoChatEntity = {
             ...repoChatPost,
+            userId: httpContext().userId,
             creationDate: new Date(),
             lastMessageDate: null,
             messageCount: 0,
-            status: ChatStatus.LOADING,
+            status: ChatStatus.IDLE,
         };
         const collection = this.mongo.db.collection<RepoChatEntity>(
             CollectionId.RepoChat,
@@ -80,6 +103,7 @@ export class ChatController extends ControllerBase {
     @Validate('params', {
         chatId: objectId.required(),
     })
+    @Authorize()
     public async runChatScrape(
         req: ChatRunScrapeRequest,
         res: ChatRunScrapeResponse,
@@ -88,6 +112,16 @@ export class ChatController extends ControllerBase {
         const chat = await this.mongo.collections.repoChat.findOne({
             _id: chatId,
         });
+        await this.mongo.collections.repoChat.updateOne(
+            {
+                _id: chatId,
+            },
+            {
+                $set: {
+                    status: ChatStatus.LOADING,
+                },
+            },
+        );
 
         // Re-run scrape for existing Github repo chat.
         Tasks.run(async () => {
@@ -105,6 +139,7 @@ export class ChatController extends ControllerBase {
     @Validate('body', {
         input: Joi.string().required(),
     })
+    @Authorize()
     public async message(
         req: ChatSendMessageRequest,
         res: ChatSendMessageResponse,
@@ -119,7 +154,7 @@ export class ChatController extends ControllerBase {
             date: new Date(),
         };
         const collection = this.mongo.db.collection<RepoMessageEntity>(
-            CollectionId.RepoChat,
+            CollectionId.RepoMessage,
         );
         const result = await collection.insertOne(repoMessageInsert);
         const insertedMessage = await collection.findOne({
@@ -141,14 +176,17 @@ export class ChatController extends ControllerBase {
     @Validate('params', {
         chatId: objectId.required(),
     })
+    @Authorize()
     public async deleteChat(
         req: ChatDeleteChatRequest,
         res: ChatDeleteChatResponse,
     ) {
         const chatId = new ObjectId(req.params.chatId);
+
         const result = await this.mongo.collections.repoChat.deleteOne({
-            chatId: chatId,
+            _id: chatId,
         });
+
         res.status(200).send({
             message: `Chat ${chatId.toHexString()} was deleted.`,
             data: {
@@ -161,6 +199,7 @@ export class ChatController extends ControllerBase {
     @Validate('params', {
         chatId: objectId.required(),
     })
+    @Authorize()
     public async clearChat(
         req: ChatClearChatRequest,
         res: ChatClearChatResponse,

@@ -1,5 +1,5 @@
 export interface RepoMessage {
-    id: string;
+    _id: string;
     chatId: string;
     source: 'ai' | 'user';
     content?: string;

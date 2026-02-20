@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { ChatStatus } from '../../shared/constants/chat-status.enums';
 import type { ComponentProps } from '../../shared/interfaces/ComponentProps';
 import type { RepoChat } from '../../shared/interfaces/RepoChat';
+import { ChatStatusBadge } from '../chat/ChatStatusBadge';
 
 type ChatCardProps = ComponentProps & {
     chat: RepoChat;
@@ -13,7 +14,7 @@ export function ChatCard({ chat }: ChatCardProps) {
     const isLoading = () => chat.status == ChatStatus.LOADING;
 
     function navToPage() {
-        navigate(`chat/${chat.id}`);
+        navigate(`chat/${chat._id}`);
     }
 
     return (
@@ -30,7 +31,7 @@ export function ChatCard({ chat }: ChatCardProps) {
                     <span className="text-white">{chat.messageCount}</span>
                 </div>
             </div>
-            <span>
+            <span className="d-flex flex-column gap-2">
                 <a
                     style={{
                         overflowWrap: 'anywhere',
@@ -53,32 +54,22 @@ export function ChatCard({ chat }: ChatCardProps) {
                         {chat.repoUrl}
                     </span>
                 </a>
+                <div title="Created Date">
+                    <FontAwesomeIcon
+                        icon={'fa-solid fa-calendar'}
+                        className="me-1"
+                    />
+                    <span>
+                        {new Date(chat.creationDate).toLocaleDateString()}
+                    </span>
+                </div>
             </span>
-            {isLoading() ? (
-                <div className="mt-3">
-                    <div className="badge p-2 bg-secondary rounded-2">
-                        <span>LOADING</span>
-                    </div>
-                </div>
-            ) : (
-                <div className="mt-3">
-                    <div className="badge p-2 bg-primary rounded-2">
-                        <span>READY</span>
-                    </div>
-                </div>
-            )}
             <div
                 style={{
                     fontSize: 14,
                 }}
-                className="d-flex flex-column gap-2 mt-auto">
-                <span>
-                    Created Date:{' '}
-                    {new Date(chat.creationDate).toLocaleDateString()}
-                </span>
-                {chat.lastMessageDate && (
-                    <span>Last Message Date: {chat.lastMessageDate}</span>
-                )}
+                className="d-flex flex-row justify-content-end align-items-end gap-2 mt-auto">
+                <ChatStatusBadge status={chat.status} />
             </div>
         </button>
     );

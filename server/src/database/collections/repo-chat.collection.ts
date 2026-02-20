@@ -40,7 +40,7 @@ export const createRepoChatCollection: CollectionSetup<
                             description: 'Chat creation timestamp',
                         },
                         lastMessageDate: {
-                            bsonType: 'date',
+                            bsonType: ['date', 'null'],
                             description: 'Timestamp of last message',
                         },
                         messageCount: {

@@ -3,6 +3,7 @@ import { ChatStatus } from 'src/database/shared/constants/chat-status.enum';
 
 export interface RepoChat {
     _id: ObjectId;
+    userId: ObjectId;
     repoName: string;
     repoUrl: string;
     creationDate: Date;

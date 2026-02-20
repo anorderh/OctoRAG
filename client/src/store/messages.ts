@@ -1,12 +1,13 @@
 import { create } from 'zustand';
+import { api } from '../services/api/api';
 import type {
     RepoMessage,
     RepoMessagePost,
 } from '../shared/interfaces/RepoMessage';
-import { sleep } from '../shared/utils/sleep';
 
 export interface MessageState {
     messages: { [id: string]: RepoMessage };
+    setMessage: (message: RepoMessage) => void;
     submit: (msg: RepoMessagePost) => Promise<void>;
     clearChat: (chatId: string) => void;
     getChatMessages: (chatId: string | null) => RepoMessage[];
@@ -14,49 +15,18 @@ export interface MessageState {
 
 export const useMessageStore = create<MessageState>((set, get) => ({
     messages: {},
-    submit: async (msg: RepoMessagePost) => {
-        // Submit human response.
-        const newMsg: RepoMessage = {
-            id: crypto.randomUUID(),
-            chatId: msg.chatId,
-            source: msg.source,
-            content: msg.content,
-            date: new Date(),
-        };
-        set((state) => {
-            let temp = { ...state };
-            temp.messages[newMsg.id] = newMsg;
-            return temp;
-        });
-
-        // Simulate waiting for AI.
-        await sleep(500);
-        const robotMsg: RepoMessage = {
-            id: crypto.randomUUID(),
-            chatId: msg.chatId,
-            source: 'ai',
-            loading: true,
-            date: new Date(),
-        };
-        set((state) => {
-            let temp = { ...state };
-            temp.messages[robotMsg.id] = robotMsg;
-            return temp;
-        });
-        await sleep(1000);
+    setMessage: (message: RepoMessage) =>
         set((state) => ({
             messages: {
                 ...state.messages,
-                [robotMsg.id]: {
-                    id: robotMsg.id,
-                    chatId: msg.chatId,
-                    source: 'ai',
-                    content: 'I agree!',
-                    loading: false,
-                    date: new Date(),
-                },
+                [message._id]: message,
             },
-        }));
+        })),
+    submit: async (msg: RepoMessagePost) => {
+        await api.messageChat({
+            chatId: msg.chatId,
+            input: msg.content,
+        });
     },
     clearChat: (chatId: string) => {
         set((state) => {
@@ -65,7 +35,7 @@ export const useMessageStore = create<MessageState>((set, get) => ({
                 (msg) => msg.chatId == chatId,
             );
             for (let msg of chatMsgs) {
-                delete temp.messages[msg.id];
+                delete temp.messages[msg._id];
             }
             return temp;
         });
@@ -74,7 +44,9 @@ export const useMessageStore = create<MessageState>((set, get) => ({
         let temp = { ...get() };
         let msgs = Object.values(temp.messages);
         let chatMsgs = msgs.filter((m) => m.chatId == chatId);
-        chatMsgs.sort((a, b) => a.date.getTime() - b.date.getTime());
+        chatMsgs.sort(
+            (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+        );
         return chatMsgs;
     },
 }));

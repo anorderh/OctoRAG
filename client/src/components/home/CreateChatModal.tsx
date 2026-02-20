@@ -3,9 +3,10 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router';
 import type { RepoChatPost } from '../../shared/interfaces/RepoChat';
+import { type RepoChat } from '../../shared/interfaces/RepoChat';
 import { useChatStore } from '../../store/chat';
+import { Badge } from '../shared/Badge';
 import { Modal, type ModalComponentProps } from '../shared/Modal';
-import type { RepoChat } from './Home';
 
 type CreateChatForm = {
     name: string;
@@ -17,21 +18,31 @@ export function CreateChatModal({ close, opened }: ModalComponentProps) {
         register,
         handleSubmit,
         formState: { errors },
+        setError,
     } = useForm<CreateChatForm>();
     const { create } = useChatStore();
     const navigate = useNavigate();
 
     const [submitting, setSubmitting] = useState(false);
     function createChat(data: { name: string; url: string }) {
-        const post: RepoChatPost = {
-            repoName: data.name,
-            repoUrl: data.url,
-        };
-        setSubmitting(true);
-        create(post).then((chat: RepoChat) => {
+        try {
+            const post: RepoChatPost = {
+                repoName: data.name,
+                repoUrl: data.url,
+            };
+            setSubmitting(true);
+            create(post).then((chat: RepoChat) => {
+                setSubmitting(false);
+                navigate(`chat/${chat._id}`);
+            });
+        } catch (err) {
+            setError('root', {
+                type: 'server',
+                message: 'Something went wrong. Try again.',
+            });
+        } finally {
             setSubmitting(false);
-            navigate(`chat/${chat.id}`);
-        });
+        }
     }
 
     return (
@@ -55,11 +66,11 @@ export function CreateChatModal({ close, opened }: ModalComponentProps) {
                                 disabled={submitting}
                                 placeholder="Enter a name for the chat"
                                 {...register('name', {
-                                    required: true,
+                                    required: 'A name is required',
                                 })}></input>
                             {errors.name && (
                                 <p className="text-danger fs-6">
-                                    A name is required
+                                    {errors.name.message}
                                 </p>
                             )}
                         </div>
@@ -74,21 +85,16 @@ export function CreateChatModal({ close, opened }: ModalComponentProps) {
                                 disabled={submitting}
                                 placeholder="Enter a Github repository URL"
                                 {...register('url', {
-                                    required: true,
+                                    required: 'A repository URL is required',
                                     pattern: {
                                         value: /^https?:\/\/(www\.)?github\.com\/[^\/\s]+\/[^\/\s]+\/?$/i,
                                         message:
                                             'Must be a valid GitHub repository URL',
                                     },
                                 })}></input>
-                            {errors.url?.type == 'required' && (
+                            {errors.url && (
                                 <p className="text-danger fs-6">
-                                    A repository URL is required.
-                                </p>
-                            )}
-                            {errors.url?.type == 'pattern' && (
-                                <p className="text-danger fs-6">
-                                    Must be a valid Github repository URL
+                                    {errors.url.message}
                                 </p>
                             )}
                         </div>
@@ -114,6 +120,12 @@ export function CreateChatModal({ close, opened }: ModalComponentProps) {
                                 )}
                             </button>
                         </div>
+                        {errors.root && (
+                            <Badge
+                                bsColor={'danger'}
+                                text={errors.root.message!}
+                            />
+                        )}
                     </div>
                 </form>
             </div>

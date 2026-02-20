@@ -1,7 +1,7 @@
 import type { ChatStatus } from '../constants/chat-status.enums';
 
 export interface RepoChat {
-    id: string;
+    _id: string;
     userId: string;
     repoName: string;
     repoUrl: string;

@@ -1,5 +1,5 @@
 export interface RepoLog {
-    id: string;
+    _id: string;
     chatId: string;
     date: string;
     content: string;

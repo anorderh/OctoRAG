@@ -197,7 +197,7 @@ export class RAGPipeline {
                 );
                 let res = await cohere.rerank({
                     query: query,
-                    model: 'rerank-english-v2.0',
+                    model: 'rerank-english-v3.0',
                     documents: rawDocContent,
                     topN: 20,
                 });

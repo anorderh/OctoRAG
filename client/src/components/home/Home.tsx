@@ -9,10 +9,3 @@ export function Home() {
         </div>
     );
 }
-
-export interface RepoChat {
-    id: string;
-    repoName: string;
-    repoUrl: string;
-    creationDate: string;
-}

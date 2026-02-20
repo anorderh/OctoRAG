@@ -1,19 +1,24 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useMemo, useState } from 'react';
+import { useFetchChatsEffect } from '../../hooks/useFetchChatsEffect';
 import { useModalState } from '../../hooks/useModalState';
 import { useChatStore } from '../../store/chat';
 import { ChatCard } from './ChatCard';
 import { CreateChatModal } from './CreateChatModal';
 
 export function ChatGrid() {
+    // Effects.
+    useFetchChatsEffect();
+
+    // Data.
+    const { chats } = useChatStore();
+
     // Handle pagination.
     const pageSize = 6;
     const [page, setPage] = useState(1);
-    const { chats } = useChatStore();
     const lower = useMemo(() => (page - 1) * pageSize, [page]);
     const upper = useMemo(() => page * pageSize, [page]);
     const vmChats = useMemo(() => {
-        console.log(lower, upper, chats.length);
         return chats.slice(lower, upper);
     }, [chats, lower, upper]);
     function prevPage() {

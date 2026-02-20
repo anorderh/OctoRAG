@@ -89,7 +89,7 @@ export class WebSocket {
             'change',
             (change: ChangeStreamInsertDocument<RepoLog>) => {
                 const log = change.fullDocument;
-                const chatId = log._id.toHexString();
+                const chatId = log.chatId.toHexString();
                 const room = this.io.sockets.adapter.rooms.get(chatId);
                 if (!room || room.size === 0) {
                     return;

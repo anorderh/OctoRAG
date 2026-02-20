@@ -164,7 +164,7 @@ export class RagService extends Service {
                             })
                         ).data[0].embedding;
                         await this.mongo.submitLog(
-                            `Embedding generated for chunk ${idx + 1}"...\n`,
+                            `Embedding generated for chunk ${idx + 1}...\n`,
                             chat._id,
                         );
                         await this.mongo.submitLog(
@@ -295,9 +295,9 @@ export class RagService extends Service {
             return messages.map((m) => {
                 switch (m.source) {
                     case 'user':
-                        return new HumanMessage(m.content);
+                        return new HumanMessage(m.content ?? '');
                     case 'ai':
-                        return new AIMessage(m.content);
+                        return new AIMessage(m.content ?? '');
                 }
             });
         }
@@ -343,13 +343,17 @@ export class RagService extends Service {
         );
         await this.mongo.submitLog(`AI response saved to MongoDB..`, chat._id);
 
-        // Update chat's status.
-        await this.mongo.submitLog(`Updating Chat's status to READY`, chat._id);
+        // Update chat's properties.
+        await this.mongo.submitLog(`Updating Chat's status...`, chat._id);
         await this.mongo.collections.repoChat.updateOne(
             { _id: message.chatId },
             {
                 $set: {
                     status: ChatStatus.READY,
+                    lastMessageDate: new Date(),
+                },
+                $inc: {
+                    messageCount: 1,
                 },
             },
         );

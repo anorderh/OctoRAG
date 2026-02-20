@@ -38,12 +38,22 @@ export class MongoService extends Service {
     }
 
     public async submitLog(content: string, chatId: ObjectId): Promise<void> {
+        App.logger.info(content);
         const newLog: RepoLogEntity = {
             chatId,
             date: new Date(),
             content,
         };
         await this.collections.repoLog.insertOne(newLog);
+    }
+
+    public async getChats(userId: ObjectId) {
+        const chats = await this.collections.repoChat
+            .find({
+                userId,
+            })
+            .toArray();
+        return chats;
     }
 
     async cleanup(): Promise<void> {

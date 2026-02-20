@@ -1,18 +1,36 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Link, useMatches, type UIMatch } from 'react-router';
-import type { RouteHandle } from '../../shared/interfaces/Breadcrumb';
+import { useSelectedChat } from '../../hooks/useSelectedChat';
 import type { ComponentProps } from '../../shared/interfaces/ComponentProps';
+import type { RouteHandle } from '../Root';
 
 export function Breadcrumb({}: ComponentProps) {
     const matches = useMatches();
+    const selectedChat = useSelectedChat();
+
     const crumbs = matches
         .map((m: UIMatch) => {
-            let handle = m.handle as RouteHandle;
-            return handle ? handle(m) : null;
+            const type = m.handle as RouteHandle;
+            switch (type) {
+                case 'login':
+                    return {
+                        icon: 'fa-solid fa-user',
+                        display: 'Login',
+                    };
+                case 'home':
+                    return {
+                        icon: 'fa-solid fa-house',
+                        display: 'Home',
+                        to: '/',
+                    };
+                case 'chat':
+                    return {
+                        icon: 'fa-solid fa-message',
+                        display: `Chat with "${selectedChat?.repoName}"`,
+                    };
+            }
         })
         .filter((c) => c != null);
-
-    console.log(crumbs);
 
     return (
         <div className="d-flex flex-row justify-content-start align-items-center ms-4 fst-italic py-4">

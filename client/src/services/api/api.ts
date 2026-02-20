@@ -114,6 +114,13 @@ export class Api {
     }
 
     // Chat Controller methods.
+    public async getChats(): Promise<RepoChat[]> {
+        const res = await this.axiosClient.get<{ data: { chats: RepoChat[] } }>(
+            '/chat/',
+        );
+        return res.data?.data.chats;
+    }
+
     public async createChat(
         request: ChatCreateChatRequestDto,
     ): Promise<RepoChat> {
@@ -130,7 +137,7 @@ export class Api {
     ): Promise<void> {
         await this.axiosClient.post<ChatSendMessageResponse>(
             `/chat/${request.chatId}`,
-            request,
+            { input: request.input },
         );
     }
 
@@ -146,10 +153,10 @@ export class Api {
         );
     }
 
-    public async rerunChatScrape(
+    public async runChatScrape(
         request: ChatRunScrapeRequestDto,
     ): Promise<void> {
-        await this.axiosClient.delete<ChatRunScrapeResponse>(
+        await this.axiosClient.post<ChatRunScrapeResponse>(
             `/chat/${request.chatId}/run`,
         );
     }

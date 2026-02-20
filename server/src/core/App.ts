@@ -102,6 +102,11 @@ export class App {
         const io = new Server(this.server);
         const mongo = container.resolve(MongoService);
         this.websocket = new WebSocket(io, mongo);
+        setInterval(() => {
+            io.emit('heartbeat', {
+                time: new Date().toISOString(),
+            });
+        }, 2000);
 
         App.logger.info(`Starting Express app...`);
         this.server.listen(this.port, () => {

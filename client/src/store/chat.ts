@@ -1,62 +1,58 @@
 import { create } from 'zustand';
-import { ChatStatus } from '../shared/constants/chat-status.enums';
+import { api } from '../services/api/api';
 import type { RepoChat, RepoChatPost } from '../shared/interfaces/RepoChat';
-import { sleep } from '../shared/utils/sleep';
 
 export interface ChatState {
     chats: RepoChat[];
     selectedId: string | null;
     create: (chat: RepoChatPost) => Promise<RepoChat>;
-    add: (chat: RepoChat) => void;
+    setChat: (chat: RepoChat) => void;
+    delete: (chatId: string) => Promise<void>;
+    setChats: (...chats: RepoChat[]) => void;
+    addChats: (...chats: RepoChat[]) => void;
     select: (chatId: string | null) => void;
     remove: (chat: RepoChat) => void;
 }
 
 export const useChatStore = create<ChatState>((set) => ({
-    chats: [
-        {
-            id: 'typescript',
-            userId: 'anthony',
-            repoName: 'Typescript',
-            repoUrl: 'https://www.google.com',
-            creationDate: '1/1/2025',
-            lastMessageDate: '1/1/2025',
-            messageCount: 25,
-            status: ChatStatus.LOADING,
-        },
-        {
-            id: 'gameboy',
-            userId: 'anthony',
-            repoName: 'GameboyMod',
-            repoUrl: 'https://www.google.com',
-            creationDate: '1/1/2025',
-            lastMessageDate: '1/1/2025',
-            messageCount: 25,
-            status: ChatStatus.READY,
-        },
-    ],
+    chats: [],
     selectedId: null,
-    create: async (chat: RepoChatPost) => {
-        await sleep(500);
-        const createdChat: RepoChat = {
-            id: crypto.randomUUID().toString(),
-            repoName: chat.repoName,
-            repoUrl: chat.repoUrl,
-            creationDate: new Date().toLocaleDateString('en-US'),
-            messageCount: 0,
-            status: ChatStatus.LOADING,
-        };
-        set((state) => ({ ...state, chats: state.chats.concat(createdChat) }));
-        return createdChat;
+    create: async (chatPost: RepoChatPost) => {
+        const repoChat = await api.createChat(chatPost);
+        set((state) => ({ ...state, chats: state.chats.concat(repoChat) }));
+        return repoChat;
     },
-    add: (chat: RepoChat) =>
-        set((state) => ({ ...state, chats: state.chats.concat([chat]) })),
+    setChat: (chat: RepoChat) =>
+        set((state) => {
+            const idx = state.chats.findIndex((c) => c._id === chat._id);
+            if (idx === -1) return state;
+            const updatedChats = [...state.chats];
+            updatedChats[idx] = chat;
+            return { chats: updatedChats };
+        }),
+    delete: async (chatId: string) => {
+        await api.deleteChat({ chatId });
+        set((state) => {
+            const updatedChats = state.chats.filter(
+                (chat) => chat._id !== chatId,
+            );
+
+            return {
+                chats: updatedChats,
+                selectedId:
+                    state.selectedId === chatId ? null : state.selectedId,
+            };
+        });
+    },
+    setChats: (...chats: RepoChat[]) => set((state) => ({ ...state, chats })),
+    addChats: (...chats: RepoChat[]) =>
+        set((state) => ({ ...state, chats: state.chats.concat(chats) })),
     select: (chatId: string | null) =>
         set((state) => ({ ...state, selectedId: chatId })),
     remove: (chat: RepoChat) =>
         set((state) => {
             let chats = state.chats;
-            chats = chats.filter((c) => c.id != chat.id);
+            chats = chats.filter((c) => c._id != chat._id);
             return {
                 ...state,
                 chats,

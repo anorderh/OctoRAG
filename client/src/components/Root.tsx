@@ -1,14 +1,11 @@
-import {
-    createBrowserRouter,
-    RouterProvider,
-    type UIMatch,
-} from 'react-router';
+import { createBrowserRouter, RouterProvider } from 'react-router';
 import { AuthGuard } from '../guards/AuthGuard';
-import { useChat } from '../hooks/useChat';
 import App from './App';
 import { ChatPage } from './chat/ChatPage';
-import { Home, type RepoChat } from './home/Home';
+import { Home } from './home/Home';
 import { Login } from './login/Login';
+
+export type RouteHandle = 'home' | 'chat' | 'login';
 
 export const router = createBrowserRouter([
     {
@@ -18,20 +15,13 @@ export const router = createBrowserRouter([
             {
                 path: 'login',
                 element: <Login />,
-                handle: (m: UIMatch) => ({
-                    icon: 'fa-solid fa-user',
-                    display: 'Login',
-                }),
+                handle: 'login',
             },
             {
                 element: <AuthGuard />,
                 children: [
                     {
-                        handle: (m: UIMatch) => ({
-                            icon: 'fa-solid fa-house',
-                            display: 'Home',
-                            to: '/',
-                        }),
+                        handle: 'home',
                         children: [
                             {
                                 index: true,
@@ -40,19 +30,7 @@ export const router = createBrowserRouter([
                             {
                                 path: 'chat/:chatId',
                                 element: <ChatPage />,
-                                loader: async ({ params }) => {
-                                    const chat = await useChat(params.chatId!);
-                                    return { chat };
-                                },
-                                handle: (m: UIMatch) => {
-                                    const { chat } = m.loaderData as {
-                                        chat: RepoChat;
-                                    };
-                                    return {
-                                        icon: 'fa-solid fa-message',
-                                        display: `Chat with "${chat.repoName}"`,
-                                    };
-                                },
+                                handle: 'chat',
                             },
                         ],
                     },

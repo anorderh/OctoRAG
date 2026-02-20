@@ -10,16 +10,36 @@ import { UserMessage } from './UserMessage';
 export function ChatConversationPanel() {
     const currentChat = useSelectedChat();
     const currentMessages = useMessageStore(
-        useShallow((state) => state.getChatMessages(currentChat?.id ?? '')),
+        useShallow((state) =>
+            Object.values(state.messages)
+                .filter((m) => m.chatId === currentChat?._id)
+                .sort(
+                    (a, b) =>
+                        new Date(a.date).getTime() - new Date(b.date).getTime(),
+                ),
+        ),
     );
 
-    const isLoading = () => currentChat?.status == ChatStatus.LOADING;
+    const is = () => currentChat?.status == ChatStatus.LOADING;
+
+    let textBoxMsg;
+    switch (currentChat?.status) {
+        case ChatStatus.IDLE:
+            textBoxMsg =
+                'Chat has not been scraped. Run scrape to start conversation.';
+            break;
+        case ChatStatus.READY:
+            textBoxMsg = `Start chatting with "${currentChat?.repoName}"`;
+            break;
+        case ChatStatus.LOADING:
+            textBoxMsg = 'Chat is currently being scraped...';
+            break;
+    }
 
     return (
         <div
             id="repoChats"
             style={{
-                minHeight: '750px',
                 height: '90%',
                 width: '50%',
                 minWidth: '400px',
@@ -32,18 +52,8 @@ export function ChatConversationPanel() {
             <div className="flex-grow-1 overflow-scroll d-flex flex-column gap-3 p-3">
                 {currentMessages.length == 0 ? (
                     <div className="w-100 h-100 d-flex justify-content-center align-items-center">
-                        <span className="text-muted fs-6">
-                            {isLoading() ? (
-                                <span>
-                                    Wait until the Github repo finishes
-                                    processing...
-                                </span>
-                            ) : (
-                                <span>
-                                    Start chatting with{' '}
-                                    <b>{currentChat?.repoName}</b>!
-                                </span>
-                            )}
+                        <span className="text-muted fs-6 text-center p-2">
+                            {textBoxMsg}
                         </span>
                     </div>
                 ) : (
@@ -51,9 +61,15 @@ export function ChatConversationPanel() {
                         <div className="flex-grow-1" />
                         {currentMessages.map((msg, idx) => {
                             return msg.source == 'ai' ? (
-                                <RobotMessage key={idx} messageId={msg.id} />
+                                <RobotMessage
+                                    key={msg._id}
+                                    messageId={msg._id}
+                                />
                             ) : (
-                                <UserMessage key={idx} messageId={msg.id} />
+                                <UserMessage
+                                    key={msg._id}
+                                    messageId={msg._id}
+                                />
                             );
                         })}
                     </>
