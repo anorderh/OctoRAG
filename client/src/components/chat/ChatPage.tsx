@@ -1,6 +1,6 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useChatSocket } from '../../hooks/useChatSocket';
-import { useFetchSelectedChatEffect } from '../../hooks/useFetchChatEffect';
+import { useFetchSelectedChatEffect } from '../../hooks/useFetchSelectedChatEffect';
 import { useSelectChat } from '../../hooks/useSelectChat';
 import { useSelectedChat } from '../../hooks/useSelectedChat';
 import type { RepoChat } from '../../shared/interfaces/RepoChat';
@@ -14,9 +14,9 @@ export function ChatPage() {
     useSelectChat();
     useFetchSelectedChatEffect();
 
-    const setChat = useChatStore((state) => state.setChat);
-    const setMessage = useMessageStore((state) => state.setMessage);
-    const addLog = useLogStore((state) => state.add);
+    const setChat = useChatStore((state) => state.upsert);
+    const setMessage = useMessageStore((state) => state.upsert);
+    const setLog = useLogStore((state) => state.upsert);
 
     // Setup socket to receive new events.
     const currentChat: RepoChat | null = useSelectedChat();
@@ -29,17 +29,14 @@ export function ChatPage() {
             setMessage(message);
         },
         onLog: (log) => {
-            addLog(log);
+            setLog(log);
         },
     });
 
     return (
         <div
-            style={{
-                width: '95%',
-                minWidth: '800px',
-            }}
-            className="h-100 d-flex flex-row justify-content-center align-items-start gap-4">
+            style={{ height: '750px' }}
+            className="w-100 d-flex flex-row justify-content-center gap-4">
             {currentChat ? (
                 <>
                     <ChatActionPanel />

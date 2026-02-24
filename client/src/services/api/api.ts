@@ -21,6 +21,8 @@ import type {
     ChatCreateChatResponse,
     ChatDeleteChatRequestDto,
     ChatDeleteChatResponse,
+    ChatGetChatRequestDto,
+    ChatGetChatResponse,
     ChatRunScrapeRequestDto,
     ChatRunScrapeResponse,
     ChatSendMessageRequestDto,
@@ -119,6 +121,15 @@ export class Api {
             '/chat/',
         );
         return res.data?.data.chats;
+    }
+
+    public async getChat(
+        request: ChatGetChatRequestDto,
+    ): Promise<ChatGetChatResponse> {
+        const res = await this.axiosClient.get<ChatGetChatResponse>(
+            `/chat/${request.chatId}`,
+        );
+        return res.data;
     }
 
     public async createChat(

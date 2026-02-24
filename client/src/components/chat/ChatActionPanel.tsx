@@ -6,7 +6,7 @@ import { useSelectedChat } from '../../hooks/useSelectedChat';
 import { api } from '../../services/api/api';
 import { ChatStatus } from '../../shared/constants/chat-status.enums';
 import { useChatStore } from '../../store/chat';
-import { useMessageStore } from '../../store/messages';
+import { selectMessagesForChat, useMessageStore } from '../../store/messages';
 import { ConfirmationModal } from '../shared/ConfirmationModal';
 import { Modal } from '../shared/Modal';
 import { ChatActionLog } from './ChatActionLog';
@@ -15,7 +15,7 @@ import { ChatStatusBadge } from './ChatStatusBadge';
 export function ChatActionPanel() {
     const currentChat = useSelectedChat()!;
     const currentMessages = useMessageStore(
-        useShallow((state) => state.getChatMessages(currentChat?._id ?? '')),
+        useShallow(selectMessagesForChat(currentChat._id ?? '')),
     );
     const deleteChat = useChatStore((s) => s.delete);
     const navigate = useNavigate();
@@ -57,12 +57,7 @@ export function ChatActionPanel() {
     const isLoading = () => currentChat?.status == ChatStatus.LOADING;
     const isResponding = () => currentChat?.status == ChatStatus.RESPONDING;
     return (
-        <div
-            style={{
-                width: '50%',
-                maxWidth: '500px',
-            }}
-            className={'d-flex flex-column align-items-start gap-2 mb-4 '}>
+        <div className="d-flex flex-column gap-3 w-50 ">
             <div className="d-flex flex-row gap-2 justify-content-between align-items-center w-100">
                 <div className="d-flex flex-row align-items-center gap-1">
                     <span className="ms-2 mb-1 fs-4 fw-bold">Logs</span>

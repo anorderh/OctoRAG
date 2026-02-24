@@ -51,7 +51,6 @@ export class AuthController extends ControllerBase {
     })
     async register(req: AuthRegisterRequest, res: AuthRegisterResponse) {
         // Check if user is already registered.
-        req.body;
         let user = await this.userCollection.findOne({
             $or: [{ email: req.body.email }, { username: req.body.username }],
         });

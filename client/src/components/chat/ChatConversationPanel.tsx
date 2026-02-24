@@ -11,7 +11,7 @@ export function ChatConversationPanel() {
     const currentChat = useSelectedChat();
     const currentMessages = useMessageStore(
         useShallow((state) =>
-            Object.values(state.messages)
+            Object.values(state.entities)
                 .filter((m) => m.chatId === currentChat?._id)
                 .sort(
                     (a, b) =>
@@ -39,17 +39,11 @@ export function ChatConversationPanel() {
     return (
         <div
             id="repoChats"
-            style={{
-                height: '90%',
-                width: '50%',
-                minWidth: '400px',
-                maxWidth: '550px',
-            }}
             className={
-                'd-flex flex-column overflow-hidden justify-content-between chat-container rounded-5 '
+                'w-50 d-flex flex-column overflow-hidden justify-content-between chat-container rounded-5 '
             }>
             <ChatConversationPanelHeader />
-            <div className="flex-grow-1 overflow-scroll d-flex flex-column gap-3 p-3">
+            <div className="d-flex flex-column overflow-scroll h-100 gap-3 p-3">
                 {currentMessages.length == 0 ? (
                     <div className="w-100 h-100 d-flex justify-content-center align-items-center">
                         <span className="text-muted fs-6 text-center p-2">

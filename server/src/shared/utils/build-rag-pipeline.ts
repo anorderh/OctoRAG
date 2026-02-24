@@ -63,9 +63,13 @@ export class RAGPipeline {
                 parameters: RagRunnableParameters,
             ) => {
                 let history = parameters[RagRunnableProperties.history];
+                await mongo.submitLog(
+                    `1 - HISTORY-AWARE REINTERPRETATION OF USER INPUT...`,
+                    chat._id,
+                );
                 if (!!history && history.length > 0) {
                     await mongo.submitLog(
-                        `Reinterpretating message using chat history...`,
+                        `Previous messages found, piping into OpenAI to reinterpret.`,
                         chat._id,
                     );
                     return RunnableSequence.from([
@@ -80,6 +84,10 @@ export class RAGPipeline {
                         new StringOutputParser(),
                     ]);
                 } else {
+                    await mongo.submitLog(
+                        `No previous messages found, no reinterpretation generated.`,
+                        chat._id,
+                    );
                     return parameters[RagRunnableProperties.input];
                 }
             },
@@ -93,7 +101,7 @@ export class RAGPipeline {
             [RagRunnableProperties.documents]: RunnableSequence.from([
                 async (parameters: RagRunnableParameters) => {
                     await mongo.submitLog(
-                        `Generating embedding from message re-interpretation...`,
+                        `2 - VECTORIZE INPUT INTO EMBEDDINGS AND RETRIEVE DOCUMENTS FROM PINECONE...`,
                         chat._id,
                     );
                     const queryDenseEmbeddings = (
@@ -140,14 +148,14 @@ export class RAGPipeline {
             [RagRunnableProperties.documents]: async (
                 parameters: RagRunnableParameters,
             ) => {
+                await mongo.submitLog(
+                    `3 - INTERPRET METADATA TO GENERATE CONTEXT FOR RETRIEVED DOCUMENTS, I.E. "CONTEXTUALIZED RETRIEVAL"...`,
+                    chat._id,
+                );
                 let docs = parameters[RagRunnableProperties.documents];
                 let tasks = docs.map((d: Document) => {
                     return new Promise<void>(async (resolve, reject) => {
                         try {
-                            await mongo.submitLog(
-                                `Contextualizing documents...`,
-                                chat._id,
-                            );
                             let runnable = RunnableSequence.from([
                                 ChatPromptTemplate.fromMessages([
                                     [
@@ -164,7 +172,7 @@ export class RAGPipeline {
                                 chat._id,
                             );
                             await mongo.submitLog(
-                                `Preview: ${chunkContext.slice(0, 50)}`,
+                                `Document ID#${d.id} Preview: ${chunkContext.slice(0, 50)}`,
                                 chat._id,
                             );
                             d.pageContent = `${chunkContext}; "${d.pageContent}"`;
@@ -192,6 +200,10 @@ export class RAGPipeline {
                 let rawDocContent = docs.map((d) => d.pageContent);
 
                 await mongo.submitLog(
+                    `4 - RERANK DOCUMENTS VIA COHERE, EMPHASIZING VECTOR SIMILARITY AND TO USER QUERY...`,
+                    chat._id,
+                );
+                await mongo.submitLog(
                     `Re-ranking existing document order: ${docs.map((d, idx) => `${idx + 1}:${d.id}`).join(', ')}...`,
                     chat._id,
                 );
@@ -217,13 +229,33 @@ export class RAGPipeline {
         );
         const queryLLM = RunnableSequence.from([
             new RunnablePassthrough().assign({
-                [RagRunnableProperties.context]: (
+                [RagRunnableProperties.context]: async (
                     parameters: RagRunnableParameters,
                 ) => {
-                    let docs = parameters[RagRunnableProperties.documents];
-                    return formatDocumentsAsContext(docs);
+                    const docs = parameters[RagRunnableProperties.documents];
+                    const context = formatDocumentsAsContext(docs);
+                    await mongo.submitLog(
+                        `Context Preview: ${context.slice(0, 200)}...`,
+                        chat._id,
+                    );
+                    return context;
                 },
             }),
+            async (parameters: RagRunnableParameters) => {
+                await mongo.submitLog(
+                    `5 - INVOKING LLM WITH COMBINED INTERPRETATION, CHAT HISTORY, AND CONTEXTUALIZED RAG CHUNKS...`,
+                    chat._id,
+                );
+                await mongo.submitLog(
+                    `User interpretation: ${parameters[RagRunnableProperties.interpretation]}`,
+                    chat._id,
+                );
+                await mongo.submitLog(
+                    `History length: ${parameters[RagRunnableProperties.history]?.length ?? 0}`,
+                    chat._id,
+                );
+                return parameters;
+            },
             new RunnablePassthrough().assign({
                 [RagRunnableProperties.output]: RunnableSequence.from([
                     ChatPromptTemplate.fromMessages([

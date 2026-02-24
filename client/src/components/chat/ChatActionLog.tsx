@@ -9,7 +9,9 @@ export function ChatActionLog() {
     // Render logs.
     const currentLogs = useLogStore(
         useShallow((state) =>
-            state.logs.filter((l) => l.chatId == currentChat?._id),
+            Object.values(state.entities).filter(
+                (l) => l.chatId == currentChat?._id,
+            ),
         ),
     );
     const outputLogs = useMemo(() => {
@@ -32,14 +34,13 @@ export function ChatActionLog() {
         <div
             ref={chatParent}
             style={{
-                height: '600px',
                 fontSize: '14px',
                 overflowWrap: 'anywhere',
                 wordBreak: 'break-word',
                 overscrollBehavior: 'contain',
             }}
             id="repoLogs"
-            className="overflow-auto w-100 d-flex flex-column info-card rounded-3 p-3 shadow-ld bg-black gap-4">
+            className="flex-grow-1 overflow-auto w-100 d-flex flex-column info-card rounded-3 p-3 shadow-ld bg-black gap-4">
             {outputLogs.length === 0 ? (
                 <span className="text-muted fst-italic">No logs yet</span>
             ) : (

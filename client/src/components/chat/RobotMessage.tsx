@@ -16,6 +16,7 @@ export function RobotMessage({ messageId }: RobotMessageProps) {
                     width: 50,
                     height: 50,
                     backgroundColor: 'var(--color-card)',
+                    flexShrink: 0,
                 }}
                 className="rounded-circle shadow d-flex justify-content-center align-items-center">
                 <FontAwesomeIcon

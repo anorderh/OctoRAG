@@ -1,5 +1,6 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useMemo, useState } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { useFetchChatsEffect } from '../../hooks/useFetchChatsEffect';
 import { useModalState } from '../../hooks/useModalState';
 import { useChatStore } from '../../store/chat';
@@ -11,7 +12,9 @@ export function ChatGrid() {
     useFetchChatsEffect();
 
     // Data.
-    const { chats } = useChatStore();
+    const chats = useChatStore(
+        useShallow((state) => Object.values(state.entities)),
+    );
 
     // Handle pagination.
     const pageSize = 6;

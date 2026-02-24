@@ -3,59 +3,95 @@ import { api } from '../services/api/api';
 import type { RepoChat, RepoChatPost } from '../shared/interfaces/RepoChat';
 
 export interface ChatState {
-    chats: RepoChat[];
+    ids: string[];
+    entities: Record<string, RepoChat>;
     selectedId: string | null;
+
     create: (chat: RepoChatPost) => Promise<RepoChat>;
-    setChat: (chat: RepoChat) => void;
+    upsert: (...chats: RepoChat[]) => void;
+    setAll: (...chats: RepoChat[]) => void;
     delete: (chatId: string) => Promise<void>;
-    setChats: (...chats: RepoChat[]) => void;
-    addChats: (...chats: RepoChat[]) => void;
     select: (chatId: string | null) => void;
-    remove: (chat: RepoChat) => void;
+    remove: (chatId: string) => void;
 }
 
-export const useChatStore = create<ChatState>((set) => ({
-    chats: [],
+export const useChatStore = create<ChatState>((set, get) => ({
+    ids: [],
+    entities: {},
     selectedId: null,
+
     create: async (chatPost: RepoChatPost) => {
         const repoChat = await api.createChat(chatPost);
-        set((state) => ({ ...state, chats: state.chats.concat(repoChat) }));
-        return repoChat;
-    },
-    setChat: (chat: RepoChat) =>
+
         set((state) => {
-            const idx = state.chats.findIndex((c) => c._id === chat._id);
-            if (idx === -1) return state;
-            const updatedChats = [...state.chats];
-            updatedChats[idx] = chat;
-            return { chats: updatedChats };
-        }),
-    delete: async (chatId: string) => {
-        await api.deleteChat({ chatId });
-        set((state) => {
-            const updatedChats = state.chats.filter(
-                (chat) => chat._id !== chatId,
-            );
+            const ids = state.ids.includes(repoChat._id)
+                ? state.ids
+                : [...state.ids, repoChat._id];
 
             return {
-                chats: updatedChats,
+                ids,
+                entities: {
+                    ...state.entities,
+                    [repoChat._id]: repoChat,
+                },
+            };
+        });
+
+        return repoChat;
+    },
+
+    upsert: (...newChats: RepoChat[]) =>
+        set((state) => {
+            const ids = [...state.ids];
+            const entities = { ...state.entities };
+
+            for (const chat of newChats) {
+                if (!entities[chat._id]) {
+                    ids.push(chat._id);
+                }
+                entities[chat._id] = chat;
+            }
+
+            return { ids, entities };
+        }),
+
+    setAll: (...chats: RepoChat[]) =>
+        set(() => {
+            const entities: Record<string, RepoChat> = {};
+            const ids: string[] = [];
+
+            for (const chat of chats) {
+                entities[chat._id] = chat;
+                ids.push(chat._id);
+            }
+
+            return { ids, entities };
+        }),
+
+    delete: async (chatId: string) => {
+        await api.deleteChat({ chatId });
+
+        set((state) => {
+            const { [chatId]: _, ...rest } = state.entities;
+
+            return {
+                entities: rest,
+                ids: state.ids.filter((id) => id !== chatId),
                 selectedId:
                     state.selectedId === chatId ? null : state.selectedId,
             };
         });
     },
-    setChats: (...chats: RepoChat[]) => set((state) => ({ ...state, chats })),
-    addChats: (...chats: RepoChat[]) =>
-        set((state) => ({ ...state, chats: state.chats.concat(chats) })),
-    select: (chatId: string | null) =>
-        set((state) => ({ ...state, selectedId: chatId })),
-    remove: (chat: RepoChat) =>
+
+    remove: (chatId: string) =>
         set((state) => {
-            let chats = state.chats;
-            chats = chats.filter((c) => c._id != chat._id);
+            const { [chatId]: _, ...rest } = state.entities;
+
             return {
-                ...state,
-                chats,
+                entities: rest,
+                ids: state.ids.filter((id) => id !== chatId),
             };
         }),
+
+    select: (chatId: string | null) => set({ selectedId: chatId }),
 }));

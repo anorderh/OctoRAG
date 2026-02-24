@@ -6,47 +6,90 @@ import type {
 } from '../shared/interfaces/RepoMessage';
 
 export interface MessageState {
-    messages: { [id: string]: RepoMessage };
-    setMessage: (message: RepoMessage) => void;
-    submit: (msg: RepoMessagePost) => Promise<void>;
+    ids: string[];
+    entities: Record<string, RepoMessage>;
+
+    upsert: (message: RepoMessage) => void;
+    upsertMany: (...messages: RepoMessage[]) => void;
+    remove: (id: string) => void;
     clearChat: (chatId: string) => void;
-    getChatMessages: (chatId: string | null) => RepoMessage[];
+
+    submit: (msg: RepoMessagePost) => Promise<void>;
 }
 
 export const useMessageStore = create<MessageState>((set, get) => ({
-    messages: {},
-    setMessage: (message: RepoMessage) =>
-        set((state) => ({
-            messages: {
-                ...state.messages,
-                [message._id]: message,
-            },
-        })),
+    ids: [],
+    entities: {},
+
+    upsert: (message: RepoMessage) =>
+        set((state) => {
+            const exists = !!state.entities[message._id];
+
+            return {
+                ids: exists ? state.ids : [...state.ids, message._id],
+                entities: {
+                    ...state.entities,
+                    [message._id]: message,
+                },
+            };
+        }),
+
+    upsertMany: (...newMessages: RepoMessage[]) =>
+        set((state) => {
+            const ids = [...state.ids];
+            const entities = { ...state.entities };
+
+            for (const msg of newMessages) {
+                if (!entities[msg._id]) {
+                    ids.push(msg._id);
+                }
+                entities[msg._id] = msg;
+            }
+
+            return { ids, entities };
+        }),
+
+    remove: (id: string) =>
+        set((state) => {
+            const { [id]: _, ...rest } = state.entities;
+            return {
+                entities: rest,
+                ids: state.ids.filter((x) => x !== id),
+            };
+        }),
+
+    clearChat: (chatId: string) =>
+        set((state) => {
+            const entities = { ...state.entities };
+            const ids: string[] = [];
+
+            for (const id of state.ids) {
+                const msg = entities[id];
+                if (msg.chatId === chatId) {
+                    delete entities[id];
+                } else {
+                    ids.push(id);
+                }
+            }
+
+            return { ids, entities };
+        }),
+
     submit: async (msg: RepoMessagePost) => {
         await api.messageChat({
             chatId: msg.chatId,
             input: msg.content,
         });
     },
-    clearChat: (chatId: string) => {
-        set((state) => {
-            let temp = { ...state };
-            let chatMsgs = Object.values(temp.messages).filter(
-                (msg) => msg.chatId == chatId,
-            );
-            for (let msg of chatMsgs) {
-                delete temp.messages[msg._id];
-            }
-            return temp;
-        });
-    },
-    getChatMessages: (chatId: string | null) => {
-        let temp = { ...get() };
-        let msgs = Object.values(temp.messages);
-        let chatMsgs = msgs.filter((m) => m.chatId == chatId);
-        chatMsgs.sort(
-            (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
-        );
-        return chatMsgs;
-    },
 }));
+
+export const selectMessagesForChat =
+    (chatId: string | null) =>
+    (state: MessageState): RepoMessage[] =>
+        state.ids
+            .map((id) => state.entities[id])
+            .filter((m) => m.chatId === chatId)
+            .sort(
+                (a, b) =>
+                    new Date(a.date).getTime() - new Date(b.date).getTime(),
+            );

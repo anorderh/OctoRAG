@@ -5,7 +5,7 @@ import { useChatStore } from '../store/chat';
 export function useSelectedChat(): RepoChat | null {
     return (
         useChatStore((state) =>
-            state.chats.find((c) => c._id == state.selectedId),
+            state.selectedId == null ? null : state.entities[state.selectedId],
         ) ?? null
     );
 }

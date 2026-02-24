@@ -31,6 +31,9 @@ import {
     ChatCreateChatResponse,
     ChatDeleteChatRequest,
     ChatDeleteChatResponse,
+    ChatGetChatsResponse,
+    ChatGetDetailsRequest,
+    ChatGetDetailsResponse,
     ChatRunScrapeRequest,
     ChatRunScrapeResponse,
     ChatSendMessageRequest,
@@ -39,6 +42,7 @@ import {
 import { httpContext } from './middleware/http-context.js';
 import { ControllerBase } from './shared/abstract/controller.abstract.js';
 import { objectId } from './shared/constants/objectid-validation.js';
+import { ControllerRequest } from './shared/interfaces/controller-request.js';
 import { githubRepoUrl } from './util/githubRepo.validator.js';
 
 @Controller('/chat')
@@ -54,13 +58,51 @@ export class ChatController extends ControllerBase {
 
     @Get('/')
     @Authorize()
-    public async getChats(req, res) {
+    public async getChats(req: ControllerRequest, res: ChatGetChatsResponse) {
         const user = await this.userService.getSelf();
         const chats = await this.mongo.getChats((await user)._id);
         res.status(200).send({
+            message: "User's chats retrieved.",
             data: {
                 chats,
             },
+        });
+    }
+
+    @Get('/:chatId')
+    @Authorize()
+    public async getChat(
+        req: ChatGetDetailsRequest,
+        res: ChatGetDetailsResponse,
+    ) {
+        const { chatId } = req.params;
+        const userId = httpContext().userId;
+
+        const chat = await this.mongo.collections.repoChat.findOne({
+            _id: new ObjectId(chatId),
+            userId: userId,
+        });
+        if (!chat) {
+            return res.status(409).send({
+                message: 'Chat not found.',
+            });
+        }
+        const messages = await this.mongo.collections.repoMessage
+            .find({ chatId: chat._id })
+            .sort({ creationDate: 1 })
+            .toArray();
+        const logs = await this.mongo.collections.repoLog
+            .find({ chatId: chat._id })
+            .sort({ creationDate: 1 })
+            .toArray();
+        const dto = {
+            chat,
+            messages,
+            logs,
+        };
+        return res.status(200).send({
+            message: `Chat ${chatId} details retrieved successfully.`,
+            data: dto,
         });
     }
 
@@ -160,6 +202,17 @@ export class ChatController extends ControllerBase {
         const insertedMessage = await collection.findOne({
             _id: result.insertedId,
         });
+        await this.mongo.collections.repoChat.updateOne(
+            { _id: insertedMessage.chatId },
+            {
+                $set: {
+                    lastMessageDate: new Date(),
+                },
+                $inc: {
+                    messageCount: 1,
+                },
+            },
+        );
 
         Tasks.run(async () => {
             await this.rag.sendMessageToGithubRepoChat(insertedMessage);

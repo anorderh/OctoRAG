@@ -8,7 +8,7 @@ export function useFetchChatsEffect() {
         const fetch = async () => {
             const chats = await api.getChats();
             if (chats.length > 0) {
-                chatStore.setChats(...chats);
+                chatStore.upsert(...chats);
             }
         };
         fetch();

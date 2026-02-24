@@ -1,6 +1,5 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useNavigate } from 'react-router';
-import { ChatStatus } from '../../shared/constants/chat-status.enums';
 import type { ComponentProps } from '../../shared/interfaces/ComponentProps';
 import type { RepoChat } from '../../shared/interfaces/RepoChat';
 import { ChatStatusBadge } from '../chat/ChatStatusBadge';
@@ -11,7 +10,6 @@ type ChatCardProps = ComponentProps & {
 
 export function ChatCard({ chat }: ChatCardProps) {
     const navigate = useNavigate();
-    const isLoading = () => chat.status == ChatStatus.LOADING;
 
     function navToPage() {
         navigate(`chat/${chat._id}`);

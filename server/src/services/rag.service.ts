@@ -194,7 +194,7 @@ export class RagService extends Service {
                 await this.mongo.submitLog(`Checking records...`, chat._id);
                 if (!!records && records.length > 0) {
                     await this.mongo.submitLog(
-                        `${records.length} valid Pinecone records produced, insert into Pinecone index...`,
+                        `${records.length} valid Pinecone records produced, inserting into Pinecone index...`,
                         chat._id,
                     );
                     await index.upsert(records);
@@ -353,7 +353,7 @@ export class RagService extends Service {
                     lastMessageDate: new Date(),
                 },
                 $inc: {
-                    messageCount: 1,
+                    messageCount: 2,
                 },
             },
         );

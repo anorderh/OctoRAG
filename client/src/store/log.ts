@@ -2,18 +2,36 @@ import { create } from 'zustand';
 import type { RepoLog } from '../shared/interfaces/RepoLog';
 
 export interface LogState {
-    logs: RepoLog[];
-    add: (...logs: RepoLog[]) => void;
+    ids: string[];
+    entities: Record<string, RepoLog>;
+
+    upsert: (...logs: RepoLog[]) => void;
+    remove: (id: string) => void;
+    clear: () => void;
 }
 
-export const useLogStore = create<LogState>((set, get) => ({
-    logs: [],
-    add: (...newLogs: RepoLog[]) =>
+export const useLogStore = create<LogState>((set) => ({
+    ids: [],
+    entities: {},
+    upsert: (...newLogs: RepoLog[]) =>
         set((state) => {
-            const existingIds = new Set(state.logs.map((l) => l._id));
-            const filtered = newLogs.filter((log) => !existingIds.has(log._id));
+            const ids = [...state.ids];
+            const entities = { ...state.entities };
+            for (const log of newLogs) {
+                if (!entities[log._id]) {
+                    ids.push(log._id);
+                }
+                entities[log._id] = log;
+            }
+            return { ids, entities };
+        }),
+    remove: (id: string) =>
+        set((state) => {
+            const { [id]: _, ...rest } = state.entities;
             return {
-                logs: [...state.logs, ...filtered],
+                entities: rest,
+                ids: state.ids.filter((x) => x !== id),
             };
         }),
+    clear: () => set({ ids: [], entities: {} }),
 }));
