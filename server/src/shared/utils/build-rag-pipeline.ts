@@ -64,7 +64,7 @@ export class RAGPipeline {
             ) => {
                 let history = parameters[RagRunnableProperties.history];
                 await mongo.submitLog(
-                    `1 - HISTORY-AWARE REINTERPRETATION OF USER INPUT...`,
+                    `STEP 1 - HISTORY-AWARE REINTERPRETATION OF USER INPUT...`,
                     chat._id,
                 );
                 if (!!history && history.length > 0) {
@@ -101,7 +101,7 @@ export class RAGPipeline {
             [RagRunnableProperties.documents]: RunnableSequence.from([
                 async (parameters: RagRunnableParameters) => {
                     await mongo.submitLog(
-                        `2 - VECTORIZE INPUT INTO EMBEDDINGS AND RETRIEVE DOCUMENTS FROM PINECONE...`,
+                        `STEP 2 - VECTORIZE INPUT INTO EMBEDDINGS AND RETRIEVE DOCUMENTS FROM PINECONE...`,
                         chat._id,
                     );
                     const queryDenseEmbeddings = (
@@ -149,7 +149,7 @@ export class RAGPipeline {
                 parameters: RagRunnableParameters,
             ) => {
                 await mongo.submitLog(
-                    `3 - INTERPRET METADATA TO GENERATE CONTEXT FOR RETRIEVED DOCUMENTS, I.E. "CONTEXTUALIZED RETRIEVAL"...`,
+                    `STEP 3 - INTERPRET METADATA TO GENERATE CONTEXT FOR RETRIEVED DOCUMENTS, I.E. "CONTEXTUALIZED RETRIEVAL"...`,
                     chat._id,
                 );
                 let docs = parameters[RagRunnableProperties.documents];
@@ -200,7 +200,7 @@ export class RAGPipeline {
                 let rawDocContent = docs.map((d) => d.pageContent);
 
                 await mongo.submitLog(
-                    `4 - RERANK DOCUMENTS VIA COHERE, EMPHASIZING VECTOR SIMILARITY AND TO USER QUERY...`,
+                    `STEP 4 - RERANK DOCUMENTS VIA COHERE, EMPHASIZING VECTOR SIMILARITY AND TO USER QUERY...`,
                     chat._id,
                 );
                 await mongo.submitLog(
@@ -243,7 +243,7 @@ export class RAGPipeline {
             }),
             async (parameters: RagRunnableParameters) => {
                 await mongo.submitLog(
-                    `5 - INVOKING LLM WITH COMBINED INTERPRETATION, CHAT HISTORY, AND CONTEXTUALIZED RAG CHUNKS...`,
+                    `STEP 5 - INVOKING LLM WITH COMBINED INTERPRETATION, CHAT HISTORY, AND CONTEXTUALIZED RAG CHUNKS...`,
                     chat._id,
                 );
                 await mongo.submitLog(

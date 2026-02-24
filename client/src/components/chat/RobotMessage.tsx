@@ -1,6 +1,8 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useMessage } from '../../hooks/useMessage';
 import type { ComponentProps } from '../../shared/interfaces/ComponentProps';
+import { MessageMarkdown } from '../shared/Markdown';
+import { TypewriterMarkdown } from '../shared/TyperwriterMarkdown';
 
 type RobotMessageProps = ComponentProps & {
     messageId: string;
@@ -28,10 +30,12 @@ export function RobotMessage({ messageId }: RobotMessageProps) {
                 />
             </div>
             <div
-                className="rounded-3 p-2 d-inline-flex text-center justify-content-center align-items-center mb-3"
+                className="rounded-3 p-3 justify-content-center align-items-center mb-3"
                 style={{
-                    backgroundColor: 'var(--color-ai)',
-                    maxWidth: '60%',
+                    border: '4px solid var(--color-ai)',
+                    backgroundColor: 'var(--bg-ai)',
+                    boxShadow: '0 0 0 2px rgba(0,0,0,0.25)',
+                    maxWidth: '80%',
                     height: 'min-content',
                 }}>
                 {msg?.loading ? (
@@ -43,17 +47,10 @@ export function RobotMessage({ messageId }: RobotMessageProps) {
                         icon="fa-solid fa-spinner"
                         spin
                     />
+                ) : msg?.animate ? (
+                    <TypewriterMarkdown message={msg} />
                 ) : (
-                    <span
-                        style={{
-                            flex: 'inline-block',
-                            whiteSpace: 'pre-wrap', // respects newlines
-                            wordBreak: 'break-word', // breaks long words
-                            overflowWrap: 'anywhere',
-                            textAlign: 'left',
-                        }}>
-                        {msg?.content ?? ''}
-                    </span>
+                    <MessageMarkdown message={msg!} />
                 )}
             </div>
         </div>

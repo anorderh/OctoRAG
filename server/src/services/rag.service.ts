@@ -353,7 +353,7 @@ export class RagService extends Service {
                     lastMessageDate: new Date(),
                 },
                 $inc: {
-                    messageCount: 2,
+                    messageCount: 1,
                 },
             },
         );

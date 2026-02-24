@@ -37,7 +37,7 @@ export function ChatCard({ chat }: ChatCardProps) {
                     }}
                     href={chat.repoUrl}
                     target="_blank"
-                    className="d-flex flex-row align-items-center text-wrap flex-wrap"
+                    className="d-flex flex-row align-items-center text-wrap flex-nowrap"
                     rel="noopener noreferrer">
                     <FontAwesomeIcon
                         style={{ width: 16, height: 16 }}

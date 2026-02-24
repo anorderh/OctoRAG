@@ -11,10 +11,11 @@ export function UserMessage({ messageId }: UserMessageProps) {
     return (
         <div className="w-100 d-flex flex-row justify-content-end align-items-end gap-2">
             <div
-                className="rounded-3 p-2 d-inline-flex text-center justify-content-center align-items-center mb-3"
+                className="rounded-3 p-3 justify-content-center align-items-center mb-3"
                 style={{
-                    backgroundColor: 'var(--color-user)',
-                    maxWidth: '60%',
+                    border: '4px solid var(--color-user)',
+                    backgroundColor: 'var(--bg-user)',
+                    maxWidth: '80%',
                     height: 'min-content',
                 }}>
                 <span

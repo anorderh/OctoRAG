@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { api } from '../services/api/api';
 import { useChatStore } from '../store/chat';
@@ -6,6 +6,8 @@ import { useLogStore } from '../store/log';
 import { useMessageStore } from '../store/messages';
 
 export function useFetchSelectedChatEffect() {
+    const [fetching, setFetch] = useState(true);
+
     const chatStore = useChatStore();
     const messageStore = useMessageStore();
     const logStore = useLogStore();
@@ -17,14 +19,21 @@ export function useFetchSelectedChatEffect() {
             if (selectedId != null) {
                 try {
                     const res = await api.getChat({ chatId: selectedId });
-                    chatStore.upsert(res.data.chat);
+                    chatStore.upsert({
+                        ...res.data.chat,
+                        animate: true, // Just to render with typing
+                    });
                     messageStore.upsertMany(...res.data.messages);
                     logStore.upsert(...res.data.logs);
                 } catch (err) {
                     navigate('/');
+                } finally {
+                    setFetch(false);
                 }
             }
         };
         fetch();
     }, [chatStore.selectedId]);
+
+    return [fetching, setFetch];
 }

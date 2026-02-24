@@ -3,6 +3,8 @@
     --color-card: rgb(43, 48, 53);
     --color-outline: rgb(86, 96, 86);
     --color-ai: #22a06b;
+    --bg-ai: #1b7f55;
+    --bg-user: #2563eb;
     --color-user: #3b82f6;
     --color-badge: #52525b;
 }

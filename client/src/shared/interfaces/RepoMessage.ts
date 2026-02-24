@@ -5,6 +5,7 @@ export interface RepoMessage {
     content?: string;
     loading?: boolean;
     date: Date;
+    animate?: boolean;
 }
 
 export interface RepoMessagePost {

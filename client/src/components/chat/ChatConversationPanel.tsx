@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useSelectedChat } from '../../hooks/useSelectedChat';
 import { ChatStatus } from '../../shared/constants/chat-status.enums';
@@ -36,6 +37,15 @@ export function ChatConversationPanel() {
             break;
     }
 
+    // Ensure log is scrolled to bottom.
+    const chatParent = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        const domNode = chatParent.current;
+        if (domNode) {
+            domNode.scrollTop = domNode.scrollHeight;
+        }
+    }, [currentMessages.length, chatParent]);
+
     return (
         <div
             id="repoChats"
@@ -43,7 +53,9 @@ export function ChatConversationPanel() {
                 'w-50 d-flex flex-column overflow-hidden justify-content-between chat-container rounded-5 '
             }>
             <ChatConversationPanelHeader />
-            <div className="d-flex flex-column overflow-scroll h-100 gap-3 p-3">
+            <div
+                ref={chatParent}
+                className="d-flex flex-column overflow-scroll h-100 gap-3 p-3">
                 {currentMessages.length == 0 ? (
                     <div className="w-100 h-100 d-flex justify-content-center align-items-center">
                         <span className="text-muted fs-6 text-center p-2">

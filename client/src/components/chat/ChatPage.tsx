@@ -12,7 +12,7 @@ import { ChatConversationPanel } from './ChatConversationPanel';
 
 export function ChatPage() {
     useSelectChat();
-    useFetchSelectedChatEffect();
+    const [fetching] = useFetchSelectedChatEffect();
 
     const setChat = useChatStore((state) => state.upsert);
     const setMessage = useMessageStore((state) => state.upsert);
@@ -37,7 +37,7 @@ export function ChatPage() {
         <div
             style={{ height: '750px' }}
             className="w-100 d-flex flex-row justify-content-center gap-4">
-            {currentChat ? (
+            {currentChat && !fetching ? (
                 <>
                     <ChatActionPanel />
                     <ChatConversationPanel />
