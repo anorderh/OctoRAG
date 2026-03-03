@@ -7,7 +7,6 @@ import './styles/chatPage.css';
 import './styles/colors.css';
 import './styles/root.css';
 import './styles/text-animation.css';
-import './styles/vs-dark.css';
 
 // Bootstrap.
 import 'bootstrap/dist/css/bootstrap.min.css';

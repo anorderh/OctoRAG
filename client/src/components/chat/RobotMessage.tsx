@@ -1,8 +1,7 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useMessage } from '../../hooks/useMessage';
 import type { ComponentProps } from '../../shared/interfaces/ComponentProps';
-import { MessageMarkdown } from '../shared/Markdown';
-import { TypewriterMarkdown } from '../shared/TyperwriterMarkdown';
+import { MessageMarkdown } from '../shared/MessageMarkdown';
 
 type RobotMessageProps = ComponentProps & {
     messageId: string;
@@ -47,10 +46,8 @@ export function RobotMessage({ messageId }: RobotMessageProps) {
                         icon="fa-solid fa-spinner"
                         spin
                     />
-                ) : msg?.animate ? (
-                    <TypewriterMarkdown message={msg} />
                 ) : (
-                    <MessageMarkdown message={msg!} />
+                    <MessageMarkdown message={msg} animate={msg.animate} />
                 )}
             </div>
         </div>

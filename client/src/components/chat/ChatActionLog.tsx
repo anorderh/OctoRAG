@@ -51,11 +51,11 @@ export function ChatActionLog() {
                         <span className="text-muted small">
                             {new Date(log.date).toLocaleTimeString()}
                         </span>
-
                         <span
                             style={{
                                 fontFamily: 'monospace',
                                 lineHeight: 1.4,
+                                whiteSpace: 'pre-wrap',
                             }}>
                             {log.content}
                         </span>

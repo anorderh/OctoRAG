@@ -26,7 +26,10 @@ export function ChatPage() {
             setChat(updatedChat);
         },
         onMessage: (message) => {
-            setMessage(message);
+            setMessage({
+                ...message,
+                animate: true, // Animate messages received via websocket.
+            });
         },
         onLog: (log) => {
             setLog(log);

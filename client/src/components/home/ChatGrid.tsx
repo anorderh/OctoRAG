@@ -62,7 +62,7 @@ export function ChatGrid() {
                 className="container overflow-auto rounded p-2 d-flex flex-column justify-content-start align-items-center"
                 style={{ minHeight: 470 }}>
                 {chats.length == 0 ? (
-                    <span className="flex-grow-1 d-flex justify-content-center align-items-center idle-text fst-italic text-muted pb-4 text-center">
+                    <span className="flex-grow-1 d-flex justify-content-center align-items-center fst-italic text-muted pb-4 text-center">
                         No chats present
                     </span>
                 ) : (

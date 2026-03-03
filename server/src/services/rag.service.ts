@@ -1,14 +1,17 @@
 import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
+import { StringOutputParser } from '@langchain/core/output_parsers';
+import { ChatPromptTemplate } from '@langchain/core/prompts';
+import { RunnableSequence } from '@langchain/core/runnables';
 import {
     Index,
     Pinecone,
-    PineconeRecord,
     RecordMetadata,
     ServerlessSpec,
 } from '@pinecone-database/pinecone';
 import { CreateIndexSpec } from '@pinecone-database/pinecone/dist/control';
 import { CohereClient } from 'cohere-ai';
 import OpenAI from 'openai';
+import pLimit from 'p-limit';
 import { EmbeddingModel } from 'src/controllers/util/model.enum.js';
 import { App } from 'src/core/App.js';
 import { RepoChat } from 'src/database/entities/repo-chat/repo-chat.js';
@@ -20,7 +23,8 @@ import { ChatStatus } from 'src/database/shared/constants/chat-status.enum.js';
 import { SetupRagIndex } from 'src/integrations/ragIndex.js';
 import { DependencyInjectionToken } from 'src/shared/constants/dependency-injection-token.js';
 import { env } from 'src/shared/constants/env.js';
-import { RAGPipeline } from 'src/shared/utils/build-rag-pipeline.js';
+import { OctoragPineconeRecord } from 'src/shared/interfaces/octorag-pinecone-record.js';
+import { RAGPipeline } from 'src/shared/utils/rag-pipeline.js';
 import { container, inject, singleton } from 'tsyringe';
 import { MongoService } from './mongo.service.js';
 import { Service } from './shared/abstract/service.abstract.js';
@@ -29,6 +33,7 @@ import { RagRunnableProperties } from './shared/constants/rag-runnable-props.js'
 import { RagRunnableParameters } from './shared/interfaces/rag-runnable-params.js';
 import { PineconeUtility } from './shared/utils/pinecone-utility.js';
 import { scrapeGithubRepo } from './shared/utils/scrape-github-repo.js';
+
 @singleton()
 export class RagService extends Service {
     chunkPrefix: string = 'octoRAG';
@@ -57,7 +62,7 @@ export class RagService extends Service {
             );
             await this.pinecone.createIndex({
                 name: env.pinecone.ragIndexName,
-                dimension: 1536,
+                dimension: 3072,
                 metric: 'cosine',
                 spec: {
                     serverless: {
@@ -134,76 +139,134 @@ export class RagService extends Service {
             `Starting chunking process for Pinecone vector db...`,
             chat._id,
         );
+
         if (!!entries) {
-            for (let entry of entries) {
-                await this.mongo.submitLog(
-                    `Chunking file "${entry.metadata.filename}"...`,
-                    chat._id,
-                );
-                let chunks = await entry.chunk();
-                await this.mongo.submitLog(
-                    `${chunks.length} chunks generated for "${entry.metadata.filename}".`,
-                    chat._id,
-                );
+            const contextualizeViaLLM = RunnableSequence.from([
+                ChatPromptTemplate.fromMessages([
+                    ['system', RAGPipeline.prompts.contextualizeEmbedding],
+                    [
+                        'human',
+                        `
+        <metadata>
+        {metadata}
+        </metadata>
+        
+        <chunk>
+        {pageContent}
+        </chunk>
+                            `,
+                    ],
+                ]),
+                RAGPipeline.llm,
+                new StringOutputParser(),
+            ]);
 
-                await this.mongo.submitLog(
-                    `Vectorizing ${chunks.length} chunks into embeddings for "${entry.metadata.filename}"...`,
-                    chat._id,
-                );
-                await this.mongo.submitLog(
-                    `Model Details:\nEmbedding Model: ${EmbeddingModel.openai}\nBM25 Vectorizer Algorithm: SKIPPED`,
-                    chat._id,
-                );
-                // Generate embeddings per chunk and insert into Pinecone.
-                let records = await Promise.all(
-                    chunks.map(async (c, idx) => {
-                        let denseEmbeddings = (
+            const fileLimit = pLimit(8);
+            await Promise.all(
+                entries.map((entry) =>
+                    fileLimit(async () => {
+                        await this.mongo.submitLog(
+                            `Chunking file "${entry.metadata.filepath}"...`,
+                            chat._id,
+                        );
+                        const chunks = await entry.chunk();
+                        await this.mongo.submitLog(
+                            `${chunks.length} chunks generated for "${entry.metadata.filepath}".`,
+                            chat._id,
+                        );
+                        if (chunks.length === 0) {
+                            await this.mongo.submitLog(
+                                `No chunks produced, skipping file...`,
+                                chat._id,
+                            );
+                            return; // skip instead of break
+                        }
+
+                        // Contextualize file via LLM.
+                        await this.mongo.submitLog(
+                            `Contextualizing chunks for ${entry.metadata.filepath}...`,
+                            chat._id,
+                        );
+                        const chunkLimit = pLimit(4);
+                        await Promise.all(
+                            chunks.map((c) =>
+                                chunkLimit(async () => {
+                                    await this.mongo.submitLog(
+                                        `Generating context for chunk ${c.id}`,
+                                        chat._id,
+                                    );
+                                    const context =
+                                        await contextualizeViaLLM.invoke({
+                                            metadata: JSON.stringify(
+                                                entry.metadata,
+                                                null,
+                                                2,
+                                            ),
+                                            pageContent: c.pageContent,
+                                        });
+                                    c.metadata.contextSummary = context;
+                                    await this.mongo.submitLog(
+                                        `Context generated for chunk #${c.id}\n"${context}"`,
+                                        chat._id,
+                                    );
+                                }),
+                            ),
+                        );
+                        await this.mongo.submitLog(
+                            `Finished generating context for file ${entry.metadata.filepath}\n"`,
+                            chat._id,
+                        );
+
+                        // Generate embeddings for contextualized chunks.
+                        await this.mongo.submitLog(
+                            `Vectorizing ${chunks.length} chunks into embeddings for "${entry.metadata.filepath}"...`,
+                            chat._id,
+                        );
+                        await this.mongo.submitLog(
+                            `Model Details:\nEmbedding Model: ${EmbeddingModel.openai}\nBM25 Vectorizer Algorithm: SKIPPED`,
+                            chat._id,
+                        );
+                        const embeddingResponse =
                             await this.openai.embeddings.create({
-                                input: c.pageContent,
+                                input: chunks.map(
+                                    (c) =>
+                                        `CONTEXT: ${c.metadata.contextSummary}\n\nTEXT: ${c.pageContent}`,
+                                ),
                                 model: EmbeddingModel.openai,
-                            })
-                        ).data[0].embedding;
-                        await this.mongo.submitLog(
-                            `Embedding generated for chunk ${idx + 1}...\n`,
-                            chat._id,
+                            });
+                        const embeddings = embeddingResponse.data.map(
+                            (d) => d.embedding,
                         );
-                        await this.mongo.submitLog(
-                            `Embedding preview: ${denseEmbeddings.toString().slice(0, 50)}`,
-                            chat._id,
+                        const records: OctoragPineconeRecord[] = chunks.map(
+                            (c, idx) => ({
+                                id: `${this.chunkPrefix}#${c.id}`,
+                                values: embeddings[idx],
+                                metadata: {
+                                    text: c.pageContent,
+                                    context: c.metadata.contextSummary,
+                                    filepath: c.metadata.filepath,
+                                    repoName: c.metadata.repoName,
+                                    ext: c.metadata.ext,
+                                },
+                            }),
                         );
 
-                        // TO-DO:
-                        /*
-                        // Add BM25 vectorizer algorithm
-                        // Fit based on `corpus` - doc collection
-                        // Generate sparse embeddings and attach to record
-                        */
+                        if (records.length > 0) {
+                            await this.mongo.submitLog(
+                                `${records.length} valid Pinecone records produced, inserting into Pinecone index...`,
+                                chat._id,
+                            );
 
-                        // Associate metadata.
-                        return {
-                            id: `${this.chunkPrefix}#${c.id}`,
-                            values: denseEmbeddings,
-                            metadata: {
-                                text: c.pageContent,
-                                ...c.metadata,
-                            },
-                        } as PineconeRecord;
+                            await index.upsert(records);
+
+                            await this.mongo.submitLog(
+                                `${records.length} records inserted into Pinecone index!`,
+                                chat._id,
+                            );
+                        }
                     }),
-                );
-
-                await this.mongo.submitLog(`Checking records...`, chat._id);
-                if (!!records && records.length > 0) {
-                    await this.mongo.submitLog(
-                        `${records.length} valid Pinecone records produced, inserting into Pinecone index...`,
-                        chat._id,
-                    );
-                    await index.upsert(records);
-                    await this.mongo.submitLog(
-                        `${records.length} records inserted into Pinecone index!`,
-                        chat._id,
-                    );
-                }
-            }
+                ),
+            );
         }
 
         await this.mongo.submitLog(
@@ -325,9 +388,10 @@ export class RagService extends Service {
         } as RagRunnableParameters);
         const aiResponseContent = res[RagRunnableProperties.output];
         await this.mongo.submitLog(
-            `RAG Pipeline generated a response: "${aiResponseContent}"`,
+            `RAG Pipeline generated a response!`,
             chat._id,
         );
+        await this.mongo.submitLog(`Output: "${aiResponseContent}"`, chat._id);
 
         // Update response with content and change status.
         await this.mongo.submitLog(`Saving AI response to MongoDB..`, chat._id);

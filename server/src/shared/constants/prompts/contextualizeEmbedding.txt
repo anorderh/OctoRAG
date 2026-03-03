@@ -1,11 +1,11 @@
-\
-<metadata>
-{metadata}
-</metadata>
-Here is the chunk we want to situate within the source, provided its metadata.
-<chunk>
-{pageContent}
-</chunk>
+You are generating retrieval-optimized structural context for a code chunk.
 
-Please give a short succinct context to situate this chunk within the source, using its metadata, for the purposes of improving search retrieval of the chunk.
-Answer only with the succinct context and nothing else.
+Use the metadata to explain:
+- What role this file likely plays in the repository
+- What responsibility this chunk appears to serve
+- How it might relate to other parts of the system
+
+Do NOT summarize the code line-by-line.
+Do NOT repeat the chunk.
+Keep the explanation concise but informative (3–4 sentences max).
+Return only the contextual description.

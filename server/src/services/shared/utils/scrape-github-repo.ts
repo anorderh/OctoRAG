@@ -4,7 +4,6 @@ import * as fs from 'fs';
 import { UUID } from 'mongodb';
 import path from 'path';
 import { RepoChat } from 'src/database/entities/repo-chat/repo-chat';
-import { OnlineResourceType } from 'src/database/shared/constants/online-resource-type';
 import { MongoService } from 'src/services/mongo.service';
 import {
     InvalidURLFormatError,
@@ -21,76 +20,132 @@ export async function scrapeGithubRepo(
     mongo: MongoService,
     chat: RepoChat,
 ): Promise<GithubFileScrapeEntry[]> {
-    // Parse URL.
-    let octokit = container.resolve<Octokit>(DependencyInjectionToken.Octokit);
-    const maxGithubRepoSizeKb = 100000; // 100 MB in kilobytes
-    let pathname = url.pathname;
+    const octokit = container.resolve<Octokit>(
+        DependencyInjectionToken.Octokit,
+    );
+    const maxGithubRepoSizeKb = 100000; // 100 MB
+    const maxFileSizeBytes = 500_000; // 500 KB per file
+
+    const allowedExtensions = new Set([
+        '.ts',
+        '.tsx',
+        '.js',
+        '.jsx',
+        '.cs',
+        '.py',
+        '.java',
+        '.go',
+        '.rs',
+        '.json',
+        '.md',
+        '.txt',
+        '.html',
+        '.css',
+        '.sql',
+    ]);
+
+    const ignoredDirectories = [
+        'node_modules/',
+        '.git/',
+        'dist/',
+        'build/',
+        '.next/',
+        'coverage/',
+    ];
+
+    const ignoredFilenames = new Set([
+        'package-lock.json',
+        'yarn.lock',
+        'pnpm-lock.yaml',
+    ]);
+
+    // Parse URL
+    const pathname = url.pathname;
     mongo.submitLog(`Parsing pathname "${pathname}"...`, chat._id);
-    let parts = pathname.split('/').filter((p) => !!p);
-    if (!url.href.includes('github.com') || parts.length != 2) {
+
+    const parts = pathname.split('/').filter(Boolean);
+    if (!url.href.includes('github.com') || parts.length !== 2) {
         mongo.submitLog(`Pathname failed to be parsed.`, chat._id);
         throw new InvalidURLFormatError();
     }
+
+    const [owner, repo] = parts;
     mongo.submitLog(`Pathname successfully parsed.`, chat._id);
 
-    // Download zip.
+    // Fetch repo info
     mongo.submitLog(`Reviewing Github repository details...`, chat._id);
-    let [owner, repo] = parts;
-    let info = (await octokit.repos.get({ repo, owner })).data;
+    const info = (await octokit.repos.get({ repo, owner })).data;
+
     if (info.size > maxGithubRepoSizeKb) {
-        mongo.submitLog(
-            `Github repository's size exceeds the allowed limit: ${maxGithubRepoSizeKb} Kb.`,
-            chat._id,
-        );
         throw new ScrapeEntryFailedError({
-            body: `Scrape for Github repo "${info.name}" failed due to passing the maximum allowed kB size.`,
+            body: `Scrape for Github repo "${info.name}" failed due to exceeding max size.`,
         });
     }
+
     mongo.submitLog(
-        `Github repository's size is within the allowed limit: ${maxGithubRepoSizeKb} Kb`,
+        `Repo details:
+Name: ${info.name}
+Owner: ${info.owner.login}
+Size: ${info.size}
+Stars: ${info.stargazers_count}
+Default Branch: ${info.default_branch}`,
         chat._id,
     );
-    mongo.submitLog(
-        `Github repository details:\nName: ${info.name}\nOwner: ${info.owner}\nSize: ${info.size}\nStars: ${info.stargazers_count}`,
-        chat._id,
-    );
-    let resource = `https://github.com/${owner}/${repo}/zipball/master`;
-    let zipUuid = new UUID().toString();
-    let zipFilename = `${zipUuid}.zip`;
+
+    const resource = `https://github.com/${owner}/${repo}/zipball/${info.default_branch}`;
+    const zipUuid = new UUID().toString();
+    const zipPath = `${env.pathes.temp}/${zipUuid}.zip`;
+
     fs.mkdirSync(env.pathes.temp, { recursive: true });
-    let zipPath = `${env.pathes.temp}/${zipFilename}`;
+
     mongo.submitLog(`Downloading Github repository...`, chat._id);
     await downloadFile(resource, zipPath);
     mongo.submitLog(`Github repository downloaded`, chat._id);
 
-    // Process files into single body and delete zip.
-    mongo.submitLog(`Processing Github repository's files...`, chat._id);
-    let zip = new AdmZip(zipPath);
-    let results = [];
-    for (let entry of zip.getEntries()) {
-        if (!entry.isDirectory) {
-            mongo.submitLog(`Processing file "${entry.name}"...`, chat._id);
+    const results: GithubFileScrapeEntry[] = [];
+
+    try {
+        mongo.submitLog(`Processing Github repository's files...`, chat._id);
+        const zip = new AdmZip(zipPath);
+
+        for (const entry of zip.getEntries()) {
+            if (entry.isDirectory) continue;
+            const filename = entry.name;
+            const baseName = path.basename(filename);
+            if (ignoredFilenames.has(baseName)) continue;
+            // Ignore unwanted directories
+            if (ignoredDirectories.some((d) => filename.includes(d))) continue;
+            const ext = path.extname(filename).toLowerCase();
+            if (!allowedExtensions.has(ext)) continue;
+            if (entry.header.size > maxFileSizeBytes) continue;
+
+            const buffer = entry.getData();
+            // crude binary detection
+            if (buffer.includes(0)) continue;
+
+            const body = buffer.toString('utf8').replace(/\r\n/g, '\n');
+            mongo.submitLog(`Processed file "${filename}"`, chat._id);
             results.push(
-                new GithubFileScrapeEntry({
-                    id: new UUID().toString(),
-                    body: entry.getData().toString('utf8'),
-                    metadata: {
-                        type: OnlineResourceType.GithubRepo,
-                        repoName: info.name,
-                        desc: info.description,
-                        owner: info.owner.name,
-                        filename: entry.name,
-                        ext: path.extname(entry.name),
-                    },
+                new GithubFileScrapeEntry(new UUID().toString(), {
+                    filepath: entry.entryName,
+                    text: body,
+                    ext,
+                    depth: filename.split('/').length,
                 }),
             );
-            mongo.submitLog(`Processed file "${entry.name}".`, chat._id);
         }
+
+        mongo.submitLog(`Processed all repository files.`, chat._id);
+    } finally {
+        mongo.submitLog(
+            `Deleting Github repository zip from disk...`,
+            chat._id,
+        );
+        if (fs.existsSync(zipPath)) {
+            fs.unlinkSync(zipPath);
+        }
+        mongo.submitLog(`Zip deleted.`, chat._id);
     }
-    mongo.submitLog(`Processed all of Github repository's files.`, chat._id);
-    mongo.submitLog(`Deleting Github repository .zip from disk`, chat._id);
-    fs.unlinkSync(zipPath); // Delete file.
-    mongo.submitLog(`Github repository deleted.`, chat._id);
 
     return results;
 }

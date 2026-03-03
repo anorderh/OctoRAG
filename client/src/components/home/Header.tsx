@@ -30,16 +30,14 @@ export function Header() {
                     OctoRAG
                 </h1>
                 <p
+                    className="mb-4"
                     style={{
                         maxWidth: 640,
-                        marginBottom: '2rem',
-                        fontSize: 24,
+                        fontSize: 18,
                     }}>
-                    Chat with GitHub repositories using <br />
-                    Retrieval Augmented Generation (RAG)
+                    A multi-stage semantic retrieval pipeline for querying
+                    entire GitHub repositories, featuring:
                 </p>
-
-                <h4 className="mb-4">Tools:</h4>
                 <div className="d-flex flex-row gap-4 justify-content-center flex-wrap align-items-center">
                     <Tippy
                         content="React for client components and state management"

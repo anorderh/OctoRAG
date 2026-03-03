@@ -1,7 +1,7 @@
 export enum LlmModel {
-    openai = 'gpt-3.5-turbo-0125',
+    openai = 'gpt-5-nano-2025-08-07',
 }
 
 export enum EmbeddingModel {
-    openai = 'text-embedding-ada-002',
+    openai = 'text-embedding-3-large',
 }

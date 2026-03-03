@@ -1,5 +1,5 @@
-export interface ScrapeEntryParams {
+export interface ScrapeEntryParams<T> {
     id: string;
     body: string;
-    metadata?: any;
+    metadata?: T;
 }

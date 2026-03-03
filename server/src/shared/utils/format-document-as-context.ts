@@ -1,18 +1,24 @@
-import { Document } from "@langchain/core/documents";
+import { Document } from '@langchain/core/documents';
 
-export function formatDocumentsAsContext(documents: Document[]) {
-    let metadataPropLimit = 500;
-    const reducePropLengths = (metadata: any) => {
-        return Object.entries(metadata).reduce((acc: any, [key, val]: [string, any]) => {
-            acc[key] = (val as string).slice(0, metadataPropLimit)
-            return acc;
-        }, {})
-    }
-    return documents
-        .map((doc, idx) => 
-            `-----CHUNK #${idx+1}----- \n\n` +
-            `${reducePropLengths(doc.metadata)}\n\n` +
-            `${doc.pageContent}`
+export function formatDocumentsAsContext(docs: Document[]) {
+    return docs
+        .map(
+            (d) => `
+<document id="${d.id}">
+<source>
+filename: ${d.metadata.filename}
+repo: ${d.metadata.repoName}
+</source>
+
+<summary>
+${d.metadata.contextSummary ?? ''}
+</summary>
+
+<content>
+${d.pageContent}
+</content>
+</document>
+`,
         )
-        .join("\n\n")
+        .join('\n');
 }
