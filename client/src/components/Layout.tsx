@@ -4,21 +4,33 @@ import {
     SidebarProvider,
     SidebarTrigger,
 } from '@/components/ui/sidebar';
+import { Outlet, useLocation } from 'react-router-dom';
+import { ChatHeader } from './chat/chat-header';
 
 export const Layout = () => {
+    const location = useLocation();
+
+    const isChatPage = location.pathname.startsWith('/chat');
     return (
         <SidebarProvider>
             <AppSidebar />
 
-            <SidebarInset className="bg-background text-foreground">
-                {/* Header */}
-                <header className="flex h-14 items-center border-b border-border px-4">
-                    <SidebarTrigger />
-                    <h1 className="ml-4 text-sm text-muted">OctoRAG</h1>
+            <SidebarInset className="bg-background text-foreground flex flex-col">
+                {/* Unified Header */}
+                <header className="flex h-14 items-center justify-between ps-4">
+                    <SidebarTrigger className="mb-1" />
+
+                    {/* Inject page-specific header */}
+                    {isChatPage && (
+                        <div className="flex-1 flex justify-center">
+                            <ChatHeader title="Chat Template" />
+                        </div>
+                    )}
                 </header>
 
-                {/* Main content */}
-                <main className="p-4">Your content here</main>
+                <div className="flex-1 overflow-hidden">
+                    <Outlet />
+                </div>
             </SidebarInset>
         </SidebarProvider>
     );

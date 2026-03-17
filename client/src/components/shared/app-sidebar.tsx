@@ -44,7 +44,7 @@ export function AppSidebar() {
                 <img
                     src={logo}
                     alt="OctoRAG"
-                    className="h-12 w-12 object-contain"
+                    className="h-10 w-10 m-2 object-contain"
                 />
                 <span className="text-xl font-semibold tracking-tight">
                     OctoRAG
@@ -101,12 +101,21 @@ export function AppSidebar() {
             <SidebarFooter className="p-3">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <button className="flex w-full items-center gap-3 rounded-md p-2 hover:bg-sidebar-accent transition-colors">
-                            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white">
+                        <button
+                            className="
+                    flex w-full items-center gap-3 rounded-md p-2
+                    transition-colors
+                    hover:bg-sidebar-accent
+                    focus:outline-none focus:ring-1 focus:ring-ring
+                ">
+                            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
                                 U
                             </div>
+
                             <div className="text-left">
-                                <p className="text-sm font-medium">Username</p>
+                                <p className="text-sm font-medium text-foreground">
+                                    Username
+                                </p>
                                 <p className="text-xs text-muted-foreground">
                                     username@email.com
                                 </p>
@@ -116,15 +125,30 @@ export function AppSidebar() {
 
                     <DropdownMenuContent
                         align="end"
-                        className="bg-popover border border-border">
-                        <DropdownMenuItem className="gap-2 cursor-pointer">
-                            <Settings className="h-4 w-4" />
+                        className="
+                bg-popover
+                border border-border
+                text-popover-foreground
+                shadow-md
+            ">
+                        <DropdownMenuItem
+                            className="
+                    flex items-center gap-2 text-sm cursor-pointer
+                    focus:bg-accent focus:text-accent-foreground
+                ">
+                            <Settings className="h-4 w-4 text-muted-foreground" />
                             Settings
                         </DropdownMenuItem>
 
-                        <DropdownMenuSeparator />
+                        <DropdownMenuSeparator className="bg-border" />
 
-                        <DropdownMenuItem className="gap-2 text-destructive cursor-pointer">
+                        <DropdownMenuItem
+                            className="
+                    flex items-center gap-2 text-sm cursor-pointer
+                    text-destructive
+                    focus:bg-destructive/10
+                    focus:text-destructive
+                ">
                             <LogOut className="h-4 w-4" />
                             Log Out
                         </DropdownMenuItem>

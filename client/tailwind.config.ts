@@ -2,6 +2,7 @@ export default {
     theme: {
         extend: {
             colors: {
+                logs: 'var(--logs)',
                 background: 'var(--background)',
                 foreground: 'var(--foreground)',
 
