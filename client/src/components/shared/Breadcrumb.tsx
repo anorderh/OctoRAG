@@ -1,8 +1,8 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Link, useMatches, type UIMatch } from 'react-router';
 import { useSelectedChat } from '../../hooks/useSelectedChat';
+import type { RouteHandle } from '../../Root';
 import type { ComponentProps } from '../../shared/interfaces/ComponentProps';
-import type { RouteHandle } from '../Root';
 
 export function Breadcrumb({}: ComponentProps) {
     const matches = useMatches();

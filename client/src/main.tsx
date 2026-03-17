@@ -1,23 +1,13 @@
 import { createRoot } from 'react-dom/client';
-import 'tippy.js/dist/tippy.css';
-import './styles/breadcrumb.css';
-import './styles/button.css';
-import './styles/card.css';
-import './styles/chatPage.css';
-import './styles/colors.css';
-import './styles/root.css';
-import './styles/text-animation.css';
+import './index.css';
 
-// Bootstrap.
-import 'bootstrap/dist/css/bootstrap.min.css';
-import './styles/custom-bs.css';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { Layout } from './components/Layout';
 
-// Setup Fontawesome icons.
-import { library } from '@fortawesome/fontawesome-svg-core';
-import { fab } from '@fortawesome/free-brands-svg-icons';
-import { far } from '@fortawesome/free-regular-svg-icons';
-import { fas } from '@fortawesome/free-solid-svg-icons';
-import { Root } from './components/Root';
-library.add(fas, far, fab);
-
-createRoot(document.getElementById('root')!).render(<Root />);
+createRoot(document.getElementById('root')!).render(
+    <BrowserRouter>
+        <Routes>
+            <Route path="/" element={<Layout />}></Route>
+        </Routes>
+    </BrowserRouter>,
+);
