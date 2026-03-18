@@ -14,4 +14,5 @@ export type UserInsert = Omit<User, '_id'>;
 export interface UserResponse {
     id: string;
     username: string;
+    email: string;
 }

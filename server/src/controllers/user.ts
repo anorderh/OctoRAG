@@ -31,6 +31,7 @@ export class UserController extends ControllerBase {
         let userRes: UserReadModel = {
             _id: self._id,
             username: self.username,
+            email: self.email,
         };
 
         return res.status(200).send({

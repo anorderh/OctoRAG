@@ -8,6 +8,8 @@ import {
 
 import { ChevronDown, FileText, Info, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { ChatDetailsDialog } from './chat-details-dialog';
+import { DeleteChatDialog } from './delete-chat-dialog';
 import { LogsDialog } from './logs-dialog';
 
 type Log = {
@@ -22,6 +24,8 @@ type ChatHeaderProps = {
 
 export function ChatHeader({ title }: ChatHeaderProps) {
     const [logsOpen, setLogsOpen] = useState(false);
+    const [detailsOpen, setDetailsOpen] = useState(false);
+    const [deleteOpen, setDeleteOpen] = useState(false);
 
     const logs: Log[] = [
         {
@@ -49,7 +53,12 @@ export function ChatHeader({ title }: ChatHeaderProps) {
                 <DropdownMenuContent
                     align="start"
                     className="w-48 bg-popover border border-border text-popover-foreground">
-                    <DropdownMenuItem className="flex items-center gap-2 text-sm cursor-pointer">
+                    <DropdownMenuItem
+                        onSelect={(e) => {
+                            e.preventDefault();
+                            setDetailsOpen(true);
+                        }}
+                        className="flex items-center gap-2 text-sm cursor-pointer">
                         <Info className="h-4 w-4 text-muted-foreground" />
                         Details
                     </DropdownMenuItem>
@@ -66,17 +75,34 @@ export function ChatHeader({ title }: ChatHeaderProps) {
 
                     <DropdownMenuSeparator className="bg-border" />
 
-                    <DropdownMenuItem className="flex items-center gap-2 text-sm text-destructive cursor-pointer">
+                    <DropdownMenuItem
+                        onSelect={(e) => {
+                            e.preventDefault();
+                            setDeleteOpen(true);
+                        }}
+                        className="flex items-center gap-2 text-sm text-destructive cursor-pointer">
                         <Trash2 className="h-4 w-4" />
                         Delete Chat
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
 
+            <ChatDetailsDialog
+                open={detailsOpen}
+                onOpenChange={setDetailsOpen}
+            />
             <LogsDialog
                 logs={logs}
                 open={logsOpen}
                 onOpenChange={setLogsOpen}
+            />
+            <DeleteChatDialog
+                open={deleteOpen}
+                onOpenChange={setDeleteOpen}
+                chatName={title}
+                onConfirm={() => {
+                    console.log('delete chat');
+                }}
             />
         </div>
     );

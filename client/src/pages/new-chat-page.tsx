@@ -62,8 +62,9 @@ export function NewChatPage() {
 
                 {/* Helper text */}
                 <div className="mt-3 flex flex-col items-center gap-4 text-center">
-                    <p className="text-sm font-medium text-muted-foreground mb-3">
-                        Vectorizing online Github repositories for prompting
+                    <p className="text-md font-medium text-muted-foreground mb-3">
+                        Turn GitHub repositories into embeddings for better
+                        responses
                         <br />
                         using <b>Retrieval-Augmented Generation</b>
                     </p>
