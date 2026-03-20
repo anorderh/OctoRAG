@@ -38,9 +38,11 @@ export function ChatResponseLoadingIndicator({ status, date }: Props) {
     const isReady = status === ChatStatus.READY;
     const isError = status === ChatStatus.ERROR;
 
-    const formattedTime =
+    const formattedDateTime =
         date &&
-        new Date(date).toLocaleTimeString([], {
+        new Date(date).toLocaleString([], {
+            month: 'short',
+            day: 'numeric',
             hour: 'numeric',
             minute: '2-digit',
         });
@@ -62,7 +64,7 @@ export function ChatResponseLoadingIndicator({ status, date }: Props) {
                 </div>
             ) : isReady ? (
                 <div className="flex items-center gap-2">
-                    <span>{formattedTime}</span>
+                    <span>{formattedDateTime}</span>
                     <Check className="h-4 w-4 text-primary" />
                 </div>
             ) : (
