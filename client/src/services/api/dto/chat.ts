@@ -4,7 +4,6 @@ import type { RepoMessage } from '../../../shared/interfaces/RepoMessage';
 import type { ClientResponse } from './base';
 
 export interface ChatCreateChatRequestDto {
-    repoName: string;
     repoUrl: string;
 }
 

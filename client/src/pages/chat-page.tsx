@@ -1,11 +1,35 @@
 import { ChatMessages } from '@/components/chat/chat-messages';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useChatSocket } from '@/hooks/useChatSocket';
+import { useChatStore } from '@/store/chat';
+import { useLogStore } from '@/store/log';
+import { useMessageStore } from '@/store/messages';
 import { Send } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 
 export function ChatPage() {
     const { id } = useParams();
+
+    const setChat = useChatStore((state) => state.upsert);
+    const setMessage = useMessageStore((state) => state.upsert);
+    const setLog = useLogStore((state) => state.upsert);
+
+    useChatSocket({
+        chatId: id,
+        onStatus: (updatedChat) => {
+            setChat(updatedChat);
+        },
+        onMessage: (message) => {
+            setMessage({
+                ...message,
+                animate: true,
+            });
+        },
+        onLog: (log) => {
+            setLog(log);
+        },
+    });
 
     const messages = [
         {
@@ -23,7 +47,7 @@ export function ChatPage() {
 
     return (
         <div className="h-full flex flex-col">
-            <ChatMessages messages={messages} />
+            <ChatMessages />
 
             <div className="p-4 mb-8 mx-8">
                 <div className="relative max-w-3xl mx-auto">

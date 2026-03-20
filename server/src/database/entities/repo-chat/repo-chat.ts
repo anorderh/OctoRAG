@@ -15,7 +15,6 @@ export interface RepoChat {
 export type RepoChatEntity = OptionalId<RepoChat>;
 
 export interface RepoChatPost {
-    repoName: string;
     repoUrl: string;
 }
 

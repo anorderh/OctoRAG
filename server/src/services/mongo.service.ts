@@ -8,6 +8,7 @@ import { RepoChatEntity } from 'src/database/entities/repo-chat/repo-chat.js';
 import { RepoLogEntity } from 'src/database/entities/repo-log/repo-log.js';
 import { RepoMessageEntity } from 'src/database/entities/repo-message/repo-message.js';
 import { UserEntity } from 'src/database/entities/user/user.js';
+import { ChatStatus } from 'src/database/shared/constants/chat-status.enum.js';
 import { env } from 'src/shared/constants/env.js';
 import { singleton } from 'tsyringe';
 import { Service } from './shared/abstract/service.abstract.js';
@@ -54,6 +55,23 @@ export class MongoService extends Service {
             })
             .toArray();
         return chats;
+    }
+
+    public async updateStatus(
+        chatId: ObjectId,
+        status: ChatStatus,
+    ): Promise<void> {
+        App.logger.info(`Chat ${chatId.toHexString()} → ${status}`);
+
+        await this.collections.repoChat.updateOne(
+            { _id: chatId },
+            {
+                $set: { status },
+            },
+        );
+
+        // Optional but VERY nice: auto-log status change
+        await this.submitLog(`STATUS → ${status}`, chatId);
     }
 
     async cleanup(): Promise<void> {

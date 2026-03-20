@@ -119,6 +119,7 @@ export class ChatController extends ControllerBase {
         let repoChatPost: RepoChatPost = req.body;
         let repoChatInsert: RepoChatEntity = {
             ...repoChatPost,
+            repoName: 'New Chat',
             userId: httpContext().userId,
             creationDate: new Date(),
             lastMessageDate: null,
@@ -154,16 +155,6 @@ export class ChatController extends ControllerBase {
         const chat = await this.mongo.collections.repoChat.findOne({
             _id: chatId,
         });
-        await this.mongo.collections.repoChat.updateOne(
-            {
-                _id: chatId,
-            },
-            {
-                $set: {
-                    status: ChatStatus.LOADING,
-                },
-            },
-        );
 
         // Re-run scrape for existing Github repo chat.
         Tasks.run(async () => {

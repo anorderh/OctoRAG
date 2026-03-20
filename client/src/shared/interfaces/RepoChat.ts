@@ -12,6 +12,5 @@ export interface RepoChat {
 }
 
 export interface RepoChatPost {
-    repoName: string;
     repoUrl: string;
 }

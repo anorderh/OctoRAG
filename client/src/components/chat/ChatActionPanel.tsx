@@ -1,4 +1,3 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useNavigate } from 'react-router';
 import { useShallow } from 'zustand/react/shallow';
 import { useModalState } from '../../hooks/useModalState';
@@ -10,7 +9,6 @@ import { selectMessagesForChat, useMessageStore } from '../../store/messages';
 import { ConfirmationModal } from '../shared/ConfirmationModal';
 import { Modal } from '../shared/Modal';
 import { ChatActionLog } from './ChatActionLog';
-import { ChatStatusBadge } from './ChatStatusBadge';
 
 export function ChatActionPanel() {
     const currentChat = useSelectedChat()!;

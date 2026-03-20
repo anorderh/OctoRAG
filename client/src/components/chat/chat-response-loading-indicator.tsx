@@ -1,0 +1,64 @@
+import octoragLogo from '@/assets/logo/octo-logo.png';
+import { ChatStatus } from '@/shared/constants/chat-status.enums';
+import { Check, Loader2 } from 'lucide-react';
+
+type Props = {
+    status: ChatStatus;
+    date?: Date;
+};
+
+const STATUS_LABELS: Record<ChatStatus, string> = {
+    IDLE: 'Idle',
+
+    PREPARING: 'Preparing repository...',
+    INITIALIZING_NAMESPACE: 'Initializing index...',
+    CLEARING_NAMESPACE: 'Resetting index...',
+    SCRAPING_REPOSITORY: 'Scraping repository...',
+    CHUNKING_FILES: 'Chunking files...',
+    CONTEXTUALIZING_CHUNKS: 'Understanding code...',
+    GENERATING_EMBEDDINGS: 'Generating embeddings...',
+    UPSERTING_VECTORS: 'Indexing data...',
+
+    READY: 'Ready',
+
+    RECEIVED_MESSAGE: 'Received message...',
+    BUILDING_PIPELINE: 'Building pipeline...',
+    REFINING_QUERY: 'Understanding your question...',
+    RETRIEVING_DOCUMENTS: 'Searching codebase...',
+    RERANKING_DOCUMENTS: 'Ranking results...',
+    GENERATING_RESPONSE: 'Generating response...',
+
+    LOADING: 'Loading...',
+    RESPONDING: 'Responding...',
+
+    ERROR: 'Something went wrong',
+};
+
+export function ChatResponseLoadingIndicator({ status, date }: Props) {
+    const isReady = status === ChatStatus.READY;
+
+    const formattedTime =
+        date &&
+        new Date(date).toLocaleTimeString([], {
+            hour: 'numeric',
+            minute: '2-digit',
+        });
+
+    return (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <img src={octoragLogo} alt="logo" className="h-6 w-6 rounded-sm" />
+
+            {isReady ? (
+                <>
+                    <span>{formattedTime}</span>
+                    <Check className="h-4 w-4" />
+                </>
+            ) : (
+                <>
+                    <span>{STATUS_LABELS[status]}</span>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                </>
+            )}
+        </div>
+    );
+}

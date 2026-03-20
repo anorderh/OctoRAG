@@ -9,7 +9,6 @@ import {
 import { ControllerResponse } from '../shared/interfaces/controller-response';
 
 export type ChatCreateChatRequest = ControllerBodyRequest<{
-    repoName: string;
     repoUrl: string;
 }>;
 export type ChatCreateChatResponse = ControllerResponse<{
