@@ -17,23 +17,11 @@ import { ChatStatus } from '@/shared/constants/chat-status.enums';
 import type { RepoChat } from '@/shared/interfaces/RepoChat';
 
 import { useFetchChatsEffect } from '@/hooks/useFetchChatsEffect';
-import { useAuthStore } from '@/store/auth';
 import { useChatStore } from '@/store/chat';
-import { useEffect } from 'react';
 
 export function SidebarChats() {
     const location = useLocation();
-
-    const { user, authLoading } = useAuthStore((s) => ({
-        user: s.user,
-        authLoading: s.authLoading,
-    }));
-
-    useEffect(() => {
-        if (!authLoading && user) {
-            useFetchChatsEffect();
-        }
-    }, [authLoading, user]);
+    useFetchChatsEffect();
 
     const chats = useChatStore(
         useShallow((state) =>

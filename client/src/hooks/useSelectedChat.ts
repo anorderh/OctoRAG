@@ -4,8 +4,10 @@ import { useChatStore } from '../store/chat';
 // Hook responsible for fetching the selected chat.
 export function useSelectedChat(): RepoChat | null {
     return (
-        useChatStore((state) =>
-            state.selectedId == null ? null : state.entities[state.selectedId],
-        ) ?? null
+        useChatStore((state) => {
+            return state.selectedId == null
+                ? null
+                : state.entities[state.selectedId];
+        }) ?? null
     );
 }

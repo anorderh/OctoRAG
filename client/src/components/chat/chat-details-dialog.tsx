@@ -5,40 +5,31 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 
-import type { RepoChat } from '@/shared/interfaces/RepoChat';
+import { useSelectedChat } from '@/hooks/useSelectedChat';
 
 type ChatDetailsDialogProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    chat?: RepoChat;
-};
-
-const defaultChat: RepoChat = {
-    _id: 'demo-id',
-    userId: 'demo-user',
-    repoName: 'example-repo',
-    repoUrl: 'https://github.com/example/repo',
-    creationDate: new Date().toISOString(),
-    lastMessageDate: new Date().toISOString(),
-    messageCount: 12,
-    status: 'ACTIVE' as any,
 };
 
 export function ChatDetailsDialog({
     open,
     onOpenChange,
-    chat = defaultChat,
 }: ChatDetailsDialogProps) {
+    const chat = useSelectedChat();
+
+    // Guard
+    if (!chat) return null;
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-md p-6">
-                <DialogHeader>
-                    <DialogTitle className="text-lg font-semibold">
-                        Chat Details
-                    </DialogTitle>
+            <DialogContent className="bg-popover border border-border shadow-xl sm:max-w-md">
+                <DialogHeader className="pb-2">
+                    <DialogTitle>Chat Details</DialogTitle>
                 </DialogHeader>
 
                 <div className="flex flex-col gap-4 text-sm">
+                    {/* Repo */}
                     <div className="flex flex-col gap-1">
                         <span className="text-muted-foreground">
                             Repository
@@ -46,16 +37,19 @@ export function ChatDetailsDialog({
                         <span className="font-medium">{chat.repoName}</span>
                     </div>
 
+                    {/* URL */}
                     <div className="flex flex-col gap-1">
                         <span className="text-muted-foreground">Repo URL</span>
                         <a
                             href={chat.repoUrl}
                             target="_blank"
+                            rel="noreferrer"
                             className="text-primary underline break-all">
                             {chat.repoUrl}
                         </a>
                     </div>
 
+                    {/* Grid stats */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="flex flex-col gap-1">
                             <span className="text-muted-foreground">
@@ -74,6 +68,7 @@ export function ChatDetailsDialog({
                         </div>
                     </div>
 
+                    {/* Dates */}
                     <div className="flex flex-col gap-1">
                         <span className="text-muted-foreground">Created</span>
                         <span className="font-medium">

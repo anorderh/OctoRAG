@@ -1,3 +1,5 @@
+import typography from '@tailwindcss/typography';
+
 export default {
     theme: {
         extend: {
@@ -17,10 +19,5 @@ export default {
             },
         },
     },
-    compilerOptions: {
-        baseUrl: '.',
-        paths: {
-            '@/*': ['src/*'],
-        },
-    },
+    plugins: [typography],
 };

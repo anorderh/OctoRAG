@@ -15,5 +15,5 @@ export function useSelectChat() {
             selectChat(null);
             setMessage('');
         };
-    }, []);
+    }, [params]);
 }

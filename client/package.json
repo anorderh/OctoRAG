@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.8",
+    "@radix-ui/react-visually-hidden": "^1.2.4",
     "@tailwindcss/vite": "^4.2.1",
     "@tanstack/react-query": "^5.90.21",
     "axios": "^1.13.6",
@@ -27,6 +28,8 @@
     "react-markdown": "^10.1.0",
     "react-router-dom": "^6.22.0",
     "react-syntax-highlighter": "^16.1.1",
+    "remark-breaks": "^4.0.0",
+    "remark-gfm": "^4.0.1",
     "shadcn": "^4.0.8",
     "socket.io-client": "^4.8.3",
     "sonner": "^2.0.7",
@@ -37,7 +40,8 @@
     "zustand": "^5.0.11"
   },
   "devDependencies": {
-    "@types/node": "^20.11.16",
+    "@tailwindcss/typography": "^0.5.19",
+    "@types/node": "^20.19.37",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@types/react-syntax-highlighter": "^15.5.13",

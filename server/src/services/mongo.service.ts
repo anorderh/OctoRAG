@@ -64,14 +64,11 @@ export class MongoService extends Service {
         App.logger.info(`Chat ${chatId.toHexString()} → ${status}`);
 
         await this.collections.repoChat.updateOne(
-            { _id: chatId },
+            { _id: chatId, status: { $ne: status } },
             {
                 $set: { status },
             },
         );
-
-        // Optional but VERY nice: auto-log status change
-        await this.submitLog(`STATUS → ${status}`, chatId);
     }
 
     async cleanup(): Promise<void> {

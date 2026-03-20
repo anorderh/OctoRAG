@@ -8,6 +8,7 @@ import {
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { api } from '@/services/api/api';
 import { useAuthStore } from '@/store/auth';
+import { useChatStore } from '@/store/chat';
 import { LogIn, LogOut, User } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -30,8 +31,9 @@ export function SidebarUserButton() {
             await api.logout();
         } catch {}
 
-        logout();
-
+        navigate('/');
+        useAuthStore.getState().reset();
+        useChatStore.getState().reset();
         toast.success('Logged out', {
             icon: <LogOut className="h-4 w-4 text-primary" />,
         });

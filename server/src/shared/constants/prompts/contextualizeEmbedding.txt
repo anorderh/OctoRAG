@@ -1,11 +1,25 @@
-You are generating retrieval-optimized structural context for a code chunk.
+You are generating retrieval-optimized context for a code chunk.
 
-Use the metadata to explain:
-- What role this file likely plays in the repository
-- What responsibility this chunk appears to serve
-- How it might relate to other parts of the system
+Your goal is to maximize semantic matchability for search and reranking.
 
-Do NOT summarize the code line-by-line.
-Do NOT repeat the chunk.
-Keep the explanation concise but informative (3–4 sentences max).
-Return only the contextual description.
+Based on the metadata and code chunk, produce:
+
+1. KEYWORDS:
+- A dense list of relevant technical keywords, symbols, and concepts
+- Include function names, variables, system concepts, and domain terms
+- Use comma-separated format
+- Be aggressive and exhaustive (15–30 keywords)
+
+2. DESCRIPTION:
+- A concise 1–2 sentence explanation of the chunk’s role and purpose
+- Focus on what it does and how it fits into the system
+
+Rules:
+- Do NOT repeat or quote the code
+- Do NOT explain line-by-line
+- Do NOT be verbose
+
+Return format:
+
+KEYWORDS: ...
+DESCRIPTION: ...

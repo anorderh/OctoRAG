@@ -1,7 +1,4 @@
 import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
-import { StringOutputParser } from '@langchain/core/output_parsers';
-import { ChatPromptTemplate } from '@langchain/core/prompts';
-import { RunnableSequence } from '@langchain/core/runnables';
 import {
     Index,
     Pinecone,
@@ -78,10 +75,15 @@ export class RagService extends Service {
 
     public async prepareGithubRepoChat(chat: RepoChat): Promise<void> {
         try {
+            await this.mongo.submitLog(
+                `Starting repo preparation...`,
+                chat._id,
+            );
             await this.mongo.updateStatus(chat._id, ChatStatus.PREPARING);
 
             const namespaceId = chat._id.toString();
 
+            await this.mongo.submitLog(`Initializing namespace...`, chat._id);
             await this.mongo.updateStatus(
                 chat._id,
                 ChatStatus.INITIALIZING_NAMESPACE,
@@ -90,13 +92,20 @@ export class RagService extends Service {
             const index = this.ragIndex.namespace(namespaceId);
 
             if (await PineconeUtility.namespaceExists(namespaceId)) {
+                await this.mongo.submitLog(
+                    `Existing namespace found, clearing...`,
+                    chat._id,
+                );
+
                 await this.mongo.updateStatus(
                     chat._id,
                     ChatStatus.CLEARING_NAMESPACE,
                 );
+
                 await index.deleteAll();
             }
 
+            await this.mongo.submitLog(`Scraping repository...`, chat._id);
             await this.mongo.updateStatus(
                 chat._id,
                 ChatStatus.SCRAPING_REPOSITORY,
@@ -108,29 +117,14 @@ export class RagService extends Service {
                 chat,
             );
 
+            await this.mongo.submitLog(
+                `Scraped ${entries?.length ?? 0} files.`,
+                chat._id,
+            );
+
             await this.mongo.updateStatus(chat._id, ChatStatus.CHUNKING_FILES);
 
             if (!!entries) {
-                const contextualizeViaLLM = RunnableSequence.from([
-                    ChatPromptTemplate.fromMessages([
-                        ['system', RAGPipeline.prompts.contextualizeEmbedding],
-                        [
-                            'human',
-                            `
-<metadata>
-{metadata}
-</metadata>
-
-<chunk>
-{pageContent}
-</chunk>
-`,
-                        ],
-                    ]),
-                    RAGPipeline.llm,
-                    new StringOutputParser(),
-                ]);
-
                 const fileLimit = pLimit(8);
 
                 await Promise.all(
@@ -138,57 +132,34 @@ export class RagService extends Service {
                         fileLimit(async () => {
                             const chunks = await entry.chunk();
                             if (chunks.length === 0) return;
-
-                            await this.mongo.updateStatus(
+                            await this.mongo.submitLog(
+                                `File "${entry.metadata.filepath}" → ${chunks.length} chunks`,
                                 chat._id,
-                                ChatStatus.CONTEXTUALIZING_CHUNKS,
                             );
-
-                            const chunkLimit = pLimit(4);
-
-                            await Promise.all(
-                                chunks.map((c) =>
-                                    chunkLimit(async () => {
-                                        const context =
-                                            await contextualizeViaLLM.invoke({
-                                                metadata: JSON.stringify(
-                                                    entry.metadata,
-                                                    null,
-                                                    2,
-                                                ),
-                                                pageContent: c.pageContent,
-                                            });
-
-                                        c.metadata.contextSummary = context;
-                                    }),
-                                ),
-                            );
-
                             await this.mongo.updateStatus(
                                 chat._id,
                                 ChatStatus.GENERATING_EMBEDDINGS,
                             );
-
+                            const embeddingInputs = chunks.map(
+                                (c) => `
+FILE: ${c.metadata.filepath}
+${c.pageContent}
+`,
+                            );
                             const embeddingResponse =
                                 await this.openai.embeddings.create({
-                                    input: chunks.map(
-                                        (c) =>
-                                            `CONTEXT: ${c.metadata.contextSummary}\n\nTEXT: ${c.pageContent}`,
-                                    ),
+                                    input: embeddingInputs,
                                     model: EmbeddingModel.openai,
                                 });
-
                             const embeddings = embeddingResponse.data.map(
                                 (d) => d.embedding,
                             );
-
                             const records: OctoragPineconeRecord[] = chunks.map(
                                 (c, idx) => ({
                                     id: `${this.chunkPrefix}#${c.id}`,
                                     values: embeddings[idx],
                                     metadata: {
                                         text: c.pageContent,
-                                        context: c.metadata.contextSummary,
                                         filepath: c.metadata.filepath,
                                         repoName: c.metadata.repoName,
                                         ext: c.metadata.ext,
@@ -197,6 +168,11 @@ export class RagService extends Service {
                             );
 
                             if (records.length > 0) {
+                                await this.mongo.submitLog(
+                                    `Upserting ${records.length} vectors...`,
+                                    chat._id,
+                                );
+
                                 await this.mongo.updateStatus(
                                     chat._id,
                                     ChatStatus.UPSERTING_VECTORS,
@@ -209,8 +185,10 @@ export class RagService extends Service {
                 );
             }
 
+            await this.mongo.submitLog(`Repository ready.`, chat._id);
             await this.mongo.updateStatus(chat._id, ChatStatus.READY);
         } catch (err) {
+            await this.mongo.submitLog(`Preparation failed.`, chat._id);
             await this.mongo.updateStatus(chat._id, ChatStatus.ERROR);
             throw err;
         }
@@ -220,6 +198,11 @@ export class RagService extends Service {
         message: RepoMessage,
     ): Promise<void> {
         try {
+            await this.mongo.submitLog(
+                `Received user message.`,
+                message.chatId,
+            );
+
             await this.mongo.updateStatus(
                 message.chatId,
                 ChatStatus.RECEIVED_MESSAGE,
@@ -241,6 +224,8 @@ export class RagService extends Service {
 
             const aiResponseId = result.insertedId;
 
+            await this.mongo.submitLog(`Building RAG pipeline...`, chat._id);
+
             await this.mongo.updateStatus(
                 chat._id,
                 ChatStatus.BUILDING_PIPELINE,
@@ -257,10 +242,19 @@ export class RagService extends Service {
                 chat,
             );
 
-            const history = await this.mongo.collections.repoMessage
-                .find({ chatId: chat._id })
-                .sort({ date: 1 })
-                .toArray();
+            await this.mongo.submitLog(`Fetching chat history...`, chat._id);
+
+            const history = (
+                await this.mongo.collections.repoMessage
+                    .find({ chatId: chat._id })
+                    .sort({ date: 1 })
+                    .toArray()
+            ).filter((m) => m._id !== result.insertedId); // Don't consider message in progress.
+
+            await this.mongo.submitLog(
+                `History length: ${history.length}`,
+                chat._id,
+            );
 
             const langchainHistory: BaseMessage[] = history.map((m) => {
                 switch (m.source) {
@@ -271,26 +265,31 @@ export class RagService extends Service {
                 }
             });
 
-            const res: RagRunnableParameters = await pipeline.invoke({
+            await this.mongo.submitLog(`Invoking pipeline...`, chat._id);
+
+            const stream = await pipeline.stream({
                 [RagRunnableProperties.input]: message.content,
                 [RagRunnableProperties.history]: langchainHistory,
             } as RagRunnableParameters);
 
-            const aiResponseContent = res[RagRunnableProperties.output];
+            let full = '';
 
-            await this.mongo.collections.repoMessage.updateOne(
-                { _id: aiResponseId },
-                {
-                    $set: {
-                        content: aiResponseContent,
-                        loading: false,
-                        date: new Date(),
+            for await (const chunk of stream) {
+                const token = chunk.content ?? '';
+                if (!token) continue;
+                full += token;
+                await this.mongo.collections.repoMessage.updateOne(
+                    { _id: aiResponseId },
+                    {
+                        $set: {
+                            content: full,
+                            loading: true,
+                        },
                     },
-                },
-            );
+                );
+            }
 
             await this.mongo.updateStatus(chat._id, ChatStatus.READY);
-
             await this.mongo.collections.repoChat.updateOne(
                 { _id: message.chatId },
                 {
@@ -302,7 +301,12 @@ export class RagService extends Service {
                     },
                 },
             );
+            await this.mongo.submitLog(`Message cycle complete.`, chat._id);
         } catch (err) {
+            await this.mongo.submitLog(
+                `Message handling failed.`,
+                message.chatId,
+            );
             await this.mongo.updateStatus(message.chatId, ChatStatus.ERROR);
             throw err;
         }

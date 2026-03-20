@@ -11,7 +11,7 @@ createRoot(document.getElementById('root')!).render(
         <Routes>
             <Route path="/" element={<Layout />}>
                 <Route index element={<NewChatPage />} />
-                <Route path="chat/:id" element={<ChatPage />} />
+                <Route path="chat/:chatId" element={<ChatPage />} />
             </Route>
         </Routes>
     </BrowserRouter>,

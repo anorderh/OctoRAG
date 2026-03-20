@@ -2,6 +2,7 @@ import {
     ChangeStream,
     ChangeStreamInsertDocument,
     ChangeStreamUpdateDocument,
+    ObjectId,
 } from 'mongodb';
 import { Server, Socket } from 'socket.io';
 import { RepoChat } from 'src/database/entities/repo-chat/repo-chat';
@@ -30,7 +31,20 @@ export class WebSocket {
         this.io.on('connection', (socket: Socket) => {
             socket.on(WebSocketEvents.ChatJoin, async (chatId: string) => {
                 socket.join(chatId);
+
+                try {
+                    const chat = await this.mongo.db
+                        .collection<RepoChat>(CollectionId.RepoChat)
+                        .findOne({ _id: new ObjectId(chatId) });
+
+                    if (chat) {
+                        socket.emit(WebSocketEvents.ChatStatus, chat); // ✅ immediate sync
+                    }
+                } catch (err) {
+                    console.error('Failed to fetch chat on join', err);
+                }
             });
+
             socket.on(WebSocketEvents.ChatLeave, (chatId: string) => {
                 socket.leave(chatId);
             });
@@ -41,22 +55,9 @@ export class WebSocket {
         const collection = this.mongo.db.collection<RepoChat>(
             CollectionId.RepoChat,
         );
-        const changeStream: ChangeStream<RepoChat> = collection.watch(
-            [
-                {
-                    $match: {
-                        operationType: 'update',
-                        // Only react if status changed
-                        'updateDescription.updatedFields.status': {
-                            $exists: true,
-                        },
-                    },
-                },
-            ],
-            {
-                fullDocument: 'updateLookup',
-            },
-        );
+        const changeStream: ChangeStream<RepoChat> = collection.watch([], {
+            fullDocument: 'updateLookup',
+        });
 
         changeStream.on(
             'change',

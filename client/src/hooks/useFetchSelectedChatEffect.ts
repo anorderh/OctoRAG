@@ -21,7 +21,6 @@ export function useFetchSelectedChatEffect() {
                     const res = await api.getChat({ chatId: selectedId });
                     chatStore.upsert({
                         ...res.data.chat,
-                        animate: true, // Just to render with typing
                     });
                     messageStore.upsertMany(...res.data.messages);
                     logStore.upsert(...res.data.logs);

@@ -1,6 +1,6 @@
 import octoragLogo from '@/assets/logo/octo-logo.png';
 import { ChatStatus } from '@/shared/constants/chat-status.enums';
-import { Check, Loader2 } from 'lucide-react';
+import { Check, Loader2, XCircle } from 'lucide-react';
 
 type Props = {
     status: ChatStatus;
@@ -36,6 +36,7 @@ const STATUS_LABELS: Record<ChatStatus, string> = {
 
 export function ChatResponseLoadingIndicator({ status, date }: Props) {
     const isReady = status === ChatStatus.READY;
+    const isError = status === ChatStatus.ERROR;
 
     const formattedTime =
         date &&
@@ -45,19 +46,30 @@ export function ChatResponseLoadingIndicator({ status, date }: Props) {
         });
 
     return (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <img src={octoragLogo} alt="logo" className="h-6 w-6 rounded-sm" />
+        <div className="flex items-center gap-3 text-sm leading-none text-muted-foreground font-medium">
+            <img
+                src={octoragLogo}
+                alt="logo"
+                className="h-8 w-8 rounded-sm shrink-0"
+            />
 
-            {isReady ? (
-                <>
+            {isError ? (
+                <div className="flex items-center gap-2">
+                    <span className="text-destructive">
+                        {STATUS_LABELS[status]}
+                    </span>
+                    <XCircle className="h-4 w-4 text-destructive" />
+                </div>
+            ) : isReady ? (
+                <div className="flex items-center gap-2">
                     <span>{formattedTime}</span>
-                    <Check className="h-4 w-4" />
-                </>
+                    <Check className="h-4 w-4 text-primary" />
+                </div>
             ) : (
-                <>
+                <div className="flex items-center gap-2">
                     <span>{STATUS_LABELS[status]}</span>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                </>
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                </div>
             )}
         </div>
     );

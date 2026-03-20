@@ -47,7 +47,7 @@ export function RobotMessage({ messageId }: RobotMessageProps) {
                         spin
                     />
                 ) : (
-                    <MessageMarkdown message={msg} animate={msg.animate} />
+                    <MessageMarkdown message={msg!} />
                 )}
             </div>
         </div>

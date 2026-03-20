@@ -1,5 +1,6 @@
 export enum LlmModel {
-    openai = 'gpt-5-nano-2025-08-07',
+    openai5nano = 'gpt-5-nano-2025-08-07',
+    openai4omini = 'gpt-4o-mini',
 }
 
 export enum EmbeddingModel {

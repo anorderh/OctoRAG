@@ -1,7 +1,6 @@
 import { Document } from 'langchain/document';
 import {
     RecursiveCharacterTextSplitter,
-    RecursiveCharacterTextSplitterParams,
     TextSplitter,
 } from 'langchain/text_splitter';
 import { UUID } from 'mongodb';
@@ -21,30 +20,43 @@ export class GithubFileScrapeEntry {
     public splitter: TextSplitter;
 
     constructor(id: string, metadata: GithubFileMetadata) {
-        let params = {
-            chunkSize: 2000,
-            chunkOverlap: 300,
-        } as RecursiveCharacterTextSplitterParams;
+        const params = {
+            chunkSize: 4000,
+            chunkOverlap: 500,
+        };
 
         this.id = id;
         this.metadata = metadata;
-        let lang = fileExtToTextSplitterLang[metadata.ext];
-        this.splitter = !!lang
+
+        const lang = fileExtToTextSplitterLang[metadata.ext];
+
+        this.splitter = lang
             ? RecursiveCharacterTextSplitter.fromLanguage(lang, params)
             : new RecursiveCharacterTextSplitter(params);
     }
 
     async chunk(): Promise<Document<GithubFileMetadata>[]> {
-        let docs: Document<GithubFileMetadata>[] = [];
-        for (let text of await this.splitter.splitText(this.metadata.text)) {
+        const docs: Document<GithubFileMetadata>[] = [];
+
+        const chunks = await this.splitter.splitText(
+            this.metadata.text.replace(/\n{3,}/g, '\n\n'),
+        );
+
+        let i = 0;
+
+        for (const text of chunks) {
             docs.push(
                 new Document({
                     id: new UUID().toString(),
                     pageContent: text,
-                    metadata: this.metadata,
+                    metadata: {
+                        ...this.metadata,
+                        chunkIndex: i++, // 🔥 important
+                    },
                 }),
             );
         }
+
         return docs;
     }
 }

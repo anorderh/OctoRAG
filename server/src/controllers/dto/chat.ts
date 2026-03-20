@@ -58,3 +58,13 @@ export type ChatRunScrapeRequest = ControllerParamsRequest<{
     chatId: string;
 }>;
 export type ChatRunScrapeResponse = ControllerResponse;
+
+export type ChatEditChatRequest = ControllerRequest<
+    {
+        chatId: string;
+    },
+    {
+        repoName: string;
+    }
+>;
+export type ChatEditChatResponse = ControllerResponse;

@@ -40,13 +40,13 @@ export function AppSidebar() {
                                 size="lg"
                                 className="h-12 w-full bg-primary text-white mb-4">
                                 <Plus className="mr-2 h-8 w-8" />
-                                Add Github Repository
+                                Add Repository
                             </Button>
                         </Link>
                         <SidebarChats />
                     </SidebarContent>
 
-                    <SidebarFooter className="p-3">
+                    <SidebarFooter className="p-3 border-t border-border">
                         <SidebarUserButton />
                     </SidebarFooter>
                 </>

@@ -38,19 +38,23 @@ export function ChatLoadingIndicator({ status }: Props) {
     const isReady = status === ChatStatus.READY;
 
     return (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <img src={octoragLogo} alt="logo" className="h-6 w-6 rounded-sm" />
+        <div className="flex items-center gap-3 text-sm leading-none text-muted-foreground font-medium">
+            <img
+                src={octoragLogo}
+                alt="logo"
+                className="h-8 w-8 rounded-sm shrink-0"
+            />
 
             {isReady ? (
-                <>
+                <div className="flex items-center gap-2">
                     <span>Chat is ready to receive messages.</span>
-                    <Check className="h-4 w-4" />
-                </>
+                    <Check className="h-4 w-4 text-primary" />
+                </div>
             ) : (
-                <>
+                <div className="flex items-center gap-2">
                     <span>{STATUS_LABELS[status]}</span>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                </>
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                </div>
             )}
         </div>
     );

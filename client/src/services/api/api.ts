@@ -21,6 +21,8 @@ import type {
     ChatCreateChatResponse,
     ChatDeleteChatRequestDto,
     ChatDeleteChatResponse,
+    ChatEditChatRequestDto,
+    ChatEditChatResponse,
     ChatGetChatRequestDto,
     ChatGetChatResponse,
     ChatRunScrapeRequestDto,
@@ -149,6 +151,15 @@ export class Api {
         await this.axiosClient.post<ChatSendMessageResponse>(
             `/chat/${request.chatId}`,
             { input: request.input },
+        );
+    }
+
+    public async editChat(request: ChatEditChatRequestDto): Promise<void> {
+        await this.axiosClient.post<ChatEditChatResponse>(
+            `/chat/${request.chatId}/edit`,
+            {
+                repoName: request.repoName.trim(),
+            },
         );
     }
 

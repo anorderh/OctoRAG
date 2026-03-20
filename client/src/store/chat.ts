@@ -13,6 +13,8 @@ export interface ChatState {
     delete: (chatId: string) => Promise<void>;
     select: (chatId: string | null) => void;
     remove: (chatId: string) => void;
+
+    reset: () => void;
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -94,4 +96,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
         }),
 
     select: (chatId: string | null) => set({ selectedId: chatId }),
+
+    reset: () =>
+        set({
+            ids: [],
+            entities: {},
+            selectedId: null,
+        }),
 }));

@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+
 import { useSelectedChat } from '@/hooks/useSelectedChat';
 import { useLogStore } from '@/store/log';
 
@@ -28,36 +30,23 @@ export function LogsViewer() {
             }));
     }, [currentLogs]);
 
-    const containerRef = useRef<HTMLDivElement>(null);
+    const bottomRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        const el = containerRef.current;
-        if (el) {
-            el.scrollTop = el.scrollHeight;
-        }
+        bottomRef.current?.scrollIntoView();
     }, [logs.length]);
 
     return (
-        <div
-            ref={containerRef}
-            className="
-                border
-                bg-black
-                rounded-lg
-                h-[60vh]
-                overflow-y-auto
-                pr-2
-                p-4
-            ">
-            {logs.length === 0 ? (
-                <div className="h-full flex items-center justify-center">
-                    <span className="text-xs text-muted-foreground italic">
-                        No logs yet
-                    </span>
-                </div>
-            ) : (
-                <div className="flex flex-col gap-6">
-                    {logs.map((log) => (
+        <ScrollArea className="p-4 border bg-black rounded-lg h-[60vh] overflow-hidden">
+            <div className="p-4 flex flex-col gap-6">
+                {logs.length === 0 ? (
+                    <div className="h-full flex items-center justify-center">
+                        <span className="text-xs text-muted-foreground italic">
+                            No logs yet
+                        </span>
+                    </div>
+                ) : (
+                    logs.map((log) => (
                         <div key={log.id} className="flex flex-col gap-1">
                             <p className="text-xs text-muted-foreground">
                                 {log.timestamp}
@@ -72,9 +61,13 @@ export function LogsViewer() {
                                 {log.content}
                             </p>
                         </div>
-                    ))}
-                </div>
-            )}
-        </div>
+                    ))
+                )}
+
+                <div ref={bottomRef} />
+            </div>
+
+            <ScrollBar orientation="vertical" />
+        </ScrollArea>
     );
 }

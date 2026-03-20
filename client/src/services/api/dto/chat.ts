@@ -50,3 +50,10 @@ export type ChatDeleteChatResponse = ClientResponse<{
     deletedCount: number;
 }>;
 export type ChatRunScrapeResponse = ClientResponse;
+
+export type ChatEditChatRequestDto = {
+    chatId: string;
+    repoName: string;
+};
+
+export type ChatEditChatResponse = ClientResponse;

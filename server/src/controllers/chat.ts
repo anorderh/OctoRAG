@@ -13,6 +13,7 @@ import {
 import { ChatStatus } from 'src/database/shared/constants/chat-status.enum.js';
 import { CollectionId } from 'src/database/shared/constants/collection-id.js';
 import { MongoService } from 'src/services/mongo.service.js';
+import { OctokitService } from 'src/services/octokit.service.js';
 import { RagService } from 'src/services/rag.service.js';
 import { UserService } from 'src/services/user.service.js';
 import { inject, singleton } from 'tsyringe';
@@ -31,6 +32,8 @@ import {
     ChatCreateChatResponse,
     ChatDeleteChatRequest,
     ChatDeleteChatResponse,
+    ChatEditChatRequest,
+    ChatEditChatResponse,
     ChatGetChatsResponse,
     ChatGetDetailsRequest,
     ChatGetDetailsResponse,
@@ -52,6 +55,7 @@ export class ChatController extends ControllerBase {
         @inject(MongoService) private mongo: MongoService,
         @inject(RagService) private rag: RagService,
         @inject(UserService) private userService: UserService,
+        @inject(OctokitService) private octokitService: OctokitService,
     ) {
         super();
     }
@@ -108,7 +112,6 @@ export class ChatController extends ControllerBase {
 
     @Post('/new')
     @Validate('body', {
-        repoName: Joi.string().required(),
         repoUrl: githubRepoUrl,
     })
     @Authorize()
@@ -119,7 +122,7 @@ export class ChatController extends ControllerBase {
         let repoChatPost: RepoChatPost = req.body;
         let repoChatInsert: RepoChatEntity = {
             ...repoChatPost,
-            repoName: 'New Chat',
+            repoName: 'Loading...',
             userId: httpContext().userId,
             creationDate: new Date(),
             lastMessageDate: null,
@@ -129,10 +132,26 @@ export class ChatController extends ControllerBase {
         const collection = this.mongo.db.collection<RepoChatEntity>(
             CollectionId.RepoChat,
         );
+
+        // Insert chat.
         const result = await collection.insertOne(repoChatInsert);
         const insertedChat = await collection.findOne({
             _id: result.insertedId,
         });
+
+        // Update chat name to name of repo.
+        const info = await this.octokitService.getRepoDetailsFromUrl(
+            new URL(repoChatPost.repoUrl),
+            insertedChat._id,
+        );
+        await collection.updateOne(
+            { _id: insertedChat._id },
+            {
+                $set: {
+                    repoName: info.name,
+                },
+            },
+        );
 
         res.status(200).send({
             message: `Chat ${insertedChat._id} created successfully`,
@@ -257,6 +276,43 @@ export class ChatController extends ControllerBase {
             data: {
                 deletedCount: result.deletedCount,
             },
+        });
+    }
+
+    @Post('/:chatId/edit')
+    @Validate('params', {
+        chatId: objectId.required(),
+    })
+    @Validate('body', {
+        repoName: Joi.string().min(1).max(200).required(),
+    })
+    @Authorize()
+    public async editChat(req: ChatEditChatRequest, res: ChatEditChatResponse) {
+        const { chatId } = req.params;
+        const { repoName } = req.body;
+
+        const userId = httpContext().userId;
+        const _id = new ObjectId(chatId);
+        const chat = await this.mongo.collections.repoChat.findOne({
+            _id,
+            userId,
+        });
+        if (!chat) {
+            return res.status(404).send({
+                message: 'Chat not found.',
+            });
+        }
+        await this.mongo.collections.repoChat.updateOne(
+            { _id },
+            {
+                $set: {
+                    repoName,
+                },
+            },
+        );
+        chat.repoName = repoName;
+        return res.status(200).send({
+            message: `Chat ${chatId} updated successfully.`,
         });
     }
 }

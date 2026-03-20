@@ -6,104 +6,147 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
+import { Input } from '@/components/ui/input';
+
 import { ChevronDown, FileText, Info, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+
 import { ChatDetailsDialog } from './chat-details-dialog';
 import { DeleteChatDialog } from './delete-chat-dialog';
 import { LogsDialog } from './logs-dialog';
 
-type Log = {
-    id: number;
-    timestamp: string;
-    content: string;
-};
+import { useSelectedChat } from '@/hooks/useSelectedChat';
+import { api } from '@/services/api/api';
 
-type ChatHeaderProps = {
-    title: string;
-};
+export function ChatHeader() {
+    const chat = useSelectedChat();
 
-export function ChatHeader({ title }: ChatHeaderProps) {
     const [logsOpen, setLogsOpen] = useState(false);
     const [detailsOpen, setDetailsOpen] = useState(false);
     const [deleteOpen, setDeleteOpen] = useState(false);
 
-    const logs: Log[] = [
-        {
-            id: 1,
-            timestamp: '7:09 am, May 5 2025',
-            content: 'Log content Log content Log content...',
-        },
-        {
-            id: 2,
-            timestamp: '7:10 am, May 5 2025',
-            content: 'Another log entry here...',
-        },
-    ];
+    const [isEditing, setIsEditing] = useState(false);
+    const [value, setValue] = useState(chat?.repoName ?? '');
+
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        setValue(chat?.repoName ?? '');
+    }, [chat]);
+
+    useEffect(() => {
+        if (isEditing) {
+            inputRef.current?.focus();
+            inputRef.current?.select();
+        }
+    }, [isEditing]);
+
+    const submit = async () => {
+        const trimmed = value.trim();
+
+        if (!chat?._id) return;
+
+        if (!trimmed || trimmed === chat.repoName) {
+            setIsEditing(false);
+            return;
+        }
+
+        setIsEditing(false);
+
+        try {
+            await api.editChat({
+                chatId: chat._id,
+                repoName: trimmed,
+            });
+        } catch {}
+    };
+
+    const cancel = () => {
+        setIsEditing(false);
+        setValue(chat?.repoName ?? '');
+    };
 
     return (
         <div className="w-full flex items-center justify-between px-6 py-3">
-            <DropdownMenu modal={false}>
-                <DropdownMenuTrigger asChild>
-                    <button className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-colors">
-                        <span className="truncate max-w-[240px]">{title}</span>
-                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                    </button>
-                </DropdownMenuTrigger>
-
-                <DropdownMenuContent
-                    align="start"
-                    className="w-48 bg-popover border border-border text-popover-foreground">
-                    <DropdownMenuItem
-                        onSelect={(e) => {
-                            e.preventDefault();
-                            setDetailsOpen(true);
+            {/* LEFT SIDE */}
+            <div className="flex items-center gap-2">
+                {isEditing ? (
+                    <Input
+                        ref={inputRef}
+                        value={value}
+                        onChange={(e) => setValue(e.target.value)}
+                        onBlur={submit}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                e.preventDefault();
+                                submit();
+                            }
+                            if (e.key === 'Escape') {
+                                e.preventDefault();
+                                cancel();
+                            }
                         }}
-                        className="flex items-center gap-2 text-sm cursor-pointer">
-                        <Info className="h-4 w-4 text-muted-foreground" />
-                        Details
-                    </DropdownMenuItem>
+                        className="h-7 text-sm px-2"
+                    />
+                ) : (
+                    <DropdownMenu modal={false}>
+                        <DropdownMenuTrigger asChild>
+                            <button
+                                onDoubleClick={() => setIsEditing(true)}
+                                className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-colors">
+                                <span className="truncate max-w-[240px]">
+                                    {chat?.repoName}
+                                </span>
+                                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                            </button>
+                        </DropdownMenuTrigger>
 
-                    <DropdownMenuItem
-                        onSelect={(e) => {
-                            e.preventDefault();
-                            setLogsOpen(true);
-                        }}
-                        className="flex items-center gap-2 text-sm cursor-pointer">
-                        <FileText className="h-4 w-4 text-muted-foreground" />
-                        Open Logs
-                    </DropdownMenuItem>
+                        <DropdownMenuContent
+                            align="start"
+                            className="w-48 bg-popover border border-border text-popover-foreground">
+                            <DropdownMenuItem
+                                onSelect={(e) => {
+                                    e.preventDefault();
+                                    setDetailsOpen(true);
+                                }}
+                                className="flex items-center gap-2 text-sm cursor-pointer">
+                                <Info className="h-4 w-4 text-muted-foreground" />
+                                Details
+                            </DropdownMenuItem>
 
-                    <DropdownMenuSeparator className="bg-border" />
+                            <DropdownMenuItem
+                                onSelect={(e) => {
+                                    e.preventDefault();
+                                    setLogsOpen(true);
+                                }}
+                                className="flex items-center gap-2 text-sm cursor-pointer">
+                                <FileText className="h-4 w-4 text-muted-foreground" />
+                                Open Logs
+                            </DropdownMenuItem>
 
-                    <DropdownMenuItem
-                        onSelect={(e) => {
-                            e.preventDefault();
-                            setDeleteOpen(true);
-                        }}
-                        className="flex items-center gap-2 text-sm text-destructive cursor-pointer">
-                        <Trash2 className="h-4 w-4" />
-                        Delete Chat
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
+                            <DropdownMenuSeparator className="bg-border" />
 
+                            <DropdownMenuItem
+                                onSelect={(e) => {
+                                    e.preventDefault();
+                                    setDeleteOpen(true);
+                                }}
+                                className="flex items-center gap-2 text-sm text-destructive cursor-pointer">
+                                <Trash2 className="h-4 w-4" />
+                                Delete Chat
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                )}
+            </div>
+
+            {/* DIALOGS */}
             <ChatDetailsDialog
                 open={detailsOpen}
                 onOpenChange={setDetailsOpen}
             />
-            <LogsDialog
-                logs={logs}
-                open={logsOpen}
-                onOpenChange={setLogsOpen}
-            />
-            <DeleteChatDialog
-                open={deleteOpen}
-                onOpenChange={setDeleteOpen}
-                chatName={title}
-                onConfirm={() => {
-                    console.log('delete chat');
-                }}
-            />
+            <LogsDialog open={logsOpen} onOpenChange={setLogsOpen} />
+            <DeleteChatDialog open={deleteOpen} onOpenChange={setDeleteOpen} />
         </div>
     );
 }
