@@ -5,4 +5,5 @@ export enum RagRunnableProperties {
     documents = 'documents',
     context = 'context',
     output = 'output',
+    refinedQuery = 'refinedQuery',
 }

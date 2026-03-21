@@ -1,4 +1,7 @@
 import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
+import { StringOutputParser } from '@langchain/core/output_parsers';
+import { ChatPromptTemplate } from '@langchain/core/prompts';
+import { RunnableSequence } from '@langchain/core/runnables';
 import {
     Index,
     Pinecone,
@@ -23,6 +26,7 @@ import { RagRunnableParameters } from 'src/services/shared/interfaces/rag-runnab
 import { DependencyInjectionToken } from 'src/shared/constants/dependency-injection-token.js';
 import { env } from 'src/shared/constants/env.js';
 import { OctoragPineconeRecord } from 'src/shared/interfaces/octorag-pinecone-record.js';
+import { extractKeywordsFromCode } from 'src/shared/utils/extract-keywords-from-code.js';
 import { RAGPipeline } from 'src/shared/utils/rag-pipeline.js';
 import { container, inject, singleton } from 'tsyringe';
 import { MongoService } from './mongo.service.js';
@@ -124,25 +128,60 @@ export class RagService extends Service {
 
             await this.mongo.updateStatus(chat._id, ChatStatus.CHUNKING_FILES);
 
-            if (!!entries) {
-                const fileLimit = pLimit(8);
+            const fileLimit = pLimit(6);
+            const chunkLimit = pLimit(3);
 
+            const contextualizeViaLLM = RunnableSequence.from([
+                ChatPromptTemplate.fromMessages([
+                    ['system', RAGPipeline.prompts.contextualizeEmbedding],
+                    [
+                        'human',
+                        `
+<file>
+{filepath}
+</file>
+
+<chunk>
+{pageContent}
+</chunk>
+`,
+                    ],
+                ]),
+                RAGPipeline.llm,
+                new StringOutputParser(),
+            ]);
+
+            if (!!entries) {
                 await Promise.all(
                     entries.map((entry) =>
                         fileLimit(async () => {
                             const chunks = await entry.chunk();
                             if (chunks.length === 0) return;
+
                             await this.mongo.submitLog(
                                 `File "${entry.metadata.filepath}" → ${chunks.length} chunks`,
                                 chat._id,
                             );
+
                             await this.mongo.updateStatus(
                                 chat._id,
                                 ChatStatus.GENERATING_EMBEDDINGS,
                             );
+
+                            const keywordSets = chunks.map((c) =>
+                                extractKeywordsFromCode(c.pageContent, {
+                                    maxKeywords: 25,
+                                    filepath: c.metadata.filepath,
+                                }),
+                            );
                             const embeddingInputs = chunks.map(
-                                (c) => `
+                                (c, i) => `
 FILE: ${c.metadata.filepath}
+
+KEYWORDS:
+${(keywordSets[i] ?? []).join(', ')}
+
+CODE:
 ${c.pageContent}
 `,
                             );
@@ -151,15 +190,18 @@ ${c.pageContent}
                                     input: embeddingInputs,
                                     model: EmbeddingModel.openai,
                                 });
+
                             const embeddings = embeddingResponse.data.map(
                                 (d) => d.embedding,
                             );
+
                             const records: OctoragPineconeRecord[] = chunks.map(
                                 (c, idx) => ({
                                     id: `${this.chunkPrefix}#${c.id}`,
                                     values: embeddings[idx],
                                     metadata: {
                                         text: c.pageContent,
+                                        filename: c.metadata.filename,
                                         filepath: c.metadata.filepath,
                                         repoName: c.metadata.repoName,
                                         ext: c.metadata.ext,
@@ -169,7 +211,7 @@ ${c.pageContent}
 
                             if (records.length > 0) {
                                 await this.mongo.submitLog(
-                                    `Upserting ${records.length} vectors...`,
+                                    `Upserting ${records.length} embeddings...`,
                                     chat._id,
                                 );
 

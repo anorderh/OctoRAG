@@ -7,6 +7,7 @@ export interface RagRunnableParameters {
     [RagRunnableProperties.input]?: string;
     [RagRunnableProperties.history]?: BaseMessage[];
     [RagRunnableProperties.interpretation]?: string;
+    [RagRunnableProperties.refinedQuery]?: RefinedQuery;
     [RagRunnableProperties.documents]?: Document<GithubFileMetadata>[];
     [RagRunnableProperties.context]?: string;
     [RagRunnableProperties.output]?: string;

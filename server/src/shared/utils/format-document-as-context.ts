@@ -8,6 +8,8 @@ export function formatDocumentsAsContext(docs: Document[]) {
 <source>
 filename: ${d.metadata.filename}
 repo: ${d.metadata.repoName}
+repoUrl: ${d.metadata.url}
+filepath: ${d.metadata.filepath}
 </source>
 
 <summary>

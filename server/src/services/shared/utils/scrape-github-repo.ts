@@ -45,6 +45,7 @@ export async function scrapeGithubRepo(
         '.yaml',
         '.yml',
         '.sh',
+        '.dart',
     ]);
 
     const EXCLUDED_EXTENSIONS = new Set([
@@ -130,7 +131,6 @@ export async function scrapeGithubRepo(
                 if (IGNORED_DIRECTORIES.some((d) => filename.includes(d)))
                     continue;
                 if (EXCLUDED_EXTENSIONS.has(ext)) continue;
-                // Only include if it's a known text/code file
                 if (!CODE_EXTENSIONS.has(ext)) continue;
 
                 if (entry.header.size > maxFileSizeBytes) continue;
@@ -143,6 +143,7 @@ export async function scrapeGithubRepo(
                     new GithubFileScrapeEntry(new UUID().toString(), {
                         filepath: entry.entryName,
                         filename: filename,
+                        url: info.url,
                         repoName: info.name,
                         text: body,
                         ext,

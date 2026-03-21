@@ -8,6 +8,7 @@ import { fileExtToTextSplitterLang } from 'src/services/shared/constants/file-ex
 
 export interface GithubFileMetadata {
     filepath: string;
+    filename: string;
     ext?: string;
     text: string;
     contextSummary?: string;

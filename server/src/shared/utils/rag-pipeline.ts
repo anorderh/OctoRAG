@@ -22,6 +22,7 @@ import { pathes } from 'src/shared/constants/pathes.js';
 import { formatDocumentsAsContext } from 'src/shared/utils/format-document-as-context.js';
 import { formatRecordAsDocument } from 'src/shared/utils/format-record-as-document.js';
 import { readLocalFile } from 'src/shared/utils/read-local-file.js';
+import { RefinedQuerySchema } from '../interfaces/refined-query-schema';
 
 export class RAGPipeline {
     public static prompts = {
@@ -59,39 +60,51 @@ export class RAGPipeline {
             chat._id,
         );
 
-        const refinePrompt = new RunnablePassthrough().assign({
-            [RagRunnableProperties.interpretation]: async (
-                parameters: RagRunnableParameters,
-            ) => {
-                // ✅ REFINING QUERY
-                await mongo.updateStatus(chat._id, ChatStatus.REFINING_QUERY);
+        const refinePrompt = RunnableSequence.from([
+            new RunnablePassthrough().assign({
+                refinedQuery: async (parameters: RagRunnableParameters) => {
+                    await mongo.updateStatus(
+                        chat._id,
+                        ChatStatus.REFINING_QUERY,
+                    );
 
-                await mongo.submitLog(
-                    `STEP 1 - HISTORY-AWARE REINTERPRETATION OF USER INPUT...`,
-                    chat._id,
-                );
+                    const raw = await openai.chat.completions.create({
+                        model: LlmModel.openai4omini,
+                        messages: [
+                            {
+                                role: 'system',
+                                content: this.prompts.refinePrompt,
+                            },
+                            {
+                                role: 'user',
+                                content:
+                                    parameters[RagRunnableProperties.input],
+                            },
+                        ],
+                        response_format: {
+                            type: 'json_schema',
+                            json_schema: RefinedQuerySchema,
+                        },
+                    });
+                    const text = raw.choices[0].message.content;
+                    const parsed = JSON.parse(text);
 
-                await mongo.submitLog(
-                    `Generating reinterpretation...`,
-                    chat._id,
-                );
+                    await mongo.submitLog(
+                        `Refined Query:\n${JSON.stringify(parsed, null, 2)}`,
+                        chat._id,
+                    );
 
-                const runnable = RunnableSequence.from([
-                    ChatPromptTemplate.fromMessages([
-                        ['system', this.prompts.refinePrompt],
-                        new MessagesPlaceholder(RagRunnableProperties.history),
-                        ['human', `{${RagRunnableProperties.input}}`],
-                    ]),
-                    RAGPipeline.llm,
-                    new StringOutputParser(),
-                ]);
-                const reinterpretion = await runnable.invoke(parameters);
-
-                await mongo.submitLog(`"${reinterpretion}"`, chat._id);
-
-                return reinterpretion;
-            },
-        });
+                    return parsed;
+                },
+            }),
+            new RunnablePassthrough().assign({
+                [RagRunnableProperties.interpretation]: (
+                    parameters: RagRunnableParameters,
+                ) => {
+                    return parameters.refinedQuery.query;
+                },
+            }),
+        ]);
 
         await mongo.submitLog(
             `Creating runnable "applyRag", to vectorize the new interpretation into an embedding.`,
@@ -112,9 +125,18 @@ export class RAGPipeline {
                         chat._id,
                     );
 
+                    const refined = parameters.refinedQuery;
+
+                    const searchText = [
+                        refined.query,
+                        ...(refined.keywords ?? []),
+                        ...(refined.code_patterns ?? []),
+                        ...(refined.variants ?? []),
+                    ].join('\n');
+
                     const queryDenseEmbeddings = (
                         await openai.embeddings.create({
-                            input: `User intent: ${parameters[RagRunnableProperties.interpretation]}`,
+                            input: searchText,
                             model: EmbeddingModel.openai,
                         })
                     ).data[0].embedding;
@@ -139,34 +161,36 @@ export class RAGPipeline {
 
                     let res = await chatsPineconeIndex.query({
                         vector: queryDenseEmbeddings,
-                        topK: 12,
+                        topK: 15,
                         includeMetadata: true,
                     });
 
-                    await mongo.submitLog(`Matched records...`, chat._id);
-
-                    // const enforcedSimilarityScore = 0.4;
-                    // await mongo.submitLog(
-                    //     `Enforcing similarity score of ${enforcedSimilarityScore}`,
-                    //     chat._id,
-                    // );
-
-                    const docs = res.matches
-                        .sort((a, b) => b.score - a.score)
-                        // .filter((d) => d.score > enforcedSimilarityScore)
-                        .slice(0, 15);
-
+                    const matches = res.matches.sort(
+                        (a, b) => b.score - a.score,
+                    );
                     await mongo.submitLog(
-                        `${docs.length} Pinecone records matched!`,
+                        `Matched ${matches.length} records...`,
                         chat._id,
                     );
-
-                    for (const [idx, d] of docs.entries()) {
+                    for (const [idx, d] of matches.entries()) {
                         await mongo.submitLog(
                             `Document #${idx + 1}\n\nRelevance Score: ${d.score}\n\nText: ${d.metadata.text}`,
                             chat._id,
                         );
                     }
+
+                    const enforcedSimilarityScore = 0.3;
+                    await mongo.submitLog(
+                        `Enforcing similarity score of ${enforcedSimilarityScore}`,
+                        chat._id,
+                    );
+                    const docs = matches.filter(
+                        (d) => d.score > enforcedSimilarityScore,
+                    );
+                    await mongo.submitLog(
+                        `${docs.length} Pinecone records matched!`,
+                        chat._id,
+                    );
 
                     return docs;
                 },
@@ -284,13 +308,6 @@ ${d.pageContent}
 `,
                 );
 
-                for (let [idx, content] of rawDocContent.entries()) {
-                    await mongo.submitLog(
-                        `Rerank Doc #${idx + 1}:\n${content}`,
-                        chat._id,
-                    );
-                }
-
                 await mongo.submitLog(
                     `STEP 3 - RERANK DOCUMENTS VIA COHERE, EMPHASIZING VECTOR SIMILARITY AND TO USER QUERY...`,
                     chat._id,
@@ -301,21 +318,28 @@ ${d.pageContent}
                     chat._id,
                 );
 
-                let res = await cohere.rerank({
-                    query: query,
-                    model: 'rerank-english-v3.0',
-                    documents: rawDocContent,
-                    topN: docs.length,
-                });
+                if (docs.length > 1) {
+                    let res = await cohere.rerank({
+                        query: query,
+                        model: 'rerank-english-v3.0',
+                        documents: rawDocContent,
+                        topN: docs.length,
+                    });
 
-                let rerankedDocs = res.results.map((r) => docs[r.index]);
+                    let rerankedDocs = res.results.map((r) => docs[r.index]);
 
-                await mongo.submitLog(
-                    `Documents re-ranked: ${rerankedDocs.map((d, idx) => `${idx + 1}:${d.id}`).join(', ')}...`,
-                    chat._id,
-                );
-
-                return rerankedDocs;
+                    await mongo.submitLog(
+                        `Documents re-ranked: ${rerankedDocs.map((d, idx) => `${idx + 1}:${d.id}`).join(', ')}...`,
+                        chat._id,
+                    );
+                    return rerankedDocs;
+                } else {
+                    await mongo.submitLog(
+                        `Skipping document rerank, only ${docs.length} files provided.`,
+                        chat._id,
+                    );
+                    return docs;
+                }
             },
         });
 
@@ -331,9 +355,7 @@ ${d.pageContent}
                 ) => {
                     const docs = parameters[RagRunnableProperties.documents];
                     const context = formatDocumentsAsContext(docs);
-
                     await mongo.submitLog(`Context: ${context}...`, chat._id);
-
                     return context;
                 },
             }),
@@ -349,12 +371,22 @@ ${d.pageContent}
                 );
 
                 await mongo.submitLog(
-                    `User interpretation: ${parameters[RagRunnableProperties.interpretation]}`,
+                    `FINAL Context: ${parameters[RagRunnableProperties.context]}`,
                     chat._id,
                 );
 
                 await mongo.submitLog(
-                    `History length: ${parameters[RagRunnableProperties.history]?.length ?? 0}`,
+                    `FINAL  User interpretation: ${parameters[RagRunnableProperties.interpretation]}`,
+                    chat._id,
+                );
+
+                await mongo.submitLog(
+                    `FINAL  Refined RAG query: ${JSON.stringify(parameters[RagRunnableProperties.refinedQuery], null, 2)}`,
+                    chat._id,
+                );
+
+                await mongo.submitLog(
+                    `FINAL History length: ${parameters[RagRunnableProperties.history]?.length ?? 0}`,
                     chat._id,
                 );
 
@@ -362,6 +394,10 @@ ${d.pageContent}
             },
             ChatPromptTemplate.fromMessages([
                 ['system', this.prompts.assistant],
+                [
+                    'system',
+                    `Repository context:\n\n{${RagRunnableProperties.context}}`,
+                ],
                 new MessagesPlaceholder(RagRunnableProperties.history),
                 ['human', `{${RagRunnableProperties.input}}`],
                 [

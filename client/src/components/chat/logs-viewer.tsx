@@ -31,14 +31,66 @@ export function LogsViewer() {
     }, [currentLogs]);
 
     const bottomRef = useRef<HTMLDivElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const viewportRef = useRef<HTMLDivElement | null>(null);
 
+    const isNearBottomRef = useRef(true);
+
+    // Detect Radix viewport + track scroll position
     useEffect(() => {
-        bottomRef.current?.scrollIntoView();
+        if (!containerRef.current) return;
+
+        const viewport = containerRef.current.closest(
+            '[data-radix-scroll-area-viewport]',
+        ) as HTMLDivElement | null;
+
+        if (!viewport) return;
+
+        viewportRef.current = viewport;
+
+        const handleScroll = () => {
+            const threshold = 100;
+
+            const distanceFromBottom =
+                viewport.scrollHeight -
+                viewport.scrollTop -
+                viewport.clientHeight;
+
+            isNearBottomRef.current = distanceFromBottom < threshold;
+        };
+
+        viewport.addEventListener('scroll', handleScroll);
+
+        return () => {
+            viewport.removeEventListener('scroll', handleScroll);
+        };
+    }, []);
+
+    // Scroll when new logs arrive
+    useEffect(() => {
+        if (isNearBottomRef.current) {
+            bottomRef.current?.scrollIntoView();
+        }
     }, [logs.length]);
+
+    // Scroll when content grows (streaming logs)
+    useEffect(() => {
+        if (!containerRef.current) return;
+
+        const observer = new ResizeObserver(() => {
+            if (isNearBottomRef.current) {
+                bottomRef.current?.scrollIntoView();
+            }
+        });
+
+        observer.observe(containerRef.current);
+
+        return () => observer.disconnect();
+    }, []);
 
     return (
         <ScrollArea className="p-4 border bg-black rounded-lg h-[60vh] overflow-hidden">
-            <div className="p-4 flex flex-col gap-6">
+            <div ref={containerRef} className="p-4 flex flex-col gap-6">
                 {logs.length === 0 ? (
                     <div className="h-full flex items-center justify-center">
                         <span className="text-xs text-muted-foreground italic">
