@@ -1,3 +1,4 @@
+import anthropicLogo from '@/assets/logo/anthropic.png';
 import githubLogo from '@/assets/logo/github-logo.png';
 import octoragLogo from '@/assets/logo/octo-logo.png';
 import cohere from '@/assets/svgs/cohere.svg';
@@ -40,18 +41,47 @@ export function NewChatPage() {
 
                     {/* Helper text */}
                     <div className="mt-3 flex flex-col items-center gap-4 text-center">
-                        <h5>
-                            A <b>Retrieval-Augmented Generation</b> pipeline for
-                            <Github className="mx-1 inline h-5 w-5" />
-                            Github Repositories
-                        </h5>
+                        <h5 className="flex flex-wrap justify-center text-center leading-relaxed text-muted-foreground">
+                            <span className="mx-1">
+                                A{' '}
+                                <b className="text-white">
+                                    Retrieval-Augmented Generation
+                                </b>{' '}
+                                pipeline
+                            </span>
 
-                        <p className="text-sm font-medium text-muted-foreground mb-3">
-                            Vectorizing code into embeddings for NL querying,
-                            <br />
-                            to contextualize LLMs&apos; input and improve AI
-                            responses.
-                        </p>
+                            <span className="basis-full h-1" />
+
+                            <span className="mx-1 inline-flex items-center gap-1">
+                                leveraging
+                                <img
+                                    src={anthropicLogo}
+                                    alt="Anthropic"
+                                    className="h-4 w-4 object-contain"
+                                />
+                                <span className="text-white">
+                                    <span>Anthropic’s</span>
+                                    <a
+                                        href="https://www.anthropic.com/engineering/contextual-retrieval"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="ml-1 font-semibold text-blue-400 hover:text-blue-500 underline underline-offset-2">
+                                        Contextual Retrieval
+                                    </a>{' '}
+                                    strategy
+                                </span>
+                            </span>
+
+                            <span className="basis-full h-1" />
+
+                            <span className="mx-1 inline-flex items-center gap-1">
+                                for deep dives into
+                                <Github className="h-4 w-4" />
+                                <span className="font-medium text-white">
+                                    GitHub repositories
+                                </span>
+                            </span>
+                        </h5>
 
                         <div className="mt-4 flex flex-wrap items-center justify-center gap-x-10 gap-y-4 text-sm text-muted-foreground">
                             <Tooltip>

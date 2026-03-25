@@ -9,9 +9,11 @@ import { useChatStore } from '@/store/chat';
 import { useLogStore } from '@/store/log';
 import { useMessageStore } from '@/store/messages';
 
+import { Loader2 } from 'lucide-react';
+
 export function ChatPage() {
     useSelectChat();
-    useFetchSelectedChatEffect();
+    const [fetching] = useFetchSelectedChatEffect();
 
     const setChat = useChatStore((state) => state.upsert);
     const setMessage = useMessageStore((state) => state.upsert);
@@ -20,18 +22,28 @@ export function ChatPage() {
     const currentChat: RepoChat | null = useSelectedChat();
 
     useChatSocket({
-        chatId: currentChat?._id,
+        chatId: fetching ? undefined : currentChat?._id,
         onStatus: (updatedChat) => setChat(updatedChat),
         onMessage: (message) => setMessage({ ...message, animate: true }),
         onLog: (log) => setLog(log),
     });
 
+    if (fetching) {
+        return (
+            <div className="h-full flex items-center justify-center">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="h-full flex flex-col">
-            {/* Scroll container */}
             <div className="flex-1 overflow-y-auto flex flex-col">
                 <ChatMessages />
             </div>
+
             <div className="sticky bottom-0 z-10">
                 <ChatMessageInput />
             </div>

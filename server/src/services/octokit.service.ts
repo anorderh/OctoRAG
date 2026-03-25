@@ -23,31 +23,15 @@ export class OctokitService extends Service {
 
     public async getRepoDetailsFromUrl(url: URL, chatId: ObjectId) {
         const pathname = url.pathname;
-        await this.mongo.submitLog(`Parsing pathname "${pathname}"...`, chatId);
         const parts = pathname.split('/').filter(Boolean);
         if (!url.href.includes('github.com') || parts.length !== 2) {
-            await this.mongo.submitLog(`Pathname failed to be parsed.`, chatId);
             throw new InvalidURLFormatError();
         }
         const [owner, repo] = parts;
-        await this.mongo.submitLog(`Pathname successfully parsed.`, chatId);
-        await this.mongo.submitLog(
-            `Reviewing Github repository details...`,
-            chatId,
-        );
         const { data: info } = await this.octokit.repos.get({
             owner,
             repo,
         });
-        await this.mongo.submitLog(
-            `Repo details:
-Name: ${info.name}
-Owner: ${info.owner.login}
-Size: ${info.size}
-Stars: ${info.stargazers_count}
-Default Branch: ${info.default_branch}`,
-            chatId,
-        );
         return info;
     }
 }

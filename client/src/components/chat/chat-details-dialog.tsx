@@ -12,13 +12,22 @@ type ChatDetailsDialogProps = {
     onOpenChange: (open: boolean) => void;
 };
 
+function formatRepoSize(kb: number): string {
+    if (!kb) return '—';
+
+    const mb = kb / 1024;
+    if (mb < 1024) return `${mb.toFixed(2)} MB`;
+
+    const gb = mb / 1024;
+    return `${gb.toFixed(2)} GB`;
+}
+
 export function ChatDetailsDialog({
     open,
     onOpenChange,
 }: ChatDetailsDialogProps) {
     const chat = useSelectedChat();
 
-    // Guard
     if (!chat) return null;
 
     return (
@@ -65,6 +74,16 @@ export function ChatDetailsDialog({
                                 Status
                             </span>
                             <span className="font-medium">{chat.status}</span>
+                        </div>
+
+                        {/* NEW: Repo Size */}
+                        <div className="flex flex-col gap-1">
+                            <span className="text-muted-foreground">
+                                Repo Size
+                            </span>
+                            <span className="font-medium">
+                                {formatRepoSize(chat.repoSize)}
+                            </span>
                         </div>
                     </div>
 

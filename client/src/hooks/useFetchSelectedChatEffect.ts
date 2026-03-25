@@ -17,6 +17,7 @@ export function useFetchSelectedChatEffect() {
         const fetch = async () => {
             const selectedId = chatStore.selectedId;
             if (selectedId != null) {
+                setFetch(true);
                 try {
                     const res = await api.getChat({ chatId: selectedId });
                     chatStore.upsert({

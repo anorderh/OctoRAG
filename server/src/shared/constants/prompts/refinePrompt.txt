@@ -10,6 +10,7 @@ CORE INSTRUCTIONS
 - Resolve ambiguous references into explicit technical terms
 - Expand with relevant frameworks, languages, and concepts
 - Preserve the original intent exactly
+- Ask for explicit source code to be added in the response
 - Do NOT answer the question
 - Output ONLY valid raw JSON (no markdown, no explanation)
 

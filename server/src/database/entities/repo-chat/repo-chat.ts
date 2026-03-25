@@ -6,6 +6,7 @@ export interface RepoChat {
     userId: ObjectId;
     repoName: string;
     repoUrl: string;
+    repoSize?: number;
     creationDate: Date;
     lastMessageDate?: Date;
     messageCount: number;

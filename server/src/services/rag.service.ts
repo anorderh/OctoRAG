@@ -1,7 +1,4 @@
 import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
-import { StringOutputParser } from '@langchain/core/output_parsers';
-import { ChatPromptTemplate } from '@langchain/core/prompts';
-import { RunnableSequence } from '@langchain/core/runnables';
 import {
     Index,
     Pinecone,
@@ -12,7 +9,7 @@ import { CreateIndexSpec } from '@pinecone-database/pinecone/dist/control';
 import { CohereClient } from 'cohere-ai';
 import OpenAI from 'openai';
 import pLimit from 'p-limit';
-import { EmbeddingModel } from 'src/controllers/util/model.enum.js';
+import { EmbeddingModel, LlmModel } from 'src/controllers/util/model.enum.js';
 import { App } from 'src/core/App.js';
 import { RepoChat } from 'src/database/entities/repo-chat/repo-chat.js';
 import {
@@ -25,13 +22,18 @@ import { RagRunnableProperties } from 'src/services/shared/constants/rag-runnabl
 import { RagRunnableParameters } from 'src/services/shared/interfaces/rag-runnable-params.js';
 import { DependencyInjectionToken } from 'src/shared/constants/dependency-injection-token.js';
 import { env } from 'src/shared/constants/env.js';
+import {
+    ContextualizedChunkOutput,
+    ContextualizedChunkSchema,
+} from 'src/shared/interfaces/contextualized-chunk.js';
 import { OctoragPineconeRecord } from 'src/shared/interfaces/octorag-pinecone-record.js';
-import { extractKeywordsFromCode } from 'src/shared/utils/extract-keywords-from-code.js';
 import { RAGPipeline } from 'src/shared/utils/rag-pipeline.js';
+import { truncateForTokenSafety } from 'src/shared/utils/truncate-token.js';
 import { container, inject, singleton } from 'tsyringe';
 import { MongoService } from './mongo.service.js';
 import { Service } from './shared/abstract/service.abstract.js';
 import { GithubFileScrapeEntry } from './shared/classes/github-scrape-entry.js';
+import { shouldIncludeFile } from './shared/utils/is-file-allowed.js';
 import { PineconeUtility } from './shared/utils/pinecone-utility.js';
 import { scrapeGithubRepo } from './shared/utils/scrape-github-repo.js';
 
@@ -86,15 +88,12 @@ export class RagService extends Service {
             await this.mongo.updateStatus(chat._id, ChatStatus.PREPARING);
 
             const namespaceId = chat._id.toString();
-
             await this.mongo.submitLog(`Initializing namespace...`, chat._id);
             await this.mongo.updateStatus(
                 chat._id,
                 ChatStatus.INITIALIZING_NAMESPACE,
             );
-
             const index = this.ragIndex.namespace(namespaceId);
-
             if (await PineconeUtility.namespaceExists(namespaceId)) {
                 await this.mongo.submitLog(
                     `Existing namespace found, clearing...`,
@@ -114,118 +113,18 @@ export class RagService extends Service {
                 chat._id,
                 ChatStatus.SCRAPING_REPOSITORY,
             );
-
             const entries: GithubFileScrapeEntry[] = await scrapeGithubRepo(
                 new URL(chat.repoUrl),
                 this.mongo,
                 chat,
             );
-
             await this.mongo.submitLog(
                 `Scraped ${entries?.length ?? 0} files.`,
                 chat._id,
             );
 
             await this.mongo.updateStatus(chat._id, ChatStatus.CHUNKING_FILES);
-
-            const fileLimit = pLimit(6);
-            const chunkLimit = pLimit(3);
-
-            const contextualizeViaLLM = RunnableSequence.from([
-                ChatPromptTemplate.fromMessages([
-                    ['system', RAGPipeline.prompts.contextualizeEmbedding],
-                    [
-                        'human',
-                        `
-<file>
-{filepath}
-</file>
-
-<chunk>
-{pageContent}
-</chunk>
-`,
-                    ],
-                ]),
-                RAGPipeline.llm,
-                new StringOutputParser(),
-            ]);
-
-            if (!!entries) {
-                await Promise.all(
-                    entries.map((entry) =>
-                        fileLimit(async () => {
-                            const chunks = await entry.chunk();
-                            if (chunks.length === 0) return;
-
-                            await this.mongo.submitLog(
-                                `File "${entry.metadata.filepath}" → ${chunks.length} chunks`,
-                                chat._id,
-                            );
-
-                            await this.mongo.updateStatus(
-                                chat._id,
-                                ChatStatus.GENERATING_EMBEDDINGS,
-                            );
-
-                            const keywordSets = chunks.map((c) =>
-                                extractKeywordsFromCode(c.pageContent, {
-                                    maxKeywords: 25,
-                                    filepath: c.metadata.filepath,
-                                }),
-                            );
-                            const embeddingInputs = chunks.map(
-                                (c, i) => `
-FILE: ${c.metadata.filepath}
-
-KEYWORDS:
-${(keywordSets[i] ?? []).join(', ')}
-
-CODE:
-${c.pageContent}
-`,
-                            );
-                            const embeddingResponse =
-                                await this.openai.embeddings.create({
-                                    input: embeddingInputs,
-                                    model: EmbeddingModel.openai,
-                                });
-
-                            const embeddings = embeddingResponse.data.map(
-                                (d) => d.embedding,
-                            );
-
-                            const records: OctoragPineconeRecord[] = chunks.map(
-                                (c, idx) => ({
-                                    id: `${this.chunkPrefix}#${c.id}`,
-                                    values: embeddings[idx],
-                                    metadata: {
-                                        text: c.pageContent,
-                                        filename: c.metadata.filename,
-                                        filepath: c.metadata.filepath,
-                                        repoName: c.metadata.repoName,
-                                        ext: c.metadata.ext,
-                                    },
-                                }),
-                            );
-
-                            if (records.length > 0) {
-                                await this.mongo.submitLog(
-                                    `Upserting ${records.length} embeddings...`,
-                                    chat._id,
-                                );
-
-                                await this.mongo.updateStatus(
-                                    chat._id,
-                                    ChatStatus.UPSERTING_VECTORS,
-                                );
-
-                                await index.upsert(records);
-                            }
-                        }),
-                    ),
-                );
-            }
+            await this.indexRepoAsEmbeddings(index, chat, entries);
 
             await this.mongo.submitLog(`Repository ready.`, chat._id);
             await this.mongo.updateStatus(chat._id, ChatStatus.READY);
@@ -352,5 +251,160 @@ ${c.pageContent}
             await this.mongo.updateStatus(message.chatId, ChatStatus.ERROR);
             throw err;
         }
+    }
+
+    private async indexRepoAsEmbeddings(
+        index: Index,
+        chat: RepoChat,
+        entries: GithubFileScrapeEntry[],
+    ) {
+        const fileLimit = pLimit(8);
+        if (!!entries) {
+            await Promise.all(
+                entries.map((entry) =>
+                    fileLimit(async () => {
+                        const chunks = await entry.chunk();
+                        if (chunks.length === 0) return;
+                        if (!shouldIncludeFile(entry.metadata.filepath)) {
+                            return;
+                        }
+
+                        await this.mongo.submitLog(
+                            `File "${entry.metadata.filepath}" → ${chunks.length} chunks`,
+                            chat._id,
+                        );
+
+                        await this.mongo.updateStatus(
+                            chat._id,
+                            ChatStatus.GENERATING_EMBEDDINGS,
+                        );
+
+                        const fullFileContent = chunks
+                            .map((c) => c.pageContent)
+                            .join('\n\n');
+                        const safeFileContent =
+                            truncateForTokenSafety(fullFileContent);
+                        const context = await this.contextualizeFile({
+                            content: safeFileContent,
+                            filepath: entry.metadata.filepath,
+                        });
+
+                        // Apply same context to all chunks
+                        const embeddingInputs = chunks.map(
+                            (chunk) => `
+FILE:
+${chunk.metadata.filepath}
+
+SUMMARY:
+${context.summary}
+
+INTENT:
+${context.intent.join(', ')}
+
+RISK:
+${context.risk.join(', ')}
+
+CODE:
+${chunk.pageContent}
+`,
+                        );
+
+                        const embeddingResponse =
+                            await this.openai.embeddings.create({
+                                input: embeddingInputs,
+                                model: EmbeddingModel.openai,
+                            });
+
+                        const embeddings = embeddingResponse.data.map(
+                            (d) => d.embedding,
+                        );
+
+                        const records: OctoragPineconeRecord[] = chunks.map(
+                            (chunk, idx) => ({
+                                id: `${this.chunkPrefix}#${chunk.id}`,
+                                values: embeddings[idx],
+                                metadata: {
+                                    text: chunk.pageContent,
+
+                                    filename: chunk.metadata.filename,
+                                    filepath: chunk.metadata.filepath,
+                                    fileUrl: chunk.metadata.fileUrl,
+                                    defaultBranch: chunk.metadata.defaultBranch,
+                                    repoName: chunk.metadata.repoName,
+                                    repoUrl: chunk.metadata.repoUrl,
+                                    ext: chunk.metadata.ext,
+
+                                    contextSummary: context.summary,
+                                    contextKeywords: context.keywords,
+                                    extractedKeywords: extractedKeywords,
+                                    intent: context.intent,
+                                    risk: context.risk,
+                                },
+                            }),
+                        );
+
+                        if (records.length > 0) {
+                            await this.mongo.submitLog(
+                                `Upserting ${records.length} embeddings...`,
+                                chat._id,
+                            );
+
+                            await this.mongo.updateStatus(
+                                chat._id,
+                                ChatStatus.UPSERTING_VECTORS,
+                            );
+
+                            await index.upsert(records);
+                        }
+                    }),
+                ),
+            );
+        }
+    }
+
+    private async contextualizeFile(params: {
+        content: string;
+        filepath: string;
+    }): Promise<ContextualizedChunkOutput> {
+        const raw = await this.openai.chat.completions.create({
+            model: LlmModel.openai4nano,
+            temperature: 0,
+            messages: [
+                {
+                    role: 'system',
+                    content: `
+You are generating retrieval-optimized context for an entire source code file.
+
+Your goal is to improve semantic search quality.
+
+Guidelines:
+- Focus on the file's PURPOSE and ROLE in the system
+- Describe what this file enables or is responsible for
+- Extract architectural signals (e.g., service, controller, utility, config, etc.)
+- Do NOT describe syntax or line-by-line behavior
+- Do NOT repeat code
+- Be concise (summary max 2 sentences)
+`,
+                },
+                {
+                    role: 'user',
+                    content: `
+FILE:
+${params.filepath}
+
+CONTENT:
+${params.content}
+`,
+                },
+            ],
+            response_format: {
+                type: 'json_schema',
+                json_schema: ContextualizedChunkSchema,
+            },
+        });
+
+        const text = raw.choices[0].message.content;
+        const parsed = JSON.parse(text);
+        return parsed;
     }
 }

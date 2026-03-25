@@ -35,6 +35,10 @@ export const createRepoChatCollection: CollectionSetup<
                             bsonType: 'string',
                             description: 'Repository URL',
                         },
+                        repoSize: {
+                            bsonType: 'int',
+                            description: 'Repository URL',
+                        },
                         creationDate: {
                             bsonType: 'date',
                             description: 'Chat creation timestamp',

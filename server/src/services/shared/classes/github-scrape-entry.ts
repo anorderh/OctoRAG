@@ -9,6 +9,9 @@ import { fileExtToTextSplitterLang } from 'src/services/shared/constants/file-ex
 export interface GithubFileMetadata {
     filepath: string;
     filename: string;
+    repoUrl: string;
+    fileUrl?: string;
+    defaultBranch: string;
     ext?: string;
     text: string;
     contextSummary?: string;
@@ -22,8 +25,8 @@ export class GithubFileScrapeEntry {
 
     constructor(id: string, metadata: GithubFileMetadata) {
         const params = {
-            chunkSize: 4000,
-            chunkOverlap: 500,
+            chunkSize: 2000,
+            chunkOverlap: 250,
         };
 
         this.id = id;

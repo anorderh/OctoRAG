@@ -1,9 +1,6 @@
-import { StringOutputParser } from '@langchain/core/output_parsers';
+import { ChatPromptTemplate } from '@langchain/core/prompts';
 import {
-    ChatPromptTemplate,
-    MessagesPlaceholder,
-} from '@langchain/core/prompts';
-import {
+    RunnableLambda,
     RunnablePassthrough,
     RunnableSequence,
 } from '@langchain/core/runnables';
@@ -11,7 +8,6 @@ import { ChatOpenAI } from '@langchain/openai';
 import { Index, RecordMetadata } from '@pinecone-database/pinecone';
 import { CohereClient } from 'cohere-ai';
 import OpenAI from 'openai';
-import pLimit from 'p-limit';
 import { EmbeddingModel, LlmModel } from 'src/controllers/util/model.enum';
 import { RepoChat } from 'src/database/entities/repo-chat/repo-chat';
 import { ChatStatus } from 'src/database/shared/constants/chat-status.enum.js';
@@ -23,6 +19,7 @@ import { formatDocumentsAsContext } from 'src/shared/utils/format-document-as-co
 import { formatRecordAsDocument } from 'src/shared/utils/format-record-as-document.js';
 import { readLocalFile } from 'src/shared/utils/read-local-file.js';
 import { RefinedQuerySchema } from '../interfaces/refined-query-schema';
+import { mapHistoryToOpenAI } from './map-base-to-openai';
 
 export class RAGPipeline {
     public static prompts = {
@@ -34,7 +31,7 @@ export class RAGPipeline {
     };
 
     public static llm = new ChatOpenAI({
-        model: LlmModel.openai4omini,
+        model: LlmModel.openai4nano,
         streaming: true,
     });
 
@@ -68,6 +65,11 @@ export class RAGPipeline {
                         ChatStatus.REFINING_QUERY,
                     );
 
+                    await mongo.submitLog(
+                        `STEP 1 - REFINE USER PROMPT USING CHAT HISTORY, KEYWORDS, AND INTENT...`,
+                        chat._id,
+                    );
+
                     const raw = await openai.chat.completions.create({
                         model: LlmModel.openai4omini,
                         messages: [
@@ -75,6 +77,9 @@ export class RAGPipeline {
                                 role: 'system',
                                 content: this.prompts.refinePrompt,
                             },
+                            ...mapHistoryToOpenAI(
+                                parameters[RagRunnableProperties.history],
+                            ),
                             {
                                 role: 'user',
                                 content:
@@ -155,13 +160,13 @@ export class RAGPipeline {
                     );
 
                     await mongo.submitLog(
-                        `Using re-interpretation embedding to query 12 most relevant Pinecord records.`,
+                        `Using refined prompt to query up to 15 Pinecord records.`,
                         chat._id,
                     );
 
                     let res = await chatsPineconeIndex.query({
                         vector: queryDenseEmbeddings,
-                        topK: 15,
+                        topK: 10,
                         includeMetadata: true,
                     });
 
@@ -199,85 +204,6 @@ export class RAGPipeline {
         });
 
         await mongo.submitLog(
-            `Creating runnable "contextualizeRetrievedDocuments", to enrich retrieved chunks with additional semantic context via LLM before reranking.`,
-            chat._id,
-        );
-
-        const contextualizeRetrievedDocuments =
-            new RunnablePassthrough().assign({
-                [RagRunnableProperties.documents]: async (
-                    parameters: RagRunnableParameters,
-                ) => {
-                    await mongo.updateStatus(
-                        chat._id,
-                        ChatStatus.CONTEXTUALIZING_CHUNKS,
-                    );
-
-                    const docs = parameters[RagRunnableProperties.documents];
-
-                    await mongo.submitLog(
-                        `STEP 3 - CONTEXTUALIZING RETRIEVED DOCUMENTS VIA LLM...`,
-                        chat._id,
-                    );
-
-                    const contextualizeViaLLM = RunnableSequence.from([
-                        ChatPromptTemplate.fromMessages([
-                            [
-                                'system',
-                                RAGPipeline.prompts.contextualizeEmbedding,
-                            ],
-                            [
-                                'human',
-                                `
-<file>
-{filepath}
-</file>
-
-<chunk>
-{pageContent}
-</chunk>
-`,
-                            ],
-                        ]),
-                        RAGPipeline.llm,
-                        new StringOutputParser(),
-                    ]);
-
-                    const limit = pLimit(3); // control concurrency
-
-                    await Promise.all(
-                        docs.map((doc) =>
-                            limit(async () => {
-                                try {
-                                    const context =
-                                        await contextualizeViaLLM.invoke({
-                                            filepath: doc.metadata.filepath,
-                                            pageContent: doc.pageContent,
-                                        });
-
-                                    doc.metadata.contextSummary = context;
-                                } catch (err) {
-                                    await mongo.submitLog(
-                                        `Contextualization failed for chunk ${doc.id}`,
-                                        chat._id,
-                                    );
-
-                                    doc.metadata.contextSummary = '';
-                                }
-                            }),
-                        ),
-                    );
-
-                    await mongo.submitLog(
-                        `Contextualized ${docs.length} retrieved documents.`,
-                        chat._id,
-                    );
-
-                    return docs;
-                },
-            });
-
-        await mongo.submitLog(
             `Creating runnable "rerankDocuments", for reorder produced documents based on chunk contexts.`,
             chat._id,
         );
@@ -300,10 +226,19 @@ export class RAGPipeline {
 FILE:
 ${d.metadata.filepath}
 
-CONTEXT:
+SUMMARY:
 ${d.metadata.contextSummary ?? ''}
 
-CONTENT:
+KEYWORDS:
+${(d.metadata.contextKeywords ?? []).join(', ')}
+
+INTENT:
+${(d.metadata.intent ?? []).join(', ')}
+
+RISK:
+${(d.metadata.risk ?? []).join(', ')}
+
+CODE:
 ${d.pageContent}
 `,
                 );
@@ -369,49 +304,30 @@ ${d.pageContent}
                     `STEP 4 - INVOKING LLM WITH INPUT, CHAT HISTORY, AND CONTEXTUALIZED RAG CHUNKS...`,
                     chat._id,
                 );
-
-                await mongo.submitLog(
-                    `FINAL Context: ${parameters[RagRunnableProperties.context]}`,
-                    chat._id,
-                );
-
-                await mongo.submitLog(
-                    `FINAL  User interpretation: ${parameters[RagRunnableProperties.interpretation]}`,
-                    chat._id,
-                );
-
-                await mongo.submitLog(
-                    `FINAL  Refined RAG query: ${JSON.stringify(parameters[RagRunnableProperties.refinedQuery], null, 2)}`,
-                    chat._id,
-                );
-
-                await mongo.submitLog(
-                    `FINAL History length: ${parameters[RagRunnableProperties.history]?.length ?? 0}`,
-                    chat._id,
-                );
-
                 return parameters;
             },
             ChatPromptTemplate.fromMessages([
                 ['system', this.prompts.assistant],
                 [
+                    'human',
+                    `User query:\n\n{${RagRunnableProperties.interpretation}}`,
+                ],
+                [
                     'system',
                     `Repository context:\n\n{${RagRunnableProperties.context}}`,
                 ],
-                new MessagesPlaceholder(RagRunnableProperties.history),
-                ['human', `{${RagRunnableProperties.input}}`],
-                [
-                    'human',
-                    `Interpreted as: {${RagRunnableProperties.interpretation}}`,
-                ],
             ]),
+            RunnableLambda.from((input) => {
+                console.log('===== RAG INPUT =====');
+                console.log(JSON.stringify(input, null, 2));
+                return input;
+            }),
             RAGPipeline.llm,
         ]);
 
         const chain = RunnableSequence.from([
             refinePrompt,
             applyRag,
-            contextualizeRetrievedDocuments,
             rerankDocuments,
             queryLLM,
         ]);

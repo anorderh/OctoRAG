@@ -5,20 +5,28 @@ export function formatDocumentsAsContext(docs: Document[]) {
         .map(
             (d) => `
 <document id="${d.id}">
+
 <source>
 filename: ${d.metadata.filename}
+fileUrl: ${d.metadata.fileUrl}
 repo: ${d.metadata.repoName}
-repoUrl: ${d.metadata.url}
-filepath: ${d.metadata.filepath}
+repoUrl: ${d.metadata.repoUrl}
 </source>
 
-<summary>
-${d.metadata.contextSummary ?? ''}
-</summary>
+<context>
+summary: ${d.metadata.contextSummary ?? ''}
 
-<content>
+keywords: ${(d.metadata.contextKeywords ?? []).join(', ')}
+
+intent: ${(d.metadata.intent ?? []).join(', ')}
+
+risk: ${(d.metadata.risk ?? []).join(', ')}
+</context>
+
+<code>
 ${d.pageContent}
-</content>
+</code>
+
 </document>
 `,
         )
