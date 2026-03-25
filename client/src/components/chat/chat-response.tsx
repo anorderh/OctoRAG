@@ -1,7 +1,6 @@
-import { useSelectedChat } from '@/hooks/useSelectedChat';
 import type { ChatStatus } from '@/shared/constants/chat-status.enums';
 import type { RepoMessage } from '../../shared/interfaces/RepoMessage';
-import { MessageMarkdown } from '../shared/MessageMarkdown';
+import { MessageMarkdown } from '../shared/message-markdown';
 import { ChatResponseLoadingIndicator } from './chat-response-loading-indicator';
 
 type ChatResponseProps = {
@@ -10,8 +9,6 @@ type ChatResponseProps = {
 };
 
 export function ChatResponse({ message, status }: ChatResponseProps) {
-    const chat = useSelectedChat();
-
     return (
         <div className="w-full flex flex-col gap-2">
             {/* AI Content */}

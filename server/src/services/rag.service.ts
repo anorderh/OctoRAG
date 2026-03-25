@@ -336,7 +336,6 @@ ${chunk.pageContent}
 
                                     contextSummary: context.summary,
                                     contextKeywords: context.keywords,
-                                    extractedKeywords: extractedKeywords,
                                     intent: context.intent,
                                     risk: context.risk,
                                 },
