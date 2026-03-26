@@ -2,7 +2,9 @@
 
 A web-based AI chat app using RAG and Anthropic's [Contextual Retrieval](https://www.anthropic.com/engineering/contextual-retrieval) to explore Github codebases
 
-Watch the [video demo on Youtube](https://www.youtube.com/watch?v=vzlDCvqDFgU&t=4s)
+## Demo
+
+[Youtube Video](https://www.youtube.com/watch?v=vzlDCvqDFgU&t=4s)
 
 ## Techstack
 
