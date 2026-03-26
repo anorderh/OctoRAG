@@ -1,6 +1,6 @@
 <img width="800" height="300" alt="octorag_banner" src="https://github.com/user-attachments/assets/e06d2d09-e115-44ec-9dbd-cca4885d9ef8" />
 
-A full-stack web app for exploring GitHub codebases with AI using RAG and Anthropic's [Contextual Retrieval](https://www.anthropic.com/engineering/contextual-retrieval) strategy
+A web-based AI chat app using RAG and Anthropic's [Contextual Retrieval](https://www.anthropic.com/engineering/contextual-retrieval) to explore Github codebases
 
 Watch the [video demo on Youtube](https://www.youtube.com/watch?v=vzlDCvqDFgU&t=4s)
 
