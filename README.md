@@ -20,16 +20,16 @@ A web-based AI chat app using RAG and Anthropic's [Contextual Retrieval](https:/
 ![octorag](https://github.com/user-attachments/assets/9d65cf7f-bb70-4639-a2c9-94fd58f5a5ce)
 
 - **Repository Ingestion Pipeline**  
-    Automatically ingests GitHub repositories by downloading, parsing, chunking, and transforming source code into AI vector embeddings for semantic retrieval
+    Ingests GitHub repositories by downloading, parsing, chunking, and transforming source code into AI vector embeddings for storage & retrieval in Pinecone
     
 - **RAG-Orchestrated Query Engine**  
-    Executes multi-stage pipelines using LangChain, including prompt refinement, vector search, reranking, and context construction for LLM queries
+    Executes AI I/O pipelines using LangChain, connecting stages such as prompt refinement, vector search, document reranking, and context formatting for LLM queries
     
 - **Source-Grounded Code Analysis**  
-    Enables accurate, context-aware responses and code insights by grounding LLM outputs directly in repository source code
+    Enables context-aware responses by grounding inputs with source code retrieved directly from the repository, improving LLM outputs' accuracy
     
 - **Interactive Full-Stack Experience**  
-    Provides a real-time chat interface (React) backed by a scalable Node.js/Express API and MongoDB for conversation and entity data management
+    Provides a real-time chat interface with React backed by a scalable Node.js/Express API and MongoDB for conversation and entity data management
 
 ## Use Cases
 
