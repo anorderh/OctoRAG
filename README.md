@@ -4,7 +4,7 @@ A web-based AI chat app using RAG and Anthropic's [Contextual Retrieval](https:/
 
 ## Demo
 
-[Youtube Video](https://www.youtube.com/watch?v=vzlDCvqDFgU&t=4s)
+[Youtube Video](https://www.youtube.com/watch?v=vzlDCvqDFgU)
 
 ## Techstack
 
